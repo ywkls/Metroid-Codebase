@@ -1,0 +1,353 @@
+//Section 22. Phantoon Script
+
+//Phantoon
+
+//Fireballs- 2 x 3
+//Body= 8 x5
+//Eye 2 x 2
+
+const int PHANTOON_BODY_COMBO_CLOSED = 3080;//Big body.
+const int PHANTOON_FIREBALL = 24;//Fireball Sprite.
+const int PHANTOON_FIREBALL_ENEMY = 218;//Fireball enemy.
+const int PHANTOON_BODY_COMBO_OPEN = 3088;//Tile of body in open form.
+const int PHANTOON_NORMAL_CSET = 9;//Normal Cset for boss.
+const int PHANTOON_HURT_CSET = 10;//Cset for boss when hurt.
+const int PHANTOON_BODY_HURT_CLOSED = 3084;//Tile for body when low on HP.
+const int PHANTOON_BODY_HURT_OPEN = 3092;//Tile for body when eye open and low on HP.
+
+ffc script Phantoon{
+	void run(int enemyID){
+		npc ghost = Ghost_InitAutoGhost(this, enemyID);
+		//Position enemy.
+		Ghost_X = 112;
+		Ghost_Y = 54;
+		//8 eweapons we can make.
+		eweapon fireball;
+		//Also, 8 enemies. Because eweapons obey sideview gravity sometimes.
+		npc flame[8];
+		float angle;//For rotational movement.
+		float angle_offset = 45;//To have more than one thing rotate but be at a different angle from the others.
+		int wave;//Counts waves of fireballs spiralling outward.
+		bool Closed = true;//Tells if the foe is vulnerable or not.
+		//Set flags.
+		Ghost_SetFlag(GHF_IGNORE_ALL_TERRAIN);
+		Ghost_SetFlag(GHF_IGNORE_NO_ENEMY);
+		Ghost_SetFlag(GHF_NO_FALL);
+		Ghost_SetFlag(GHF_FAKE_Z);
+		//Hover code from sideview enemies.
+		int HVS = ghost->Attributes[0];//Type of hover. 0=Float, 1=Horizontal movement, 2=Vertical  movement, 3 = Parametric movement
+		int Misc1 = ghost->Attributes[1];//Half width of horizontal movement
+		int Misc2 = ghost->Attributes[2];//X speed
+		int Misc3 = ghost->Attributes[3];//Half Height of vertical movement
+		int Misc4 = ghost->Attributes[4];//Y speed
+		//These four variables handle the parametric movement.
+		int StartX = Ghost_X;
+		int StartY = Ghost_Y;
+		int T1 = 0;
+		int T2 = 0;
+		//Tile width and height.
+		int Width = Ghost_GetAttribute(ghost,5,1);
+		int Height = Ghost_GetAttribute(ghost,6,1);
+		Ghost_SetSize(this,ghost,Width,Height);
+		int MaxHP = Ghost_HP;//Remember max HP.
+		int OpenTimer;//How long to stay open or closed.
+		int IntroTimer = 360;//Timer for intro segment.
+		Ghost_Data = GH_INVISIBLE_COMBO;//Keep the true enemy always invisible.
+		int i;//To keep from have to declare this a million times. Iterative variable.
+		int radius = 64;//Radius of circle.
+		int FireTimer;//Tracks how often to fire fireballs.
+		int Chance;//Tracks how many times it has fired fireballs.
+		int Side;//Sets where it appears while fireballs fall from the ceiling.
+		bool Positioning = false;//Is it dropping fireballs from the ceiling?
+		bool Ceiling = false;//Is it hovering near the ceiling and sending out waves of fireballs?
+		int combo = Ghost_GetAttribute(ghost,10,0);
+		this->Flags[FFCF_TRANS]= true;
+		while(true){
+			//This is the intro.
+			if(IntroTimer>0){
+				//Create the fireballs.
+				for(i=0;i<=7;i++){
+					flame[i]= Screen->CreateNPC(PHANTOON_FIREBALL_ENEMY);
+					//Adjust size.
+					EnemyResize(flame[i],2,3);
+					SetEnemyHitbox(flame[i],16,34,2,8);
+					flame[i]->X =(Ghost_X+16) + radius * Cos(270+(i*angle_offset));
+					flame[i]->Y =(Ghost_Y+16) + radius * Sin(270+(i*angle_offset));
+					Game->PlaySound(SFX_FIRE);
+					Gen_Leader_Waitframes(this,ghost,15);
+				}
+				//The radius is more than zero.
+				while(radius>0){
+					//Make it where the enemy can't hurt you.
+					ghost->CollDetection = false;
+					//Rotate stuff.
+					angle = (angle+3) % 360;
+					//Rotate fireballs.
+					for(i=0;i<=7;i++){
+						flame[i]->X =(Ghost_X+16) + radius * Cos(angle+(i*angle_offset));
+						flame[i]->Y =(Ghost_Y+16) + radius * Sin(angle+(i*angle_offset));
+					}
+					//Reduce radius after three seconds.
+					if(IntroTimer<180)
+						radius--;
+					//Reduce intro timer.
+					IntroTimer--;
+					if(radius ==1){
+						for(i=0;i<=7;i++){
+							flame[i]->X = -1000;
+							flame[i]->Y = -1000;
+							flame[i]->HP = 0;
+						}
+						ghost->CollDetection = true;
+					}
+					Gen_Leader_Waitframe(this,ghost);
+				}
+			}
+			
+			//The enemy can hurt you now.
+			//Set how long it moves based on HP.
+			if(Ghost_HP>(MaxHP *0.75))
+				OpenTimer = 180;
+			else if(Ghost_HP<(MaxHP *0.75) && Ghost_HP>(MaxHP/3))
+				OpenTimer = 300;
+			else if(Ghost_HP<(MaxHP/3))
+				OpenTimer = 420;
+			//It has appeared but is still invulnerable.
+			if(OpenTimer>0 && Closed){
+				//Make it where it can't hurt you.
+				ghost->CollDetection = false;
+				this->Flags[FFCF_TRANS]= true;
+				//Make the enemy appear.
+				if(Ghost_HP>(MaxHP/2)){
+					Ghost_AddCombo(PHANTOON_BODY_COMBO_CLOSED,-32,-48,2,5);
+					Ghost_AddCombo(PHANTOON_BODY_COMBO_CLOSED+1,0,-48,3,3);
+					Ghost_AddCombo(PHANTOON_BODY_COMBO_CLOSED+2,-16,32,3,2);
+					Ghost_AddCombo(PHANTOON_BODY_COMBO_CLOSED+3,32,0,1,2);
+					Ghost_Data = combo+2;
+				}
+				else{
+					Ghost_AddCombo(PHANTOON_BODY_HURT_CLOSED,-32,-48,2,5);
+					Ghost_AddCombo(PHANTOON_BODY_HURT_CLOSED+1,0,-48,3,3);
+					Ghost_AddCombo(PHANTOON_BODY_HURT_CLOSED+2,-16,32,3,2);
+					Ghost_AddCombo(PHANTOON_BODY_HURT_CLOSED+3,32,0,1,2);
+					Ghost_Data = combo+3;
+				}
+				//Set all defenses from the last time we did this.
+				Ghost_SetAllDefenses(ghost, NPCDT_BLOCK);
+				//The timer exists.
+				while(OpenTimer>0){
+					//Move the enemy.
+					T1+=Misc2;
+					WrapDegrees(T1);
+					T2+=Misc4;
+					WrapDegrees(T2);
+					Ghost_X = StartX+Misc1*Cos(T1);
+					Ghost_Y = StartY+Misc3*Sin(2*T2);
+					//Fire fireballs periodically.
+					FireTimer = (FireTimer+1)%60;
+					//Creates dropped fireballs.
+					if(FireTimer == 0){
+						if(Link->X<Ghost_X)
+							fireball = FireBigEWeapon(EW_SCRIPT10, Ghost_X, Ghost_Y, DegtoRad(180),150,ghost->WeaponDamage, PHANTOON_FIREBALL,SFX_FIRE, 0,2,3);
+						else
+							fireball = FireBigEWeapon(EW_SCRIPT10, Ghost_X, Ghost_Y, DegtoRad(0),150,ghost->WeaponDamage, PHANTOON_FIREBALL,SFX_FIRE, 0,2,3);
+						SetEWeaponHitbox(fireball,16,34,2,8);
+						SetEWeaponLifespan(fireball,EWL_TIMER, 60);
+						SetEWeaponDeathEffect(fireball,EWD_VANISH, 0);
+						//This section taken directly from Moosh's sideview enemy pack.
+						while(fireball->isValid()){
+							T1+=Misc2;
+							WrapDegrees(T1);
+							T2+=Misc4;
+							WrapDegrees(T2);
+							Ghost_X = StartX+Misc1*Cos(T1);
+							Ghost_Y = StartY+Misc3*Sin(2*T2);
+							if(!Screen->isSolid(fireball->X+16,fireball->Y+42))fireball->Y++;
+							else{
+								if(fireball->X<Link->X)fireball->X++;
+								else fireball->X--;
+							}
+							fireball->Jump = 0;
+							Gen_Leader_Waitframe(this,ghost);
+						}
+					}
+					//Reduces the timer.
+					OpenTimer--;
+					Gen_Leader_Waitframe(this,ghost);
+				}
+				//Make the body invisible.
+				Ghost_ClearCombos();
+				Ghost_Data = GH_INVISIBLE_COMBO;
+				//Time to drop fireballs from the ceiling.
+				Positioning = true;
+				//No longer invulnerable.
+				Closed = false;
+			}
+			//Dropping fireballs from the ceiling.
+			if(Positioning){
+				//Randomly choose where to appear.
+				Side = Choose(64,192);
+				//Move to position.
+				Ghost_X = Side;
+				Ghost_Y = 96;
+				//It can hurt you now.
+				ghost->CollDetection = true;
+				//Make it visible.
+				this->Flags[FFCF_TRANS]= true;
+				if(Ghost_HP>(MaxHP/2)){
+					Ghost_AddCombo(PHANTOON_BODY_COMBO_OPEN,-16,-64,1,8);
+					Ghost_AddCombo(PHANTOON_BODY_COMBO_OPEN+1,0,-64,4,4);
+					Ghost_AddCombo(PHANTOON_BODY_COMBO_OPEN+2,0,32,3,2);
+					Ghost_AddCombo(PHANTOON_BODY_COMBO_OPEN+3,32,0,2,2);
+					Ghost_Data = combo;
+				}
+				else{
+					Ghost_AddCombo(PHANTOON_BODY_HURT_OPEN,-16,-64,1,8);
+					Ghost_AddCombo(PHANTOON_BODY_HURT_OPEN+1,0,-64,4,4);
+					Ghost_AddCombo(PHANTOON_BODY_HURT_OPEN+2,0,32,3,2);
+					Ghost_AddCombo(PHANTOON_BODY_HURT_OPEN+3,32,0,2,2);
+					Ghost_Data = combo+1;
+				}
+				//Make it vulnerable.
+				Ghost_SetAllDefenses(ghost, NPCDT_HALFDAMAGE);
+				//Tell the game it has been vulnerable.
+				Chance++;
+				//If you haven't hit it by the second time, switch to next phase.
+				if(Chance ==2){
+					//Reset variable.
+					Chance = 0;
+					//Make it not hurt you.
+					Ghost_ClearCombos();
+					Ghost_Data = GH_INVISIBLE_COMBO;
+					ghost->CollDetection = false;
+					//Move it to position.
+					Ghost_Y = StartY;
+					Ghost_X = StartX-Misc1;
+					//It is invulnerable now.
+					Closed = true;
+				}
+				//No longer moving to position.
+				Positioning = false;
+			}
+			//It is vulnerable and the timer exists.
+			if(OpenTimer>0 && !Closed){
+				//Create fireballs.
+				for(i=0;i<=7;i++){
+					fireball = FireBigEWeapon(EW_SCRIPT10, 64+(i*32), 48, DegtoRad(90),100,ghost->WeaponDamage, PHANTOON_FIREBALL,SFX_FIRE, 0,2,3);
+					SetEWeaponHitbox(fireball,16,34,2,8);
+					SetEWeaponLifespan(fireball,EWL_TIMER, 60);
+                    SetEWeaponDeathEffect(fireball,EWD_VANISH, 0);
+					Gen_Leader_Waitframes(this,ghost,30);
+				}
+				//The timer exists.
+				while(OpenTimer>0){
+					//If you hit the enemy.
+					if(Ghost_GotHit()){
+						//Make it invisible.
+						//body->OriginalTile = INVISIBLE_ENEMY_TILE;
+						//Make it not hurt you.
+						ghost->CollDetection = false;
+						Ghost_ClearCombos();
+						Ghost_Data = GH_INVISIBLE_COMBO;
+						//Time to hover on the ceiling.
+						Ceiling = true;
+						//End this loop now.
+						OpenTimer = 0;
+					}
+					//Reduce open timer.
+					OpenTimer--;
+					//Just before end of open timer.
+					if(OpenTimer ==1){
+						//Make it not hurt you.
+						ghost->CollDetection = false;
+						Ghost_ClearCombos();
+						Ghost_Data = GH_INVISIBLE_COMBO;
+						//Wait a little while.
+						Gen_Explode_Waitframes(this,ghost,Rand(60,120));
+						//Do positioning again.
+						Positioning= true;
+					}
+					Gen_Leader_Waitframe(this,ghost);
+				}
+			}
+			//Time to hover on ceiling.
+			if(Ceiling){
+				//Move into position.
+				Ghost_X = StartX;
+				Ghost_Y = 48;
+				this->Flags[FFCF_TRANS]= true;
+				if(Ghost_HP>(MaxHP/2)){
+					Ghost_AddCombo(PHANTOON_BODY_COMBO_CLOSED,-32,-48,2,5);
+					Ghost_AddCombo(PHANTOON_BODY_COMBO_CLOSED+1,0,-48,3,3);
+					Ghost_AddCombo(PHANTOON_BODY_COMBO_CLOSED+2,-16,32,3,2);
+					Ghost_AddCombo(PHANTOON_BODY_COMBO_CLOSED+3,32,0,1,2);
+					Ghost_Data = combo+2;
+				}
+				else{
+					Ghost_AddCombo(PHANTOON_BODY_HURT_CLOSED,-32,-48,2,5);
+					Ghost_AddCombo(PHANTOON_BODY_HURT_CLOSED+1,0,-48,3,3);
+					Ghost_AddCombo(PHANTOON_BODY_HURT_CLOSED+2,-16,32,3,2);
+					Ghost_AddCombo(PHANTOON_BODY_HURT_CLOSED+3,32,0,1,2);
+					Ghost_Data = combo+3;
+				}
+				//Set initial radius.
+				radius= 32;
+				//Set up enemies.
+				for(i=0;i<=7;i++){
+					//Rotate in different directions depending on the wave.
+					flame[i] = Screen->CreateNPC(PHANTOON_FIREBALL_ENEMY);
+					EnemyResize(flame[i],2,3);
+					SetEnemyHitbox(flame[i],16,34,2,8);
+					Ghost_SetAllDefenses(flame[i], NPCDT_NONE);
+				}
+				//Create 4 waves.
+				while(wave<4){
+					//Expand radius.
+					while(radius<160){
+						//Adjust angle of rotation.
+						angle = (angle+3) % 360;
+						//Move fireballs.
+						for(i=0;i<=7;i++){
+							if(wave ==1||wave ==3){
+								flame[i]->X =(Ghost_X+16) + radius * Cos(angle+(i*angle_offset));
+								flame[i]->Y =(Ghost_Y+16) + radius * Sin(angle+(i*angle_offset));
+							}	
+							else{
+								flame[i]->X =(Ghost_X+16) + radius * Sin(angle+(i*angle_offset));
+								flame[i]->Y =(Ghost_Y+16) + radius * Cos(angle+(i*angle_offset));
+							}
+						}
+						//Increase radius.
+						radius++;
+						Gen_Explode_Waitframe(this,ghost);
+					}
+					//Reset radius for next wave.
+					radius = 0;
+					//Increase wave count.
+					wave++;
+					Gen_Leader_Waitframe(this,ghost);
+				}
+				//Kill the generated flames.
+				for(i=0;i<=7;i++){
+					flame[i]->X = -1000;
+					flame[i]->Y = -1000;
+					flame[i]->HP = 0;
+				}	
+				//Make it invulnerable.
+				Closed = true;
+				//Make it not hurt you.
+				ghost->CollDetection = false;
+				Ghost_ClearCombos();
+				Ghost_Data = GH_INVISIBLE_COMBO;
+				//Move it into position.
+				Ghost_Y = StartY;
+				Ghost_X = StartX-Misc1;
+				//Reset wave count.
+				wave = 0;
+				//No longer on ceiling.
+				Ceiling = false;
+			}
+			Gen_Leader_Waitframe(this,ghost);
+		}
+	}
+}
