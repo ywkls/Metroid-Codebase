@@ -1,0 +1,25 @@
+//Section 26. Cutscene Scripts
+
+//Keeps you from pressing buttons during cutscenes.
+
+ffc script Cutscene{
+	void run(){
+		while(true){
+			SamusVars[IS_INVISIBLE]= 1;
+			SamusVars[IS_FROZEN]= 1;
+			Link->CollDetection = false;
+			NoAction();
+			Waitframe();
+		}
+	}
+}
+
+//End a cutscene.
+
+ffc script CutsceneEnd{
+	void run(){
+		if(SamusVars[IS_INVISIBLE])SamusVars[IS_INVISIBLE]= 0;
+		if(SamusVars[IS_FROZEN])SamusVars[IS_FROZEN]= 0;
+		if(!Link->CollDetection)Link->CollDetection = true;
+	}
+}
