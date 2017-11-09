@@ -1,0 +1,53 @@
+//Section 43. Inverse Jumper
+//---COMMMENTING NEEDED--
+
+ffc script Sideview_Inverse_Jumper{
+	 void run (int enemyID){
+		  npc ghost = Ghost_InitAutoGhost(this, enemyID);
+		  Ghost_SetFlag(GHF_NO_FALL);
+		  float x = Ghost_X;
+		  float y = Ghost_Y;
+		  float vy;
+		  float vx = -1;
+		  int timer;
+		  int Width = Ghost_GetAttribute(ghost,0,1);
+		  int Height = Ghost_GetAttribute(ghost,1,1);
+		  Ghost_SetSize(this,ghost,Width,Height);
+		  while (true){
+			   if (Screen->isSolid(Ghost_X + 8, Ghost_Y - 1)){
+					if (timer <= 0){
+						 vx = Sign(vx) * Choose(1, 1.5, 2);
+						 vy = 3;
+						 timer = Rand(30, 70);
+						 Game->PlaySound(SFX_JUMP);
+					}
+					else if (vy < 0)
+						vy = 0;
+			   }
+			   y += vy;
+			   vy -= GRAVITY;
+			   if ((vy > 0 && !Screen->isSolid(Ghost_X + 8, Ghost_Y + 17)) 
+					|| (vy < 0 && !Screen->isSolid(Ghost_X + 8, Ghost_Y - 1)))
+					Ghost_Y = Round(y);
+			   if (timer > 0 && Screen->isSolid(Ghost_X + 8, Ghost_Y - 1))
+					timer--;
+				if (vx >= 0 && !Screen->isSolid(Ghost_X + 8, Ghost_Y - 1)){
+					if (!Screen->isSolid(Ghost_X + 17, Ghost_Y + 8)){
+						x += vx;
+						Ghost_X = Round(x);
+					}
+					else
+						vx = -1 * Abs(vx);
+			   }
+			   if (vx < 0 && !Screen->isSolid(Ghost_X + 8, Ghost_Y - 1)){
+					if (!Screen->isSolid(Ghost_X - 1, Ghost_Y + 8)){
+						 x += vx;
+						 Ghost_X = Round(x);
+					}
+					else
+						vx = Abs(vx);
+			   }
+			   Ghost_Waitframe(this, ghost);
+		  }
+	 }
+}
