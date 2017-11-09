@@ -1,0 +1,49 @@
+//Section 57. Seahorse.
+//---COMMMENTING NEEDED--
+
+ffc script Seahorse{
+	void run(int enemyID){
+		npc ghost = Ghost_InitAutoGhost(this, enemyID);
+		Ghost_SetFlag(GHF_IGNORE_ALL_TERRAIN);
+		Ghost_SetFlag(GHF_IGNORE_NO_ENEMY);
+		Ghost_SetFlag(GHF_NO_FALL);
+		Ghost_SetFlag(GHF_FAKE_Z);
+		Ghost_SetSize(this,ghost,1,2);
+		eweapon fireball;
+		int combo = ghost->Attributes[10];
+		int SpitTimer = Rand(60,180);
+		bool Spitting = ChooseBool();
+		while(true){
+			if(!Spitting){
+				Ghost_Data = GH_INVISIBLE_COMBO;
+				ghost->CollDetection = false;
+			}
+			else{
+				if(SamusVars[DRAW_X]<Ghost_X)
+					Ghost_Data = combo;
+				else
+					Ghost_Data = combo+1;
+				ghost->CollDetection = true;
+			}
+			if(SpitTimer<0){
+				if(!Spitting){
+					Ghost_SetAllDefenses(ghost,NPCDT_NONE);
+					Spitting = true;
+					for(int i =0;i<4;i++){
+						fireball = FireAimedEWeapon(EW_SCRIPT1, Ghost_X+16,Ghost_Y+24, DegtoRad(0), 300, ghost->WeaponDamage, SPR_GEN_FIREBALL, -1, 0);
+						SetEWeaponLifespan(fireball,EWL_TIMER, 200);
+						SetEWeaponDeathEffect(fireball,EWD_VANISH, 0);
+						Ghost_Waitframes(this,ghost,true,true,5);
+					}
+				}
+				else{
+					Ghost_SetAllDefenses(ghost,NPCDT_BLOCK);
+					Spitting = false;
+				}
+				SpitTimer = Rand(60,180);
+			}
+			SpitTimer--;
+			Ghost_Waitframe(this,ghost,true,true);
+		}
+	}
+}
