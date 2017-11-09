@@ -12,3 +12,8 @@ void DebuggingMetroidSaveStation(){
 	int t[]="Debugging int MetroidSaveStationMenu(int station_id, int refill)";
 	TraceNL(); TraceS(t); TraceNL();
 }
+
+void DebuggingRefillMenu(){
+	int t[]="Debugging Refillmeny(int type)";
+	TraceNL(); TraceS(t); TraceNL();
+}
