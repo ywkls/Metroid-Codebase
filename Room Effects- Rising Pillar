@@ -1,0 +1,46 @@
+//Section 50. Rising Pillar
+//---COMMMENTING NEEDED--
+
+ffc script Rising_Pillar{
+	void run(int combo, int cset, int speed, int height, int sfx, int delay){
+		int TopY = this->Y-(height*16);
+		int CurrentY = this->Y;
+		int i;
+		if(speed==0)speed =1;
+		bool triggered = false;
+		while(!triggered){
+			for(i=Screen->NumLWeapons();i>0;i--){
+				lweapon wpn = Screen->LoadLWeapon(i);
+				if(wpn->ID ==LW_BOMBBLAST && Collision(this,wpn))
+					triggered = true;
+			}
+			Waitframe();
+		}
+		while(CurrentY>TopY){
+			Screen->FastCombo(6, this->X, CurrentY+16, combo, cset, 128);
+			if(((CurrentY-this->Y)%16)==0){
+				Screen->ComboD[ComboAt(this->X,CurrentY)]= combo;
+				Game->PlaySound(sfx);
+			}
+			CurrentY-=speed;
+			if(Between(Link->X+8,this->X,this->X+16)){
+				Link->Jump = 0;
+				Link->Y = CurrentY;
+				Link->X = this->X;
+			}
+			if(delay){
+				for(i=delay;i>0;i--){
+					Screen->FastCombo(6, this->X, CurrentY+16, combo, cset, 128);
+					if(Between(Link->X+8,this->X,this->X+16)){
+						Link->Jump = 0;
+						Link->Y = CurrentY;
+						Link->X = this->X;
+					}
+					Waitframe();
+				}
+			}
+			else
+				Waitframe();
+		}
+	}
+}
