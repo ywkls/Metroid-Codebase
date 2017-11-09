@@ -1,0 +1,13 @@
+//Section 69/ Control Settings
+
+//Item Ids for equipped items.
+
+const int I_MISSILES = 13;
+const int I_BEAM = -1;//Do this so be don't have to have a specific item.
+const int I_BEAM1 = 5;
+const int I_BEAM2 = 6;
+const int I_BEAM3 = 7;
+const int I_BEAM4 = 36;
+const int I_SUPERMISSILE = 25;
+const int I_X_RAY = 53;
+const int I_POWER_BOMB = 48;
