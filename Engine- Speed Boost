@@ -1,0 +1,328 @@
+//Section 29. Speed Boost
+
+const int I_SPEED_BOOST = 31;//Item id for Speed Boost.
+const int REQUIRED_SPEED_BOOST_TIME = 90;//How long you must press a direction and R to trigger speed boost.
+const int CF_SPEED_BOOST = 101;//Speed Boost combo flag.
+const int SPEED_BOOST_UNDERCOMBO = 164;//Combo to change speed boost combo to.
+const int MAX_SHINE_SPARK_TIME = 300;//Time to use Shine Spark.
+const int SHINE_SPARK_SFX = 87;//Sound effect for activating shine spark.
+const int SHINE_SPARK_IMPACT_SFX = 74;//Sound effect for shine spark hitting a wall.
+const int SPEED_BOOST_SFX = 81;//Sound made while speed boosting.
+const int SHINE_SPARKING_SFX= 73;//Sound while Shine Sparking
+
+//True if combo type and flag are correct.
+bool isSpeedBoostCombo(int x,int y){
+	int loc= ComboAt(x,y);
+	return( Screen->ComboT[loc] == CT_OVERHEAD && ComboFI(loc, CF_SPEED_BOOST));
+}
+
+void Speed_Boost(){
+	//You have the item.
+	if(Link->Item[I_SPEED_BOOST]){
+		//Not currently speed boosting.
+		if(!SamusVars[IS_SPEED_BOOSTING] && !SamusVars[IS_SHINE_SPARK] 
+			&& SamusVars[SAMUS_ACTION]==SAMUS_ACTION_NONE){
+			//If you press Right and R.
+			if(Link->InputRight && InputDash()){
+				DampInput(SamusVars[DASH_BUTTON]);
+				//Is the combo to the right not solid?
+				if(!Screen->isSolid(Link->X+16,Link->Y-8) && !Screen->isSolid(Link->X+16,Link->Y+8)){
+					if(Screen->Flags[SF_MISC]&SF_MISC_SCRIPT1 && !Link->Item[I_GRAVITY_SUIT])SamusVars[SPEED_BOOST_TIMER] = 0;
+					else{
+						SamusVars[SPEED_BOOST_TIMER]++;;//Increase timer
+						Link->X+=2;//Move Link.
+						SamusVars[SPEED_SFX_TIMER]=(SamusVars[SPEED_SFX_TIMER]+1)%30;
+					}
+					if(SamusVars[SPEED_SFX_TIMER]==0)Game->PlaySound(SPEED_BOOST_SFX);
+				}
+				//The combo to the right is solid.
+				else{
+					SamusVars[SPEED_BOOST_TIMER]+=SamusVars[SPEED_BOOST_SLOPE_TIMER];
+					//Reset speed boost timer.
+					if(SamusVars[SPEED_BOOST_TIMER]<REQUIRED_SPEED_BOOST_TIME)
+						SamusVars[SPEED_BOOST_TIMER] = 0;
+				}
+			}
+			//If you press left and R.
+			else if(Link->InputLeft && InputDash()){
+				DampInput(SamusVars[DASH_BUTTON]);
+				//Is the combo to the left not solid?
+				if(!Screen->isSolid(Link->X-1,Link->Y-8) &&!Screen->isSolid(Link->X-1,Link->Y+8)){
+					if((Screen->Flags[SF_MISC]&SF_MISC_SCRIPT1 || SamusVars[IN_WATER])
+						&& !Link->Item[I_GRAVITY_SUIT])SamusVars[SPEED_BOOST_TIMER] = 0;
+					else{
+						SamusVars[SPEED_BOOST_TIMER]++;
+						Link->X-=2;
+						SamusVars[SPEED_SFX_TIMER]=(SamusVars[SPEED_SFX_TIMER]+1)%30;
+					}
+					if(SamusVars[SPEED_SFX_TIMER]==0)Game->PlaySound(SPEED_BOOST_SFX);
+				}
+				//The combo to the left is solid.
+				else{
+					SamusVars[SPEED_BOOST_TIMER]+=SamusVars[SPEED_BOOST_SLOPE_TIMER];
+					if(SamusVars[SPEED_BOOST_TIMER]<REQUIRED_SPEED_BOOST_TIME)
+						SamusVars[SPEED_BOOST_TIMER] = 0;
+				}
+			}
+			//You press a different direction than the frame before.
+			if(SamusVars[PREV_LINK_DIR]=Link->Dir){
+				SamusVars[SPEED_BOOST_TIMER] = 0;
+				SamusVars[SPEED_BOOST_SLOPE_TIMER]=0;
+			}
+			//You've been Speed Boosting long enough.
+			if(SamusVars[SPEED_BOOST_TIMER]>REQUIRED_SPEED_BOOST_TIME)
+				SamusVars[IS_SPEED_BOOSTING] = 1;
+		}
+		//You're speed boosting now.
+		else if(SamusVars[IS_SPEED_BOOSTING] && !SamusVars[IS_SHINE_SPARK] ){
+			if((Screen->Flags[SF_MISC]&SF_MISC_SCRIPT1 || SamusVars[IN_WATER])
+				&& !Link->Item[I_GRAVITY_SUIT]){
+				SamusVars[SPEED_BOOST_TIMER] = 0;
+				SamusVars[IS_SPEED_BOOSTING] = 0;
+			}
+			SamusVars[SPEED_SFX_TIMER]=(SamusVars[SPEED_SFX_TIMER]+1)%30;
+			if(SamusVars[SPEED_SFX_TIMER]==0)Game->PlaySound(SPEED_BOOST_SFX);
+			//Keep moving in direction you were last speed boosting.
+			if(Link->InputRight && InputDash() && Prev_Link_Dir == DIR_RIGHT 
+				&& !Link->InputLeft && !Link->InputDown && !Link->InputUp){
+				//The combo to the right is a speed boost combo.
+				if(isSpeedBoostCombo(Link->X+16,Link->Y-8) && isSpeedBoostCombo(Link->X+16,Link->Y+8)){
+					Screen->ComboD[ComboAt(Link->X+16,Link->Y-8)]= SPEED_BOOST_UNDERCOMBO;
+					Screen->ComboD[ComboAt(Link->X+16,Link->Y+8)]= SPEED_BOOST_UNDERCOMBO;
+				}
+				else if(isSpeedBoostCombo(Link->X+8,Link->Y+24))
+					Screen->ComboD[ComboAt(Link->X+8,Link->Y+24)]= SPEED_BOOST_UNDERCOMBO;
+				else if((Screen->isSolid(Link->X+16,Link->Y-8)||Screen->isSolid(Link->X+16,Link->Y+8)) 
+						&& !isSpeedBoostCombo(Link->X+16,Link->Y-8) && !isSpeedBoostCombo(Link->X+16,Link->Y+8)){
+					SamusVars[IS_SPEED_BOOSTING] = 0;
+					SamusVars[SPEED_BOOST_TIMER] = 0;
+				}
+				else if(SamusVars[PREV_LINK_DIR]!=Link->Dir){
+					SamusVars[IS_SPEED_BOOSTING] = 0;
+					SamusVars[SPEED_BOOST_TIMER] = 0;
+					SamusVars[SPEED_BOOST_SLOPE_TIMER]=0;
+				}
+				if(NumLWeaponsOf(LW_SCRIPT4)==0){
+					lweapon boost = FireBigLWeapon(LW_SCRIPT4, Link->X, Link->Y-16, 0,0,16,
+									SPRITE_NULL,0,LWF_ZERO_G|LWF_LINK_NO_COLL,1,2);
+					SetLWeaponLifespan(boost,LWL_TIMER,5);
+					SetLWeaponDeathEffect(boost,LWD_VANISH,0);
+				}
+				Link->X+=2;
+				DampInput(SamusVars[DASH_BUTTON]);
+			}
+			//You start speed boosting right.
+			else if(Link->InputRight && InputDash() && Prev_Link_Dir ==DIR_LEFT){
+				SamusVars[SPEED_BOOST_TIMER] = 0;
+				SamusVars[IS_SPEED_BOOSTING]= 0;
+				SamusVars[SPEED_BOOST_SLOPE_TIMER]=0;
+			}
+			else if(Link->InputLeft && InputDash() && Prev_Link_Dir == DIR_LEFT
+					&& !Link->InputRight && !Link->InputDown && !Link->InputUp){
+				//The combo to the left is a speed boost combo.
+				if(isSpeedBoostCombo(Link->X-1,Link->Y+8)&& isSpeedBoostCombo(Link->X-1,Link->Y-8)){
+					Screen->ComboD[ComboAt(Link->X-1,Link->Y+8)]= SPEED_BOOST_UNDERCOMBO;
+					Screen->ComboD[ComboAt(Link->X-1,Link->Y-8)]= SPEED_BOOST_UNDERCOMBO;
+				}
+				else if(isSpeedBoostCombo(Link->X+8,Link->Y+24))
+					Screen->ComboD[ComboAt(Link->X+8,Link->Y+24)]= SPEED_BOOST_UNDERCOMBO;
+				else if((Screen->isSolid(Link->X-1,Link->Y-8)||Screen->isSolid(Link->X-1,Link->Y+8)) && !isSpeedBoostCombo(Link->X-1,Link->Y-8) && !isSpeedBoostCombo(Link->X-1,Link->Y+8)){
+					SamusVars[IS_SPEED_BOOSTING] = 0;
+					SamusVars[SPEED_BOOST_TIMER] = 0;
+				}
+				else if(SamusVars[PREV_LINK_DIR]!=Link->Dir){
+					SamusVars[IS_SPEED_BOOSTING] = 0;
+					SamusVars[SPEED_BOOST_TIMER] = 0;
+					SamusVars[SPEED_BOOST_SLOPE_TIMER]=0;
+				}
+				if(NumLWeaponsOf(LW_SCRIPT4)==0){
+					lweapon boost = FireBigLWeapon(LW_SCRIPT4, Link->X, Link->Y-16, 0,0,16,
+									SPRITE_NULL,0,LWF_ZERO_G|LWF_LINK_NO_COLL,1,2);
+					SetLWeaponLifespan(boost,LWL_TIMER,5);
+					SetLWeaponDeathEffect(boost,LWD_VANISH,0);
+				}
+				Link->X-=2;
+				DampInput(SamusVars[DASH_BUTTON]);
+			}
+			//You start speed boosting left.
+			else if(Link->InputLeft && InputDash() && Prev_Link_Dir ==DIR_RIGHT){
+				SamusVars[SPEED_BOOST_TIMER] = 0;
+				SamusVars[IS_SPEED_BOOSTING] = 0;
+				SamusVars[SPEED_BOOST_SLOPE_TIMER]=0;
+			}
+			//You're not speed boosting left or right. Or shine sparking.
+			else if(Link->InputDown && InputDash()){
+				DampInput(SamusVars[DASH_BUTTON]);
+				SamusVars[IS_SHINE_SPARK] = 1;
+				SamusVars[IS_SPEED_BOOSTING] = 0;
+				SamusVars[SPEED_BOOST_TIMER] = 0;
+				SamusVars[SPEED_BOOST_SLOPE_TIMER]=0;
+				SamusVars[SHINE_SPARK_TIMER] = MAX_SHINE_SPARK_TIME;
+				Game->PlaySound(SHINE_SPARK_SFX);
+				SamusVars[SAMUS_ACTION] = SAMUS_ACTION_NONE;
+			}
+		}
+		else if(!SamusVars[IS_SPEED_BOOSTING] && SamusVars[IS_SHINE_SPARK] 
+				&& SamusVars[SHINE_SPARK_TIMER]>=0 && SamusVars[SAMUS_ACTION] == SAMUS_ACTION_NONE){
+			if((Screen->Flags[SF_MISC]&SF_MISC_SCRIPT1 || SamusVars[IN_WATER])
+				&& !Link->Item[I_GRAVITY_SUIT]){
+				SamusVars[SHINE_SPARK_TIMER] = 0;
+				SamusVars[IS_SHINE_SPARK] = 0;
+				SamusVars[SAMUS_ACTION] = SAMUS_ACTION_NONE;
+			}
+			SamusVars[SPEED_SFX_TIMER]=(SamusVars[SPEED_SFX_TIMER]+1)%30;
+			if(SamusVars[SPEED_SFX_TIMER]==0)Game->PlaySound(SPEED_BOOST_SFX);
+			SamusVars[SHINE_SPARK_TIMER]--;
+			if(PressDash()||InputDash()){
+				DampInput(SamusVars[DASH_BUTTON]);
+				if(Link->InputLeft)
+					SamusVars[SAMUS_ACTION] = SAMUS_ACTION_SHINE_SPARK_LEFT;
+				else if(Link->InputRight)
+					SamusVars[SAMUS_ACTION] = SAMUS_ACTION_SHINE_SPARK_RIGHT;
+				else if(Link->InputUp)
+					SamusVars[SAMUS_ACTION] = SAMUS_ACTION_SHINE_SPARK_UP;
+				else if(Link->InputDown)SamusVars[SAMUS_ACTION] = SAMUS_ACTION_NONE;
+				else if(Press_Aim_Up()||Input_Aim_Up()){
+					DampInput(SamusVars[AIM_UP_BUTTON]);
+					if(Link->Dir==DIR_LEFTUP)
+						SamusVars[SAMUS_ACTION] = SAMUS_ACTION_SS_DIAG_LEFT;
+					else if(Link->Dir==DIR_RIGHTUP)
+						SamusVars[SAMUS_ACTION] = SAMUS_ACTION_SS_DIAG_RIGHT;
+				}
+			}
+			if(SamusVars[SHINE_SPARK_TIMER]<0){
+				SamusVars[SHINE_SPARK_TIMER] = 0;
+				SamusVars[IS_SHINE_SPARK] = 0;
+				SamusVars[SAMUS_ACTION] = SAMUS_ACTION_NONE;
+			}
+		}
+		if(SamusVars[PREV_LINK_DIR]!=Link->Dir){
+            SamusVars[IS_SPEED_BOOSTING] = 0;
+            SamusVars[SPEED_BOOST_TIMER] = 0;
+			SamusVars[SPEED_BOOST_SLOPE_TIMER]=0;
+        }
+		if(SamusVars[SAMUS_ACTION] == SAMUS_ACTION_SHINE_SPARK_LEFT){
+			if(isSpeedBoostCombo(Link->X-1,Link->Y+8)&& isSpeedBoostCombo(Link->X-1,Link->Y-8)){
+				Screen->ComboD[ComboAt(Link->X-1,Link->Y+8)]= SPEED_BOOST_UNDERCOMBO;
+				Screen->ComboD[ComboAt(Link->X-1,Link->Y-8)]= SPEED_BOOST_UNDERCOMBO;
+			}
+			if((Screen->isSolid(Link->X-1,Link->Y-8)&& !isSpeedBoostCombo(Link->X-1,Link->Y-8))
+				||(Screen->isSolid(Link->X-1,Link->Y+8)&& !isSpeedBoostCombo(Link->X-1,Link->Y+8))){
+				SamusVars[IS_SHINE_SPARK] = 0;
+				SamusVars[SHINE_SPARK_TIMER] = 0;
+				Game->PlaySound(SHINE_SPARK_IMPACT_SFX);
+				SamusVars[SAMUS_ACTION] = SAMUS_ACTION_NONE;
+				Link->X++;
+				Link->Y--;
+			}
+			if(NumLWeaponsOf(LW_SCRIPT4)==0){
+				lweapon boost = FireBigLWeapon(LW_SCRIPT4, Link->X, Link->Y-16, 0,0,16,
+								SPRITE_NULL,SHINE_SPARKING_SFX,LWF_ZERO_G|LWF_LINK_NO_COLL,1,2);
+				SetLWeaponLifespan(boost,LWL_TIMER,5);
+				SetLWeaponDeathEffect(boost,LWD_VANISH,0);
+			}
+			Link->X-=4;
+			Link->InputRight = false;
+			Link->InputDown = false;
+			Link->InputUp = false;
+			Link->Jump = 0;
+		}
+		else if(SamusVars[SAMUS_ACTION] == SAMUS_ACTION_SHINE_SPARK_RIGHT){
+			if(isSpeedBoostCombo(Link->X+16,Link->Y-8) && isSpeedBoostCombo(Link->X+16,Link->Y+8)){
+				Screen->ComboD[ComboAt(Link->X+16,Link->Y-8)]= SPEED_BOOST_UNDERCOMBO;
+				Screen->ComboD[ComboAt(Link->X+16,Link->Y+8)]= SPEED_BOOST_UNDERCOMBO;
+			}
+			if((Screen->isSolid(Link->X+16,Link->Y-8)&& !isSpeedBoostCombo(Link->X+16,Link->Y-8))
+				||(Screen->isSolid(Link->X+16,Link->Y+8)&& !isSpeedBoostCombo(Link->X+16,Link->Y+8))){
+				SamusVars[IS_SHINE_SPARK] = 0;
+				SamusVars[SHINE_SPARK_TIMER] = 0;
+				Game->PlaySound(SHINE_SPARK_IMPACT_SFX);
+				SamusVars[SAMUS_ACTION] = SAMUS_ACTION_NONE;
+				Link->X--;
+				Link->Y--;
+			}
+			if(NumLWeaponsOf(LW_SCRIPT4)==0){
+				lweapon boost = FireBigLWeapon(LW_SCRIPT4, Link->X, Link->Y-16, 0,0,16,
+								SPRITE_NULL,SHINE_SPARKING_SFX,LWF_ZERO_G|LWF_LINK_NO_COLL,1,2);
+				SetLWeaponLifespan(boost,LWL_TIMER,5);
+				SetLWeaponDeathEffect(boost,LWD_VANISH,0);
+			}
+			Link->X+=4;
+			Link->InputLeft = false;
+			Link->InputDown = false;
+			Link->InputUp = false;
+			Link->Jump = 0;
+		}
+		else if(SamusVars[SAMUS_ACTION] == SAMUS_ACTION_SHINE_SPARK_UP){
+			if(isSpeedBoostCombo(Link->X+8,Link->Y-17))
+				Screen->ComboD[ComboAt(Link->X+8,Link->Y-17)]= SPEED_BOOST_UNDERCOMBO;
+			if(Screen->isSolid(Link->X+8,Link->Y-17)&& !isSpeedBoostCombo(Link->X+8,Link->Y-17)){
+				SamusVars[IS_SHINE_SPARK] = 0;
+				SamusVars[SHINE_SPARK_TIMER] = 0;
+				Game->PlaySound(SHINE_SPARK_IMPACT_SFX);
+				SamusVars[SAMUS_ACTION] = SAMUS_ACTION_NONE;
+			}
+			if(NumLWeaponsOf(LW_SCRIPT4)==0){
+				lweapon boost = FireBigLWeapon(LW_SCRIPT4, Link->X, Link->Y-16, 0,0,16,
+								SPRITE_NULL,SHINE_SPARKING_SFX,LWF_ZERO_G|LWF_LINK_NO_COLL,1,2);
+				SetLWeaponLifespan(boost,LWL_TIMER,5);
+				SetLWeaponDeathEffect(boost,LWD_VANISH,0);
+			}
+			Link->Y-=4;
+			Link->Jump = 0;
+			Link->InputRight = false;
+			Link->InputDown = false;
+			Link->InputLeft = false;
+		}
+		else if(SamusVars[SAMUS_ACTION] == SAMUS_ACTION_SS_DIAG_LEFT){
+			if(isSpeedBoostCombo(Link->X-1,Link->Y+8)&& isSpeedBoostCombo(Link->X-1,Link->Y-8)){
+				Screen->ComboD[ComboAt(Link->X-1,Link->Y+8)]= SPEED_BOOST_UNDERCOMBO;
+				Screen->ComboD[ComboAt(Link->X-1,Link->Y-8)]= SPEED_BOOST_UNDERCOMBO;
+			}
+			if((Screen->isSolid(Link->X-1,Link->Y-8)&& !isSpeedBoostCombo(Link->X-1,Link->Y-8))
+				||(Screen->isSolid(Link->X-1,Link->Y+8)&& !isSpeedBoostCombo(Link->X-1,Link->Y+8))){
+				SamusVars[IS_SHINE_SPARK] = 0;
+				SamusVars[SHINE_SPARK_TIMER] = 0;
+				Game->PlaySound(SHINE_SPARK_IMPACT_SFX);
+				SamusVars[SAMUS_ACTION] = SAMUS_ACTION_NONE;
+			}
+			if(NumLWeaponsOf(LW_SCRIPT4)==0){
+				lweapon boost = FireBigLWeapon(LW_SCRIPT4, Link->X, Link->Y-16, 0,0,16,
+								SPRITE_NULL,SHINE_SPARKING_SFX,LWF_ZERO_G|LWF_LINK_NO_COLL,1,2);
+				SetLWeaponLifespan(boost,LWL_TIMER,5);
+				SetLWeaponDeathEffect(boost,LWD_VANISH,0);
+			}
+			Link->Y-=4;
+			Link->X-=4;
+			Link->Jump = 0;
+			Link->InputRight = false;
+			Link->InputDown = false;
+			Link->InputUp = false;
+		}
+		else if(SamusVars[SAMUS_ACTION] == SAMUS_ACTION_SS_DIAG_RIGHT){
+			if(isSpeedBoostCombo(Link->X+16,Link->Y-8) && isSpeedBoostCombo(Link->X+16,Link->Y+8)){
+				Screen->ComboD[ComboAt(Link->X+16,Link->Y-8)]= SPEED_BOOST_UNDERCOMBO;
+				Screen->ComboD[ComboAt(Link->X+16,Link->Y+8)]= SPEED_BOOST_UNDERCOMBO;
+			}
+			if((Screen->isSolid(Link->X+16,Link->Y-8)&& !isSpeedBoostCombo(Link->X+16,Link->Y-8))
+				||(Screen->isSolid(Link->X+16,Link->Y+8)&& !isSpeedBoostCombo(Link->X+16,Link->Y+8))){
+				SamusVars[IS_SHINE_SPARK] = 0;
+				SamusVars[SHINE_SPARK_TIMER] = 0;
+				Game->PlaySound(SHINE_SPARK_IMPACT_SFX);
+				SamusVars[SAMUS_ACTION] = SAMUS_ACTION_NONE;
+			}
+			if(NumLWeaponsOf(LW_SCRIPT4)==0){
+				lweapon boost = FireBigLWeapon(LW_SCRIPT4, Link->X, Link->Y-16, 0,0,16,
+								SPRITE_NULL,SHINE_SPARKING_SFX,LWF_ZERO_G|LWF_LINK_NO_COLL,1,2);
+				SetLWeaponLifespan(boost,LWL_TIMER,5);
+				SetLWeaponDeathEffect(boost,LWD_VANISH,0);
+			}
+			Link->Y-=4;
+			Link->X+=4;
+			Link->Jump = 0;
+			Link->InputLeft = false;
+			Link->InputDown = false;
+			Link->InputUp = false;
+		}
+	}
+}
