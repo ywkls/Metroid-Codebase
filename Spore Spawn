@@ -1,0 +1,321 @@
+//Section 20. Spore Spawn Script
+
+//Shell Top- 3 X 6
+//Shell Bottom- 3 x 6
+//Core- 2 x 3
+//First segment - 3 x 3
+//Other segments- 2 x 2
+
+const int SHELL_TOP = 213;//Enemy ID for top shell
+const int SHELL_BOTTOM = 214;//Enemy ID for bottom shell
+const int MAIN_SEGMENT = 215;//Enemy ID for first segment.
+const int VINE_SEGMENT = 216;//Enemy ID for vine segments.
+const int SPORE_SPRITE = 93;//Sprite for spores
+const int SPORE_SFX = 63;//Sound for spores
+const int SPORE_TOP_DAMAGED_TILE = 10000;//Tile for top when damaged.
+const int SPORE_BOTTOM_DAMAGED_TILE = 10060;//Tile for bottom when damaged.
+const int MAIN_SEGMENT_DAMAGED_TILE = 10008;//Tile for main segment when damaged.
+const int VINE_SEGMENT_DAMAGED_TILE = 10066;//Tile for vine segment when damaged.
+
+ffc script SporeSpawn{
+	void run(int enemyid){
+		npc ghost = Ghost_InitAutoGhost(this, enemyid);
+		Ghost_SetFlag(GHF_IGNORE_ALL_TERRAIN);
+		Ghost_SetFlag(GHF_IGNORE_NO_ENEMY);
+		Ghost_SetFlag(GHF_NO_FALL);
+		Ghost_SetFlag(GHF_FAKE_Z);
+		int HVS = ghost->Attributes[0];//Type of hover. 0=Float, 1=Horizontal movement, 2=Vertical  movement, 3 = Parametric movement
+		int Misc1 = ghost->Attributes[1];//Half width of horizontal movement
+		int Misc2 = ghost->Attributes[2];//X speed
+		int Misc3 = ghost->Attributes[3];//Half Height of vertical movement
+		int Misc4 = ghost->Attributes[4];//Y speed
+		Ghost_X = 112;
+		Ghost_Y = 0;
+		bool Closed = false;//Tracks whether it is defending or not.
+		//These four variables handle the parametric movement.
+		int StartX;
+		int StartY;
+		int T1 = 0;
+		int T2 = 0;
+		//Tile width and height.
+		int Width = Ghost_GetAttribute(ghost,5,1);
+		int Height = Ghost_GetAttribute(ghost,6,1);
+		Ghost_SetSize(this,ghost,Width,Height);
+		//Initiate enemies for all the parts and position them.
+		npc ShellTop = Screen->CreateNPC(SHELL_TOP);
+		npc ShellBottom = Screen->CreateNPC(SHELL_BOTTOM);
+		npc FirstSegment = Screen->CreateNPC(MAIN_SEGMENT);
+		npc TailSegments[6];
+		ShellTop->X = Ghost_X-32;
+		ShellTop->Y = Ghost_Y-16;
+		ShellBottom->X = ShellTop->X;
+		ShellBottom->Y = Ghost_Y+16;;
+		FirstSegment->X =Ghost_X-8;
+		FirstSegment->Y =ShellTop->Y-16;
+		EnemyResize(ShellTop,6,3);
+		SetEnemyHitbox(ShellTop,96,32,0,16);
+		EnemyResize(ShellBottom,6,3);
+		SetEnemyHitbox(ShellBottom,96,32,0,16);
+		FirstSegment->Extend = 3;
+		FirstSegment->TileHeight = 3;
+		FirstSegment->TileWidth = 3;
+		int MaxHP = Ghost_HP;
+		for(int i = 0;i<=5;i++){
+			TailSegments[i] = Screen->CreateNPC(VINE_SEGMENT);
+			TailSegments[i]->X = FirstSegment->X;
+			TailSegments[i]->Y = FirstSegment->Y;
+			TailSegments[i]->Extend = 3;
+			TailSegments[i]->TileHeight = 2;
+			TailSegments[i]->TileWidth = 2;
+		}
+		int Mode = 0;//Tracks what mode it is in.
+		int OpenTimer;//How long to stay open or closed.
+		int SporeTimer;//How long between spore attacks.
+		int IntroTimer = 60;//Handles initial lowering into position.
+		eweapon Spores[4];
+		int CalcX;//Used to calculate average X position for placement of segments.
+		int CalcY;//Used to Calculate average Y position for vertical placement of segments.
+		int StoreY[6];//Stores Y location of segments at end of lowering phase.
+		int combo = ghost->Attributes[10];
+		while(true){
+			//Lower into position. This part works in sideview.
+			while(IntroTimer>0){
+				Ghost_Y++;
+				ShellTop->X = Ghost_X-32;
+				ShellTop->Y = Ghost_Y-16;
+				ShellBottom->X = ShellTop->X;
+				ShellBottom->Y = Ghost_Y+16;;
+				FirstSegment->X =Ghost_X-8;
+				FirstSegment->Y =ShellTop->Y-16;
+				for(int i = 0;i<=5;i++)
+					TailSegments[i]->X = FirstSegment->X+12;
+				CalcY = FirstSegment->Y/5;
+				TailSegments[0]->Y = FirstSegment->Y-CalcY;
+				TailSegments[1]->Y = FirstSegment->Y-(CalcY*2);
+				TailSegments[2]->Y = FirstSegment->Y-(CalcY*3);
+				TailSegments[3]->Y = FirstSegment->Y-(CalcY*4);
+				TailSegments[4]->Y = FirstSegment->Y-(CalcY*5);
+				TailSegments[5]->Y = 0;
+				IntroTimer--;
+				if(IntroTimer==1){
+					for(int i = 0;i<=5;i++)
+						StoreY[i] = TailSegments[i]->Y;
+					StartX = Ghost_X;
+					StartY = Ghost_Y;
+				}
+				Spore_Waitframe(this,ghost,ShellTop,ShellBottom,FirstSegment,TailSegments);
+			}
+			//In mode one, open and open time is less than or equal to zero.
+			if(Mode == 0 && !Closed && OpenTimer<=0){
+				Mode = 1;//Go to mode zero.
+				Closed = true;//Restore defenses.
+				ghost->Defense[NPCD_ARROW] =NPCDT_BLOCK;
+				ghost->Defense[NPCD_BEAM] =NPCDT_BLOCK;
+				//Move top shell over core.
+				while(ShellTop->Y<Ghost_Y-16){
+					ShellTop->Y++;
+					FirstSegment->Y =ShellTop->Y-16;
+					CalcY = FirstSegment->Y/5;
+					TailSegments[0]->Y = FirstSegment->Y-CalcY;
+					TailSegments[1]->Y = FirstSegment->Y-(CalcY*2);
+					TailSegments[2]->Y = FirstSegment->Y-(CalcY*3);
+					TailSegments[3]->Y = FirstSegment->Y-(CalcY*4);
+					TailSegments[4]->Y = FirstSegment->Y-(CalcY*5);
+					TailSegments[5]->Y = 0;
+					Spore_Waitframe(this,ghost,ShellTop,ShellBottom,FirstSegment,TailSegments);
+				}
+				//Move bottom shell over core.
+				while(ShellBottom->Y>Ghost_Y+16){
+					ShellBottom->Y--;
+					FirstSegment->Y =ShellTop->Y-16;
+					CalcY = FirstSegment->Y/5;
+					TailSegments[0]->Y = FirstSegment->Y-CalcY;
+					TailSegments[1]->Y = FirstSegment->Y-(CalcY*2);
+					TailSegments[2]->Y = FirstSegment->Y-(CalcY*3);
+					TailSegments[3]->Y = FirstSegment->Y-(CalcY*4);
+					TailSegments[4]->Y = FirstSegment->Y-(CalcY*5);
+					TailSegments[5]->Y = 0;
+					Spore_Waitframe(this,ghost,ShellTop,ShellBottom,FirstSegment,TailSegments);
+				}
+				//Set closed timer.
+				OpenTimer = Rand(180,240);
+			}
+			//In mode zero and open timer exists.
+			while(OpenTimer>0 && Mode ==1){
+				//Create spores every two seconds.
+				SporeTimer = (SporeTimer + 1)%120;
+				if(SporeTimer == 0){
+					for(int i = 0;i<4;i++){
+						Spores[i] = FireEWeapon(EW_SCRIPT10, Rand(32,224), 0, DegtoRad(90), 50, ghost->WeaponDamage, SPORE_SPRITE,SPORE_SFX, 0);
+						SetEWeaponLifespan(Spores[i],EWL_TIMER, 240);
+						SetEWeaponMovement(Spores[i], EWM_SINE_WAVE, 16, 6);
+						SetEWeaponDeathEffect(Spores[i],EWD_VANISH, 0);
+					}
+				}
+				//Handle movement.
+				if(Ghost_HP>(MaxHP/2)){
+					T1+=Misc2;
+					WrapDegrees(T1);
+					T2+=Misc4;
+					WrapDegrees(T2);
+				}
+				else{
+					Ghost_Data = combo+1;
+					ShellTop->OriginalTile = SPORE_TOP_DAMAGED_TILE;
+					ShellBottom->OriginalTile = SPORE_BOTTOM_DAMAGED_TILE;
+					FirstSegment->OriginalTile = MAIN_SEGMENT_DAMAGED_TILE;
+					for(int i = 0;i<=5;i++)
+						TailSegments[i]->OriginalTile = VINE_SEGMENT_DAMAGED_TILE;
+					T1+=(2*Misc2);
+					WrapDegrees(T1);
+					T2+=(2*Misc4);
+					WrapDegrees(T2);
+				}
+				if(HVS==1){
+					Ghost_X = StartX + Misc1*Sin(T1);
+				}
+				else if(HVS==2){
+					Ghost_Y = StartY + Misc1*Sin(T1);
+				}
+				else if(HVS==3){
+					Ghost_X = StartX+Misc1*Cos(T1);
+					Ghost_Y = StartY+Misc3*Sin(2*T2);
+				}
+				//Align parts with core.
+				ShellTop->X = Ghost_X-32;
+				ShellTop->Y = Ghost_Y-16;
+				ShellBottom->X = ShellTop->X;
+				ShellBottom->Y = Ghost_Y+16;;
+				FirstSegment->X =Ghost_X-8;
+				FirstSegment->Y =ShellTop->Y-16;
+				CalcX = Abs(FirstSegment->X-StartX)/5;
+				if(Ghost_X<StartX){
+					TailSegments[0]->X = FirstSegment->X+(CalcX);
+					TailSegments[1]->X = FirstSegment->X+(CalcX*2);
+					TailSegments[2]->X = FirstSegment->X+(CalcX*3);
+					TailSegments[3]->X = FirstSegment->X+(CalcX*4);
+					TailSegments[4]->X = FirstSegment->X+(CalcX*5);
+					TailSegments[5]->X = StartX-8;
+				}
+				else{
+					TailSegments[0]->X = FirstSegment->X-(CalcX);
+					TailSegments[1]->X = FirstSegment->X-(CalcX*2);
+					TailSegments[2]->X = FirstSegment->X-(CalcX*3);
+					TailSegments[3]->X = FirstSegment->X-(CalcX*4);
+					TailSegments[4]->X = FirstSegment->X-(CalcX*5);
+					TailSegments[5]->X = StartX-8;
+				}
+				CalcY = FirstSegment->Y/5;
+				TailSegments[0]->Y = FirstSegment->Y-CalcY;
+				TailSegments[1]->Y = FirstSegment->Y-(CalcY*2);
+				TailSegments[2]->Y = FirstSegment->Y-(CalcY*3);
+				TailSegments[3]->Y = FirstSegment->Y-(CalcY*4);
+				TailSegments[4]->Y = FirstSegment->Y-(CalcY*5);
+				TailSegments[5]->Y = 0;
+				OpenTimer--;
+				Spore_Waitframes(this,ghost,ShellTop,ShellBottom,FirstSegment,TailSegments,4);
+			}
+			//If closed, in mode zero and open timer is less than or equal to zero.
+			if(Mode == 1 && Closed && OpenTimer<=0){
+				Mode = 0;//Change modes.
+				Closed = false;//Turn defenses off.
+				ghost->Defense[NPCD_ARROW] =NPCDT_NONE;
+				ghost->Defense[NPCD_BEAM] = NPCDT_NONE;
+				//Move top shell away from core.
+				while(ShellTop->Y>Ghost_Y-44){
+					ShellTop->Y--;
+					FirstSegment->Y =ShellTop->Y-16;
+					CalcY = FirstSegment->Y/5;
+					TailSegments[0]->Y = FirstSegment->Y-CalcY;
+					TailSegments[1]->Y = FirstSegment->Y-(CalcY*2);
+					TailSegments[2]->Y = FirstSegment->Y-(CalcY*3);
+					TailSegments[3]->Y = FirstSegment->Y-(CalcY*4);
+					TailSegments[4]->Y = FirstSegment->Y-(CalcY*5);
+					TailSegments[5]->Y = 0;
+					Spore_Waitframe(this,ghost,ShellTop,ShellBottom,FirstSegment,TailSegments);
+				}
+				//Move bottom shell away from core.
+				while(ShellBottom->Y<Ghost_Y+36){
+					ShellBottom->Y++;
+					FirstSegment->Y =ShellTop->Y-16;
+					CalcY = FirstSegment->Y/5;
+					TailSegments[0]->Y = FirstSegment->Y-CalcY;
+					TailSegments[1]->Y = FirstSegment->Y-(CalcY*2);
+					TailSegments[2]->Y = FirstSegment->Y-(CalcY*3);
+					TailSegments[3]->Y = FirstSegment->Y-(CalcY*4);
+					TailSegments[4]->Y = FirstSegment->Y-(CalcY*5);
+					TailSegments[5]->Y = 0;
+					Spore_Waitframe(this,ghost,ShellTop,ShellBottom,FirstSegment,TailSegments);
+				}
+				//Set timer for how long to stay open.
+				OpenTimer = 120;
+			}
+			//In mode one and open timer exists.
+			while(OpenTimer>0 && Mode ==0){
+				Ghost_ForceDir(DIR_DOWN);
+				//Drop spores every two seconds.
+				SporeTimer = (SporeTimer + 1)%120;
+				if(SporeTimer == 0){
+					for(int i = 0;i<4;i++){
+						Spores[i] = FireEWeapon(EW_SCRIPT10, Rand(32,224), 32, DegtoRad(90), 100, ghost->WeaponDamage, SPORE_SPRITE,SPORE_SFX, 0);
+						SetEWeaponLifespan(Spores[i],EWL_TIMER, 240);
+						SetEWeaponMovement(Spores[i], EWM_SINE_WAVE, 16, 6);
+						SetEWeaponDeathEffect(Spores[i],EWD_VANISH, 0);
+					}
+				}
+				//Align parts with core.
+				ShellTop->X = Ghost_X-32;
+				ShellTop->Y = Ghost_Y-44;
+				ShellBottom->X = ShellTop->X;
+				ShellBottom->Y = Ghost_Y+36;;
+				FirstSegment->X =Ghost_X-8;
+				FirstSegment->Y =ShellTop->Y-16;
+				CalcX = Abs(FirstSegment->X-StartX)/5;
+				if(Ghost_X<StartX){
+					TailSegments[0]->X = FirstSegment->X+(CalcX);
+					TailSegments[1]->X = FirstSegment->X+(CalcX*2);
+					TailSegments[2]->X = FirstSegment->X+(CalcX*3);
+					TailSegments[3]->X = FirstSegment->X+(CalcX*4);
+					TailSegments[4]->X = FirstSegment->X+(CalcX*5);
+					TailSegments[5]->X = StartX-8;
+				}
+				else{
+					TailSegments[0]->X = FirstSegment->X-(CalcX);
+					TailSegments[1]->X = FirstSegment->X-(CalcX*2);
+					TailSegments[2]->X = FirstSegment->X-(CalcX*3);
+					TailSegments[3]->X = FirstSegment->X-(CalcX*4);
+					TailSegments[4]->X = FirstSegment->X-(CalcX*5);
+					TailSegments[5]->X = StartX-8;
+				}
+				CalcY = FirstSegment->Y/5;
+				TailSegments[0]->Y = FirstSegment->Y-CalcY;
+				TailSegments[1]->Y = FirstSegment->Y-(CalcY*2);
+				TailSegments[2]->Y = FirstSegment->Y-(CalcY*3);
+				TailSegments[3]->Y = FirstSegment->Y-(CalcY*4);
+				TailSegments[4]->Y = FirstSegment->Y-(CalcY*5);
+				TailSegments[5]->Y = 0;
+				OpenTimer--;
+				Spore_Waitframe(this,ghost,ShellTop,ShellBottom,FirstSegment,TailSegments);
+			}
+			Spore_Waitframe(this,ghost,ShellTop,ShellBottom,FirstSegment,TailSegments);
+		}
+	}
+	//Custom waitframe.
+	void Spore_Waitframe(ffc f, npc n, npc top, npc bottom, npc first, npc tail){
+		n->Jump = 0;
+		if(!Ghost_Waitframe(f, n, false, false)){
+			Ghost_DeathAnimation(f,n,2);
+			top->HP = 0;
+			bottom->HP = 0;
+			first->HP = 0;
+			for(int i = 0;i<=5;i++)
+				tail[i]->HP = 0;
+			f->Data = 0;
+			 Quit();
+		}
+	}
+	void Spore_Waitframes(ffc f,npc n, npc top, npc bottom, npc first, npc tail,int frames){
+		for(;frames>0;frames--)
+			Spore_Waitframe(f,n,top,bottom,first,tail);
+	}
+}
