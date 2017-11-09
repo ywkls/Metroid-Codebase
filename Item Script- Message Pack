@@ -1,0 +1,40 @@
+// Section 8. Item Message and Pack Scropt
+
+//These are the individual pack increases for each item.
+const int MISSILE_PACK = 5;
+const int SUPER_MISSILE_PACK = 5;
+const int POWER_BOMB_PACK = 5;
+int SECRET_COUNTER = CR_SCRIPT1;//Counter to track completion.
+
+//D0- Message to play.
+//D1- Type of pack.
+//	  One- Missiles
+//	  Two- Super Missiles
+//	  Three- Power Bombs
+//    Any other non-zero number will increase completion counter.
+
+item script Message_Pack{
+    void run(int m, int packtype,int beam_activate){
+        if (m != 0)Screen->Message(m);
+        if(packtype != 0) Game->Counter[SECRET_COUNTER] +=1;
+        if(packtype == 1) Game->MCounter[CR_ARROWS] += MISSILE_PACK;
+        if(packtype == 2) Game->MCounter[CR_RUPEES] += SUPER_MISSILE_PACK;
+        if(packtype == 3) Game->MCounter[CR_SBOMBS] += POWER_BOMB_PACK;
+		if(beam_activate==1)
+			SamusVars[BEAMS_EQUIPPED]|=EQ_CHARGE;
+		else if(beam_activate==2)
+			SamusVars[BEAMS_EQUIPPED]|=EQ_ICE;	
+		else if(beam_activate==3)
+			SamusVars[BEAMS_EQUIPPED]|=EQ_WAVE;
+		else if(beam_activate==4){
+			SamusVars[BEAMS_EQUIPPED]|=EQ_SPAZER;
+			if((SamusVars[BEAMS_EQUIPPED]&EQ_PLASMA)!=0)
+				SamusVars[BEAMS_EQUIPPED]&= ~EQ_PLASMA;
+		}	
+		else if(beam_activate==5){
+			SamusVars[BEAMS_EQUIPPED]|=EQ_PLASMA;
+			if((SamusVars[BEAMS_EQUIPPED]&EQ_SPAZER)!=0)
+				SamusVars[BEAMS_EQUIPPED]&= ~EQ_SPAZER;
+		}		
+    }
+}
