@@ -1,0 +1,239 @@
+//Section 25. Kraid- First Form
+
+//Kraid- First Form
+
+//Head- 6 x 7
+//Body- 4 x 9
+//Claw- 2 x 4
+
+const int KRAID_HEAD = 223;//Enemy Id for head.
+const int KRAID_BODY = 224;//Enemy Id for body.
+const int KRAID_CLAW = 225;//Enemy id for claw.
+const int KRAID_CLAW_SPRITE = 0;//Weapon sprite for hurled claw.
+const int KRAID_ROAR_SFX =69;//Sound he makes.
+const int KRAID_HEAD_OPEN_TILE = 11700;//Tile for head with mouth open.
+const int KRAID_HEAD_HIT_TILE = 11707;//Tile for head when hit with weapon.
+const int KRAID_ROCK_SPRITE = 95;//Weapon sprite for rocks.
+const int KRAID_HIT_CSET = 7;//Cset of Kraid when hurt.
+const int KRAID_NORMAL_CSET = 8;//Normal Cset of Kraid.
+
+ffc script Kraid_First_Form{
+	void run(int enemyID){
+		//Set up enemy.
+		npc ghost = Ghost_InitAutoGhost(this, enemyID);
+		Ghost_SetFlag(GHF_IGNORE_ALL_TERRAIN);
+		Ghost_SetFlag(GHF_IGNORE_NO_ENEMY);
+		Ghost_SetFlag(GHF_NO_FALL);
+		Ghost_SetFlag(GHF_FAKE_Z);
+		Ghost_X = 144;
+		Ghost_Y = 176;
+		//Set up head.
+		npc head = Screen->CreateNPC(KRAID_HEAD);
+		head->X = Ghost_X;
+		head->Y = Ghost_Y-32;
+		head->Extend = 3;
+		head->TileWidth = 7;
+		head->TileHeight = 6;
+		head->HitHeight = 96;
+		head->HitWidth = 112;
+		int HeadTile = head->OriginalTile;//Remember head tile.
+		//Set up body.
+		npc body = Screen->CreateNPC(KRAID_BODY);
+		body->Extend = 3;
+		body->TileHeight = 4;
+		body->TileWidth = 9;
+		body->HitHeight = 64;
+		body->HitWidth = 144;
+		body->X = Ghost_X-32;
+		body->Y = Ghost_Y+64;
+		//Set up claw.
+		npc claw = Screen->CreateNPC(KRAID_CLAW);
+		claw->Extend = 3;
+		claw->TileHeight = 2;
+		claw->TileWidth = 4;
+		claw->HitHeight = 32;
+		claw->HitWidth = 64;
+		claw->X = body->X-32;
+		claw->Y = body->Y;
+		eweapon rock[6];//Eweapons we can use.
+		int IntroTimer = 8;//Timer for intro segment.
+		bool Hit = false;//Whether you hit Kraid recently/
+		int Mode = 0;//Controls behavior.
+		int i;//Iterative variable so we don't have to declare it a million times.
+		int LobTimer = Rand(150,210);//How often to chuck rocks.
+		bool Firing = false;//Controls when we shoot rocks.
+		int OpenTimer;//How long to lower defenses.
+		//Size of main enemy.
+		int Width = Ghost_GetAttribute(ghost,5,1);
+		int Height = Ghost_GetAttribute(ghost,6,1);
+		Ghost_SetSize(this,ghost,Width,Height);
+		Ghost_Data = GH_INVISIBLE_COMBO;//Make it invisible.
+		while(true){
+			//Intro segment.
+			while(IntroTimer>0){
+				//Make enemy rise. Align parts with whole.
+				Ghost_Y-=16;
+				head->Y = Ghost_Y-32;
+				body->X = Ghost_X-32;
+				body->Y = Ghost_Y+64;
+				claw->X = body->X-32;
+				claw->Y = body->Y;
+				//Periodically toss rocks into the air.
+				for(i = 0;i<=5;i++){
+					rock[i] = FireEWeapon(ghost->Weapon, Rand(64,256), 144, DegtoRad(270), 100, ghost->WeaponDamage, KRAID_ROCK_SPRITE, -1, 0);
+					SetEWeaponLifespan(rock[i],EWL_TIMER, 200);
+					SetEWeaponDeathEffect(rock[i],EWD_VANISH, 0);
+					Kraid_Waitframes(this,ghost,head,body,claw,16);
+				}
+				//Shake the screen.
+				Screen->Quake = 30;
+				//Reduce the timer.
+				IntroTimer--;
+				Kraid_Waitframe(this,ghost,head,body,claw);
+			}
+			//Throw rocks if you haven't been hit recently.
+			if(Mode == 0 && !Hit){
+				//Time to throw rocks.
+				if(Firing){
+					//Change appearance.
+					head->OriginalTile = KRAID_HEAD_OPEN_TILE;
+					//Create six rocks.
+					for(i = 0;i<=5;i++){
+						rock[i] = FireEWeapon(EW_SCRIPT10, Ghost_X+16, Ghost_Y+16, DegtoRad(180), 300, ghost->WeaponDamage, KRAID_ROCK_SPRITE, KRAID_ROAR_SFX, 0);
+						SetEWeaponLifespan(rock[i],EWL_TIMER, 200);
+						SetEWeaponDeathEffect(rock[i],EWD_VANISH, 0);
+						int FakeJump =  -(Rand(16,32))/10;
+						int Y = rock[i]->Y;
+						//Make them arc through the air.
+						while(rock[i]->isValid()){
+							head->Y = Ghost_Y-32;
+							body->X = Ghost_X-32;
+							body->Y = Ghost_Y+64;
+							claw->X = body->X-32;
+							claw->Y = body->Y;
+							FakeJump = Clamp(FakeJump+GH_GRAVITY, -GH_TERMINAL_VELOCITY, GH_TERMINAL_VELOCITY);
+							Y += FakeJump;
+							rock[i]->Y = Y;
+							rock[i]->X--;
+							rock[i]->Jump = 0;
+							Kraid_Waitframe(this,ghost,head,body,claw);
+						}
+					}
+					//Return to normal appearance.
+					head->OriginalTile = HeadTile;
+					//Reset rock timer.
+					LobTimer = Rand(150,210);
+					//Change behavior.
+					Mode = 1;
+					//Let the game know to not fire again immediately.
+					Firing = false;
+				}
+			}
+			//Time to lunge forward if not hit recently.
+			else if(Mode == 1 && !Hit){
+				//Move forward. Align parts with whole.
+				while(Ghost_X>48){
+					Ghost_X--;
+					head->X = Ghost_X;
+					head->Y = Ghost_Y-32;
+					body->X = Ghost_X-32;
+					body->Y = Ghost_Y+64;
+					claw->X = body->X-32;
+					claw->Y = body->Y;
+					Kraid_Waitframe(this,ghost,head,body,claw);
+				}
+				//Move back again.
+				while(Ghost_X<128){
+					Ghost_X++;
+					head->X = Ghost_X;
+					head->Y = Ghost_Y-32;
+					body->X = Ghost_X-32;
+					body->Y = Ghost_Y+64;
+					claw->X = body->X-32;
+					claw->Y = body->Y;
+					Kraid_Waitframe(this,ghost,head,body,claw);
+				}
+				//Change behavior.
+				Mode = 0;
+			}
+			//Track all lweapons.
+			for (i = 1; i <= Screen->NumLWeapons(); i++){
+				lweapon w = Screen->LoadLWeapon(i);
+				//If it is a beam and hits the enemy.
+				if (w->ID == LW_BEAM && Collision(this, w)){
+					//Tell the game it has been hit.
+					Hit= true;
+					//Kil the lweapon.
+					w->DeadState = 0;
+				}
+			}
+			//Kraid has been hit.
+			if(Hit){
+				//Change appearance.
+				head->OriginalTile = KRAID_HEAD_HIT_TILE;
+				//Wait a bit.
+				Kraid_Waitframes(this,ghost,head,body,claw,60);
+				OpenTimer = 120;//Set up open timer.
+				//Lower defenses.
+				ghost->Defense[NPCD_ARROW] = NPCDT_NONE;
+				ghost->Defense[NPCD_MAGIC] = NPCDT_NONE;
+				Game->PlaySound(KRAID_ROAR_SFX);//Make a sound.
+				//Do stuff while head is open.
+				while(OpenTimer>0){
+					//Maintain appearance and position.
+					head->OriginalTile = KRAID_HEAD_OPEN_TILE;
+					head->Y = Ghost_Y-32;
+					body->X = Ghost_X-32;
+					body->Y = Ghost_Y+64;
+					claw->X = body->X-32;
+					claw->Y = body->Y;
+					//Reduce timer.
+					OpenTimer--;
+					Kraid_Waitframe(this,ghost,head,body,claw);
+				}
+				//Restore defenses.
+				Ghost_SetAllDefenses(ghost,NPCDT_BLOCK);
+				//Restore appearance.
+				head->OriginalTile = HeadTile;
+				//It is no longer hit.
+				Hit = false;
+			}
+			//Reduce rock timer.
+			LobTimer--;
+			//If rock timer is less than zero, throw rocks.
+			if(LobTimer<=0)Firing = true;
+			Kraid_Waitframe(this,ghost,head,body,claw);
+		}
+	}
+	//Handles waitframe.
+	void Kraid_Waitframe(ffc this, npc ghost, npc head, npc body, npc claw){
+		ghost->Jump = 0;//Keep enemy in midair.
+		//If hit, change Cset of all parts.
+		if(Ghost_GotHit()){
+			head->CSet = KRAID_HIT_CSET;
+			body->CSet = KRAID_HIT_CSET;
+			claw->CSet = KRAID_HIT_CSET;
+			Ghost_Waitframes(this,ghost,false,false,5);
+		}
+		//Otherwise, use normal Cset.
+		else{
+			head->CSet = KRAID_NORMAL_CSET;
+			body->CSet = KRAID_NORMAL_CSET;
+			claw->CSet = KRAID_NORMAL_CSET;
+		}
+		//The core has died. Kill the parts.
+		if(!Ghost_Waitframe(this,ghost, false, false)){
+			Ghost_DeathAnimation(this,ghost,2);
+			claw->HP = 0;
+			head->HP = 0;
+			body->HP = 0;
+			this->Data = 0;
+			Quit();
+		}
+	}
+	//Wait a number of frames.
+	void Kraid_Waitframes(ffc this, npc ghost, npc head, npc body, npc claw, int frames){
+		for(;frames>0;frames--)
+			Kraid_Waitframe(this,ghost,head,body,claw);
+	}
+}
