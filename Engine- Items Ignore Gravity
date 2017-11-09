@@ -1,0 +1,11 @@
+//Section 41. Item Gravity Ignorance
+//---COMMMENTING NEEDED--
+
+void Item_Gravity_Ignorance(){
+	for (int i = 1; i <= Screen->NumItems(); i++){
+		item thing= Screen->LoadItem(i);
+		if((thing->Misc[GEN_MISC_FLAGS]&GEN_F_ZERO_G)==0 && thing->ID!=I_MAGICCONTAINER)
+			thing->Misc[GEN_MISC_FLAGS]|=GEN_F_ZERO_G;
+		if((thing->Misc[GEN_MISC_FLAGS]&GEN_F_ZERO_G)!=0)thing->Jump = 0;
+	}
+}
