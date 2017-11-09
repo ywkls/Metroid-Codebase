@@ -1,0 +1,22 @@
+//Section 38. Hot Room
+//---COMMMENTING NEEDED--
+
+const int HP_REGEN_TIME = 30;//Time between reduction of HP in hot rooms.
+
+void Hot_Room(){
+	if(ScreenFlagTest(SF_MISC,SF_MISC_SCRIPT2)){
+		if(Screen->Wavy==0)
+			Screen->Wavy =1;
+		if(!Link->Item[I_VARIA_SUIT]){
+			if(SamusVars[HOT_ROOM_TIMER]<=HP_REGEN_TIME)
+				SamusVars[HOT_ROOM_TIMER]++;
+			else{
+				SamusVars[HOT_ROOM_TIMER] = 0;
+				if(Link->CollDetection){
+					Link->HP-=2;
+					Game->PlaySound(SFX_OUCH);
+				}
+			}
+		}
+	}
+}
