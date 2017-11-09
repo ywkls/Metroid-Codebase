@@ -1,0 +1,38 @@
+//Section 45. Rising Lava
+//---COMMMENTING NEEDED--
+
+const int LAVA_COMBO = 1211;//Combo used to draw lava.
+const int LAVA_CSET = 8;//CSet of lava.
+
+ffc script Rising_Lava{
+	void run(int speed, int low_point, int high_point, int damage){
+		int i;
+		bool MovingUp = ChooseBool();
+		int LavaY = this->Y;
+		while(true){
+			if(MovingUp && LavaY>high_point)LavaY-=speed;
+			else if(MovingUp && LavaY<=high_point)
+				MovingUp = false;
+			if(!MovingUp && LavaY<low_point)LavaY+=speed;
+			else if(!MovingUp && LavaY>=low_point)
+				MovingUp = true;
+			for(i=0;i<=256;i+=16){
+				Screen->FastCombo(3, i, LavaY, LAVA_COMBO, LAVA_CSET, 64);
+				if(LavaY<(low_point-16)){
+					for(int j=0;j<=low_point;j+=16)
+						Screen->FastCombo(3, i, LavaY+j, LAVA_COMBO, LAVA_CSET, 64);
+				}
+			}
+			if(Between(Link->X+8,this->X,256) && Between(Link->Y+8,LavaY,low_point)){
+				if(SamusVars[LAVA_TIMER]<=HP_REGEN_TIME)
+					SamusVars[LAVA_TIMER]++;
+				else{
+					SamusVars[LAVA_TIMER] = 0;
+					Link->HP-=damage;
+					Game->PlaySound(SFX_OUCH);
+				}
+			}
+			Waitframe();
+		}
+	}
+}
