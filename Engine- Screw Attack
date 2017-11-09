@@ -1,0 +1,128 @@
+// 3. Screw Attack Script. Created by MoscowModder, justin and me.
+
+const int DashSFXLength        = 9;        //Time between repeating Dash SFX
+const int CF_DASH            = 98;        //Flag that Link can't dash through if walkable, and will break if solid
+const int SFX_DASH            = 54; //Sound to make while using screw attack. 
+const int SCREW_ATTACK_WALKABLE = 2097;//Walkable combo identical to one below.
+const int SCREW_ATTACK_WALKABLE_RT = 2185;//Walkable combo identical to one below.
+const int SCREW_ATTACK_UNWALKABLE = 2096;//Unwalkable combo so you can stand on them.
+const int SCREW_ATTACK_UNWALKABLE_RT = 2184;//Unwalkable combo so you can stand on them.
+const int SCREW_ATTACK_SPRITE = 100;//Weapon sprite for screw attack.
+const int SFX_BLOCK_CRUMBLE = 77;//Sound made when blocks crumble.
+
+void ScrewAttack(){
+     lweapon mysword;
+     int loc;
+	 //We're using the screw attack.
+     if(SamusVars[IS_SCREW_ATTACK]){
+		 //We haven't collided with anything yet.
+          if(!SamusVars[SCREW_ATTACK_COLLISION]){
+				//You're not scrolling.
+				//You've been dashing for a bit.
+               if(Link->Action != LA_SCROLLING && SamusVars[SA_DASH_COUNTER] > 10){
+					//You've run into something.
+                    if(Link->Dir == DIR_DOWN || DashCheck(Link->X+8,Link->Y+6,true) == 2){
+                        SamusVars[SCREW_ATTACK_COLLISION] = 1;
+                        SamusVars[SA_DASH_COUNTER] = 0;
+                    }
+               }
+               mysword = LoadLWeaponOf(LW_SCREWATTACK);
+			   //Create the screw attack Lweapon.
+               if(!mysword->isValid())
+				   mysword =FireScriptedLWeapon(LW_SCREWATTACK, SamusVars[DRAW_X], SamusVars[DRAW_Y],
+												SCREW_ATTACK_SPRITE,0, SCREWATTACK_DAMAGE,LWF_ZERO_G|LWF_LINK_NO_COLL);
+              else{ // we don't have dashSword
+                   mysword = LoadLWeaponOf(LW_SCREWATTACK);
+                   Remove(mysword);
+              }//end mysword if
+			  //Handle screw attack collision based on how high you can jump.
+			  for ( int i = 0; i < 175; i++ ){
+				if (isScrewAttackBlock(i)){
+					if(ComboF(i)==CF_BLOCKTRIGGER && Screen->ComboD[i]!=SCREW_ATTACK_WALKABLE){
+						CopyTile(Game->ComboTile(Screen->ComboD[i]),Game->ComboTile(SCREW_ATTACK_WALKABLE));
+						Screen->ComboD[i] =SCREW_ATTACK_WALKABLE;
+						Screen->ComboF[i]=CF_BLOCKTRIGGER;
+					}
+					else if(ComboF(i)==CF_NOBLOCKS && Screen->ComboD[i]!=SCREW_ATTACK_WALKABLE_RT){
+						CopyTile(Game->ComboTile(Screen->ComboD[i]),Game->ComboTile(SCREW_ATTACK_WALKABLE_RT));
+						Screen->ComboD[i]=SCREW_ATTACK_WALKABLE_RT;
+						Screen->ComboF[i]=CF_NOBLOCKS;
+					}
+					else if(Screen->ComboD[i]!=SCREW_ATTACK_WALKABLE
+							&&Screen->ComboD[i]!=SCREW_ATTACK_WALKABLE_RT){
+						CopyTile(Game->ComboTile(Screen->ComboD[i]),Game->ComboTile(SCREW_ATTACK_WALKABLE));
+						Screen->ComboD[i] =SCREW_ATTACK_WALKABLE;
+					}
+				}
+			 }
+				int screw_locs[9] = {ComboAt(Link->X + 1, Link->Y + 1), 
+									ComboAt(Link->X + 8, Link->Y + 1), 
+									ComboAt(Link->X + 15, Link->Y + 1), 
+									ComboAt(Link->X + 1, Link->Y + 8), 
+									ComboAt(Link->X + 8, Link->Y + 8), 
+									ComboAt(Link->X + 15, Link->Y + 8), 
+									ComboAt(Link->X + 1, Link->Y + 15), 
+									ComboAt(Link->X + 8, Link->Y + 15), 
+									ComboAt(Link->X + 15, Link->Y + 15)};	
+				for (int j = 0; j < SizeOfArray(screw_locs); j++){
+					if (isScrewAttackBlock(screw_locs[j])){
+						Game->PlaySound(SFX_BLOCK_CRUMBLE);
+						Screen->ComboD[screw_locs[j]]++;
+					}	
+				}
+					//Play screw attack sound.
+				if(SamusVars[SA_DASH_COUNTER]%DashSFXLength == 0) Game->PlaySound(SFX_DASH);
+          }
+          else{ //is SamusVars[SCREW_ATTACK_COLLISION]
+            NoAction();
+			//Reset variables.
+            SamusVars[SA_DASH_COUNTER] = 0;
+            SamusVars[SCREW_ATTACK_COLLISION] = 0;
+			//Reset screw attack blocks.
+			for ( int i = 0; i < 175; i++ ){
+				if (Screen->ComboD[i]==SCREW_ATTACK_WALKABLE && ComboF(i)==CF_BLOCKTRIGGER){
+					CopyTile(Game->ComboTile(SCREW_ATTACK_WALKABLE),Game->ComboTile(SCREW_ATTACK_UNWALKABLE));
+					Screen->ComboD[i]=SCREW_ATTACK_UNWALKABLE;
+					Screen->ComboF[i]=CF_BLOCKTRIGGER;
+				}
+				else if (Screen->ComboD[i]==SCREW_ATTACK_WALKABLE_RT){
+					CopyTile(Game->ComboTile(SCREW_ATTACK_WALKABLE_RT),Game->ComboTile(SCREW_ATTACK_UNWALKABLE_RT));
+					Screen->ComboD[i]=SCREW_ATTACK_UNWALKABLE_RT;
+					Screen->ComboF[i]=CF_NOBLOCKS;
+				}
+				else if(Screen->ComboD[i]==SCREW_ATTACK_WALKABLE && ComboF(i)!=CF_BLOCKTRIGGER){
+					CopyTile(Game->ComboTile(SCREW_ATTACK_WALKABLE),Game->ComboTile(SCREW_ATTACK_UNWALKABLE));
+					Screen->ComboD[i]=SCREW_ATTACK_UNWALKABLE;
+				}
+			}
+		}
+		  DustDrawLW();
+		  //Increase Screw attack sound counter.
+          SamusVars[SA_DASH_COUNTER]++; 
+     }
+	 //You're not screw attacking any more.
+	 else{
+		//Reset combos.
+		 for ( int i = 0; i < 175; i++ ){
+			if (Screen->ComboD[i]==SCREW_ATTACK_WALKABLE && ComboF(i)==CF_BLOCKTRIGGER){
+				CopyTile(Game->ComboTile(SCREW_ATTACK_WALKABLE),Game->ComboTile(SCREW_ATTACK_UNWALKABLE));
+				Screen->ComboD[i]=SCREW_ATTACK_UNWALKABLE;
+				Screen->ComboF[i]=CF_BLOCKTRIGGER;
+			}
+			else if (Screen->ComboD[i]==SCREW_ATTACK_WALKABLE_RT){
+				CopyTile(Game->ComboTile(SCREW_ATTACK_WALKABLE_RT),Game->ComboTile(SCREW_ATTACK_UNWALKABLE_RT));
+				Screen->ComboD[i]=SCREW_ATTACK_UNWALKABLE_RT;
+				Screen->ComboF[i]=CF_NOBLOCKS;
+			}
+			else if(Screen->ComboD[i]==SCREW_ATTACK_WALKABLE && ComboF(i)!=CF_BLOCKTRIGGER){
+				CopyTile(Game->ComboTile(SCREW_ATTACK_WALKABLE),Game->ComboTile(SCREW_ATTACK_UNWALKABLE));
+				Screen->ComboD[i]=SCREW_ATTACK_UNWALKABLE;
+			}
+		 }
+	 }
+}
+
+//Test to see if this is a Screw Attack block.
+bool isScrewAttackBlock(int loc){
+	return (ComboFI(loc,CF_DASH) && Screen->ComboT[loc]== CT_OVERHEAD);
+}
