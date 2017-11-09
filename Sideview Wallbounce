@@ -1,0 +1,31 @@
+ffc script Sideview_WallBounce{
+	void run(int enemyid){
+		npc ghost = Ghost_InitAutoGhost(this, enemyid);
+		Ghost_SetFlag(GHF_STUN);
+		Ghost_SetFlag(GHF_CLOCK);
+		Ghost_SetFlag(GHF_NO_FALL);
+		int Angle = Ghost_GetAttribute(ghost, 0, Choose(-135, -45, 45, 135)); //The initial angle the enemy starts at
+		float VX = VectorX(ghost->Step/100, Angle);
+		float VY = VectorY(ghost->Step/100, Angle);
+		int FlashCounter;
+		int Width = Ghost_GetAttribute(ghost,1,1);
+		int Height = Ghost_GetAttribute(ghost,2,1);
+		Ghost_SetSize(this,ghost,Width,Height);
+		while(true){
+			if(Ghost_GotHit())
+				FlashCounter = 32;
+			else if(FlashCounter>0)
+				FlashCounter--;
+			if(FlashCounter==0){
+				Ghost_MoveXY(VX, VY, 0);
+				if((!Ghost_CanMove(DIR_UP, 1, 0)&&VY<0)||(!Ghost_CanMove(DIR_DOWN, 1, 0)&&VY>0)){
+					VY = -VY;
+				}
+				if((!Ghost_CanMove(DIR_LEFT, 1, 0)&&VX<0)||(!Ghost_CanMove(DIR_RIGHT, 1, 0)&&VX>0)){
+					VX = -VX;
+				}
+			}
+			Ghost_Waitframe(this, ghost);
+		}
+	}
+}
