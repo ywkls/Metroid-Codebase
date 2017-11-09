@@ -1,0 +1,55 @@
+//Section 37. Custom Collision
+
+const int SPRITE_NULL = 99;//A blank sprite.
+
+void Custom_Collision(){
+	//Scan all npcs.
+	int i;
+	if(!SamusVars[IS_MORPHED]){
+		for(i = 1;i<=Screen->NumNPCs();i++){
+			npc n = Screen->LoadNPC(i);
+			//This npc is directly above Link.
+			if(Between(Link->X+8,n->X,n->X+n->HitWidth)
+				&& Between(Link->Y-8,n->Y,n->Y+n->HitHeight)
+				&& !Between(Link->Y+8,n->Y,n->Y+n->HitHeight))n->Misc[GEN_MISC_FLAGS]|=GEN_F_COLLISION;
+			if((n->Misc[GEN_MISC_FLAGS]&GEN_F_COLLISION)!=0
+				&& n->Misc[GEN_MISC_TIMER_INDEX] ==0){
+				//Spawn an eweapon for a frame at Link's location.
+				eweapon fireball = FireEWeapon(EW_FIREBALL, Link->X, Link->Y, DegtoRad(0),0,n->WeaponDamage, SPRITE_NULL,0, EWF_UNBLOCKABLE);
+				SetEWeaponLifespan(fireball,EWL_TIMER, 1);
+				SetEWeaponDeathEffect(fireball,EWD_VANISH, 0);
+				//Set index so it doesn't do it every frame.
+				n->Misc[GEN_MISC_TIMER_INDEX]= 48;
+			}
+			if(n->Misc[GEN_MISC_TIMER_INDEX]>0)n->Misc[GEN_MISC_TIMER_INDEX]--;
+			else if (n->Misc[GEN_MISC_TIMER_INDEX]<0)n->Misc[GEN_MISC_TIMER_INDEX]=0;
+			if((!Between(Link->X+8,n->X,n->X+n->HitWidth)
+				||!Between(Link->Y-8,n->Y,n->Y+n->HitHeight))
+				&& (n->Misc[GEN_MISC_FLAGS]&GEN_F_COLLISION)!=0)
+					n->Misc[GEN_MISC_FLAGS]&=~GEN_F_COLLISION;
+		}
+		for(i = 1;i<=Screen->NumEWeapons();i++){
+			eweapon e = Screen->LoadEWeapon(i);
+			//This npc is directly above Link.
+			if(Between(Link->X+8,e->X,e->X+e->HitWidth)
+				&& Between(Link->Y-8,e->Y,e->Y+e->HitHeight) 
+				&& !Between(Link->Y+8,e->Y,e->Y+e->HitHeight))
+				e->Misc[GEN_MISC_FLAGS]|=GEN_F_COLLISION;
+			if((e->Misc[GEN_MISC_FLAGS]&GEN_F_COLLISION)!=0
+				&& e->Misc[GEN_MISC_TIMER_INDEX] ==0){
+				//Spawn an eweapon for a frame at Link's location.
+				eweapon fireball = FireEWeapon(EW_FIREBALL, Link->X, Link->Y, DegtoRad(0),0,e->Damage, SPRITE_NULL,0, EWF_UNBLOCKABLE);
+				SetEWeaponLifespan(fireball,EWL_TIMER, 1);
+				SetEWeaponDeathEffect(fireball,EWD_VANISH, 0);
+				//Set index so it doesn't do it every frame.
+				e->Misc[GEN_MISC_TIMER_INDEX]= 48;
+			}
+			if(e->Misc[GEN_MISC_TIMER_INDEX]>0)e->Misc[GEN_MISC_TIMER_INDEX]--;
+			else if (e->Misc[GEN_MISC_TIMER_INDEX]<0)e->Misc[GEN_MISC_TIMER_INDEX]=0;
+			if((!Between(Link->X+8,e->X,e->X+e->HitWidth)
+				||!Between(Link->Y-8,e->Y,e->Y+e->HitHeight))
+				&& (e->Misc[GEN_MISC_FLAGS]&GEN_F_COLLISION)!=0)
+				e->Misc[GEN_MISC_FLAGS]&=~GEN_F_COLLISION;	
+		}
+	}
+}
