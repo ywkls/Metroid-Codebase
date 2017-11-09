@@ -1,0 +1,13 @@
+//When you get this item, current number of reserve tanks is increased.
+
+int RESERVE_COUNTER = CR_SCRIPT3;//Counter for reserve tanks.
+
+item script Reserve_Tank{
+	void run(int message){
+		SamusVars[NUM_RES_TANKS]++;
+		SamusVars[NUM_FILLED_RES_TANKS]++;
+		Screen->Message(message);
+		Game->Counter[SECRET_COUNTER]++;
+		Game->Counter[RESERVE_COUNTER]+=100;
+	}
+}
