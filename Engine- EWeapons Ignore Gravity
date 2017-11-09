@@ -1,0 +1,13 @@
+//Section 40. Eweapon Realignment
+//---COMMMENTING NEEDED--
+
+void WeaponGravityIgnorance(){
+	for(int i = Screen->NumEWeapons();i>0;i--){
+		eweapon e = Screen->LoadEWeapon(i);
+		if((e->Misc[GEN_MISC_FLAGS]&GEN_F_ZERO_G)==0 && !Between(e->ID,EW_SCRIPT1,EW_SCRIPT10))
+			//Set index.
+			e->Misc[GEN_MISC_FLAGS]|=GEN_F_ZERO_G;
+		//Make eweapon hover.
+		if((e->Misc[GEN_MISC_FLAGS]&GEN_F_ZERO_G)!= 0)e->Jump = 0;
+	}
+}
