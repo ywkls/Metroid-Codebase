@@ -1,0 +1,57 @@
+//Section 36. Sideview Rope
+
+ffc script Sideview_Rope{
+	void run(int enemyID){
+		npc ghost = Ghost_InitAutoGhost(this, enemyID);
+		//Set flags.
+		Ghost_SetFlag(GHF_IGNORE_ALL_TERRAIN);
+		Ghost_SetFlag(GHF_IGNORE_NO_ENEMY);
+		Ghost_SetFlag(GHF_NO_FALL);
+		Ghost_SetFlag(GHF_FAKE_Z);
+		Ghost_SetFlag(GHF_MOVE_OFFSCREEN);
+		//Type of Rope.
+		//Zero Charges towards you from its start position.
+		//One Adjusts height, then charges towards you.
+		int Type = ghost->Attributes[0];
+		int StartDir;//Which way it moves.
+		bool Charging;//Whether it is charging yet.
+		int Combo = ghost->Attributes[10];//Remember combo.
+		//Link is left of the enemy, so set that up.
+		if(Link->X<Ghost_X){
+			StartDir = DIR_LEFT;
+			Ghost_Data = Combo;
+		}
+		//Link is right of the enemy so do that.
+		else{
+			StartDir = DIR_RIGHT;
+			Ghost_Data = Combo+1;
+		}
+		while(true){
+			//Just charges.
+			if(Type == 0 && !Charging)Charging = true;
+			//Adjusts height.
+			else if(Type == 1){
+				//Not charging yet.
+				if(!Charging){
+					//Below Link.
+					if(Ghost_Y>Link->Y+8)Ghost_Y--;
+					//Above Link.
+					else Ghost_Y++;
+					///Just right.
+					if(Ghost_Y == Link->Y+8)Charging = true;
+				}
+			}
+			//Time to charge.
+			if(Charging){
+				//Move left or right depending on starting direction.
+				if(StartDir == DIR_LEFT)Ghost_X--;
+				else Ghost_X++;
+			}
+			if(Ghost_X<=0)
+				Remove(ghost);
+			else if(Ghost_X>=256)	
+				Remove(ghost);
+			Ghost_Waitframe(this,ghost,true,true);
+		}
+	}
+}
