@@ -1,0 +1,29 @@
+//Section 44. Item Spawner
+//---COMMMENTING NEEDED--
+
+ffc script Item_Spawner{
+	void run(int item_to_spawn, int perm){
+		bool acquired = false;
+		if(Screen->D[perm]!=0)
+			acquired = true;
+		if(acquired){
+			this->Data = 0;
+			Quit();
+		}
+		item anitem = Screen->CreateItem(item_to_spawn);
+		anitem->X = this->X;
+		anitem->Y = this->Y;
+		while(!acquired){
+			if(LinkCollision(anitem)){
+				anitem->X = Link->X;
+				anitem->Y = Link->Y;
+				Game->PlaySound(SFX_PICKUP);
+				Screen->D[perm]=1;
+				acquired = true;
+			}
+			Waitframe();
+		}
+		this->Data = 0;
+		Quit();
+	}
+}
