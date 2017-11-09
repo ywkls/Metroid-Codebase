@@ -1,0 +1,43 @@
+// Section 9. Countdown Script, created by Gleeok.
+
+//D0 - amount of time, in seconds, before time expires
+//D1 - minutes combo. (+59 * IT WILL -1 FOR EVERY MINUTE)
+//D2 - seconds combos. -again, +59!
+
+ffc script Countdown{
+    void run(int time_clock, int min_combo, int sec_combo){
+        int doom = time_clock;
+        int sec_count = 0;
+        int min_count = 0;
+        ffc minutes = Screen->LoadFFC(31);
+        ffc seconds = Screen->LoadFFC(32);
+        minutes->Data = min_combo;
+        while(true){
+            if (doom >=1){
+                Waitframes(60);
+                doom--;
+                sec_count++;
+                sec_combo++;
+                seconds->Data = sec_combo;
+                if (sec_count == 60){
+                    sec_count = 0;
+                    sec_combo = 2236;
+                    min_combo++;
+                    min_count++;
+                    minutes->Data = min_combo;
+                }
+            } 
+			else {
+                Link->HP = 0;  // kills link :0 
+				seconds->Flags[FFCF_CARRYOVER]= false;
+				minutes->Flags[FFCF_CARRYOVER]= false;
+				this->Flags[FFCF_CARRYOVER]= false;
+				seconds->Data = 0;
+				minutes->Data = 0;
+				break;
+            }
+        }
+		this->Data = 0;
+		Quit();
+    }
+}
