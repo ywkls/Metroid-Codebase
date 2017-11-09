@@ -1,0 +1,207 @@
+//Section 1. Global Scripts.
+
+global script Init{
+	void run(){
+		SetDefaultWarpPoint();
+		//Initialize counters.
+		Game->MCounter[CR_ARROWS] = 0;
+        Game->MCounter[CR_RUPEES] = 0;
+        Game->MCounter[CR_SBOMBS] = 0;
+		//Game->MCounter[SECRET_COUNTER] = 100;
+		Game->Counter[HEALTH_COUNTER] = 99;
+		SetCommonStyleData(WINDOW_STYLE_1);
+        SetCommonStyleData(WINDOW_STYLE_2);
+        SetCommonStyleData(WINDOW_STYLE_3);
+		SetCommonStyleData(WINDOW_STYLE_4);
+		SetCommonStyleData(WINDOW_STYLE_5);
+		//Initialize Samus Variables.
+		SamusVars[NUM_TANKS]=1;
+		SamusVars[CURR_FILLED_TANKS]= 1;
+		SamusVars[EQUIPPED_ITEM]=I_BEAM;
+		SamusVars[BEAMS_EQUIPPED]|=EQ_POWER;
+		SamusVars[KRAID_HP]= 9999;
+		SetControls(SET_DEFAULT);
+	}
+}
+
+global script globalscript{
+    void run(){
+		Game->ClickToFreezeEnabled= false;
+		//Set up Kraid Drawing.
+		int ScreenLayers[1760];
+		for(int i =0;i<175;i++){
+			ScreenLayers[i]= GetRemoteComboD(1,28,i);
+			ScreenLayers[i+176]= GetRemoteComboD(1,29,i);
+			ScreenLayers[i+352]= GetRemoteComboD(1,12,i);
+			ScreenLayers[i+528]= GetRemoteComboD(1,13,i);
+		}
+		int PrevTanks = SamusVars[NUM_TANKS];//Initialize variable to track tanks between frames.
+		SamusVars[LINK_PREV_HP] = Link->HP;//Initialize variable.
+		Tango_Start();
+		StartGhostZH();
+		//Used by function in grapple.
+		ForcePosX = -1000;
+		ForcePosY = -1000;
+		ResumeGame();//Go to last saved position.
+		while(true){
+			//Link has died.
+			GameOver();
+			ScrollFix();//Fix scrolling animations.
+			MapAdjust();
+			//if(Game->GetCurDMap()==3 && Game->GetCurDMapScreen()<=32)
+				//TiltRoomFix();
+			//Run Kraid Scrolling.
+			if(!SamusVars[KRAID_IS_DEAD]){
+				//But only on the correct DMap.
+				if(Game->GetCurDMap()==LARGE_KRAID_DMAP)
+					KraidFix();
+			}
+			//Disable the normal subscreen.
+			if(Link->PressStart|| Link->InputStart){
+				Link->PressStart = false;
+				Link->InputStart = false;
+			}
+			//Draw Samus.
+			if(!SamusVars[IS_INVISIBLE] && !SamusVars[IS_MORPHED])
+				Draw_Samus();
+			if(SamusVars[SAMUS_ACTION]!=SAMUS_ACTION_CROUCH && !SamusVars[IS_MORPHED])
+				Custom_Collision();//Run custom collision code.
+			Weapon_Realignment();//Does weapon moving stuff
+			WeaponGravityIgnorance();//Custom eweapon gravity interaction.
+			Item_Gravity_Ignorance();//Does Item hovering.
+			//Not having a game over.
+			if(Link->HP>=2){
+				//Run energy tanks.
+				health();
+				//DrawMTTanks();
+				if(!SamusVars[IS_INVISIBLE])
+					Game_Time();//Tracks passage of time in the game.
+				if(!SamusVars[IS_FROZEN])
+					Subscreen();//Run Scripted subscreen.
+				if(!SamusVars[IS_INVISIBLE]||!SamusVars[IS_FROZEN])
+					Ice_CleanUp();
+				//Varia suit compatibility.
+				Hot_Room();
+				//Lava Field
+				Lava_Field();
+			}
+			UpdateGhostZH1();
+			//You have more tanks than you did last frame.
+			if(SamusVars[NUM_TANKS]>PrevTanks){
+				PrevTanks = SamusVars[NUM_TANKS];//Set variable to new value.
+				//Max health counter.
+				Game->Counter[HEALTH_COUNTER] = 99;
+				SamusVars[CURR_FILLED_TANKS]= SamusVars[NUM_TANKS];//Match variable amount.
+				item TradeSeqItem;
+				//Create the item and place it at Link's location.
+				TradeSeqItem = Screen->CreateItem(I_MAGICCONTAINER);
+				TradeSeqItem->X = Link->X;
+				TradeSeqItem->Y = Link->Y;
+				TradeSeqItem->Pickup |= IP_HOLDUP;
+				Link->MP= Link->MaxMP;
+			}
+			Tango_Update1();
+			if(!SamusVars[IS_INVISIBLE] && !SamusVars[IS_FROZEN]){
+				UpdateLWZH1();
+				GrappleVelocity();
+				Push();
+			}
+			Waitdraw();
+			UpdateGhostZH2();
+			//You're alive.
+			if(Link->HP>=2){
+				//Kraid is alive.
+				if(!SamusVars[KRAID_IS_DEAD]){
+					//You're on Kraid's DMap.
+					if(Game->GetCurDMap()==LARGE_KRAID_DMAP)
+						RunKraid(ScreenLayers);//Run Kraid animation.
+				}
+				if(!SamusVars[IS_FROZEN]){
+					DrawMiniMap();
+					DrawIcons();//Draws item icons.
+				}
+				if(!SamusVars[IS_INVISIBLE]){
+					ItemSwitcher();//Allows Super Metroid style item switching.
+					//Run morph ball.
+					MorphBall();
+					//if(Game->GetCurDMap()==3 && Game->GetCurDMapScreen()<=32)
+						//Tilting_Room();
+					Aiming();//Allows diagonal aiming.
+					ItemUse();//Runs scripts to use items.
+					EWeaponItems();//Runs items dropped by shooting eweapons.
+					Grapple_Grip();//Handles sideview grapple to walls.	
+				}
+			}
+			
+			Tango_Update2();
+			if(!SamusVars[IS_INVISIBLE] && !SamusVars[IS_FROZEN])
+				UpdateLWZH2();//Does fancy Lweapon stuff.
+			//Run sideview slopes.
+			UpdateStairCombos();
+			PushLinkOutOfSolidCombos();
+			//You're not morphed right now.
+			if(!SamusVars[IS_MORPHED]){
+				VariableJump();//Jump script.
+				//If you have the screw attack and this is a sideview scren.
+				if (Link->Item[I_SCREWATTACK]){
+					if(SamusVars[IS_JUMPING])SamusVars[IS_SCREW_ATTACK] = 1;
+					//Deactivate Screw Attack.
+					else if(!SamusVars[IS_JUMPING]){
+						SamusVars[IS_SCREW_ATTACK] = 0;
+						//Clear screw attack lweapon.
+						RemoveLWeaponType(LW_SCREWATTACK);
+					}
+				}
+				//Handles beam switching combos to the next.
+				Beam_Next();
+				//Speed boost.
+				Speed_Boost();
+				//Run screw attack stuff.
+				ScrewAttack();
+			}
+			//Run blocks that crumble in sideview.
+			//Runs sounds for Samus landing on surfaces.
+			if(IsSideview()){
+				SideviewStep();
+				LandingSound();
+			}
+			//Counts down timer since last instance of firing.
+			if(SamusVars[BEAM_FIRING_TIMER]>0){
+				//Make spazer fire more rapidly.
+				if(SamusVars[BEAMS_EQUIPPED]&EQ_SPAZER)
+					SamusVars[BEAM_FIRING_TIMER]-=2;
+				else
+					SamusVars[BEAM_FIRING_TIMER]--;
+			}
+			else{
+				SamusVars[BEAM_FIRING_TIMER]=0;
+				if(SamusVars[LINK_ACTION]!=LA_NONE)
+					SamusVars[LINK_ACTION]=LA_NONE;
+			}
+			if(SamusVars[MISSILE_TIMER]>0)
+				SamusVars[MISSILE_TIMER]--;
+			else{
+				SamusVars[MISSILE_TIMER]=0;
+				if(SamusVars[LINK_ACTION]!=LA_NONE)
+					SamusVars[LINK_ACTION]=LA_NONE;
+			}
+			//Run this script, associated with grapple beam.
+			ForcePos();
+			Prev_Link_Dir = Link->Dir;//Track direction Link is facing.
+			//TraceMap();
+			//TraceMiniMap();
+			Waitframe();
+		}
+    }
+}
+
+//Make sure you have HP when you die and restart.
+
+global script OnContinue{
+    void run(){
+        Game->Counter[HEALTH_COUNTER] = 99;
+        SamusVars[CURR_FILLED_TANKS]= SamusVars[NUM_TANKS];
+		Link->MP = Link->MaxMP;
+		Link->HP = Link->MaxHP;
+    }
+}
