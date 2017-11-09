@@ -1,0 +1,13 @@
+//Section 46. Landing Sound effects.
+//---COMMMENTING NEEDED--
+
+void LandingSound(){
+	if(Link->Action!=LA_SCROLLING){
+		if(OnGround() && !SamusVars[ON_GROUND_LAST_FRAME]){
+			SamusVars[ON_GROUND_LAST_FRAME]=1;
+			Game->PlaySound(SFX_SAMUS_LAND);
+		}
+		else if(!OnGround() && SamusVars[ON_GROUND_LAST_FRAME])
+			SamusVars[ON_GROUND_LAST_FRAME]= 0;
+	}
+}
