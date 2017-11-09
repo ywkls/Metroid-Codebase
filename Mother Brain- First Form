@@ -1,0 +1,181 @@
+//Section 51. Mother Brain First Form
+//---COMMMENTING NEEDED--
+
+ffc script Mother_Brain_First{
+	void run(int enemyID){
+		npc ghost = Ghost_InitAutoGhost(this, enemyID);
+		int combo = ghost->Attributes[10];
+		int hitcount;
+		Ghost_X = 32;
+		Ghost_Y = 48;
+		Ghost_SetSize(this,ghost,4,4);
+		Ghost_SetHitOffsets(ghost,6,10,1,0);
+		Ghost_ForceDir(DIR_RIGHT);
+		Ghost_CSet = 8;
+		int form = 0;
+		Ghost_SetFlag(GHF_IGNORE_ALL_TERRAIN);
+		Ghost_SetFlag(GHF_IGNORE_NO_ENEMY);
+		Ghost_SetFlag(GHF_NO_FALL);
+		//this->Flags[FFCF_OVERLAY]= true;
+		int color;
+		int wait;
+		int LaserChance;//Chance of laser firing.
+		float angle;//Used to rotate laser.
+		lweapon missile;
+		int i;
+		Ghost_Data = combo;
+		this->Flags[FFCF_OVERLAY]= true;
+		int direction;
+		while(true){
+			while(form==0){
+				Ghost_ForceDir(DIR_RIGHT);
+				for(i=Screen->NumLWeapons();i>0;i--){
+					missile = Screen->LoadLWeapon(i);
+					if(missile->ID==LW_ARROW && Collision(ghost,missile)){
+						missile->DeadState =0;
+						Game->PlaySound(IMPACT_SFX);
+						hitcount++;
+					}
+				}
+				if(hitcount>10){
+					form = 1;
+					hitcount=0;
+					Ghost_Data = combo+1;
+				}
+				Gen_Leader_Waitframe(this,ghost);
+			}
+			while(form==1){
+				Ghost_ForceDir(DIR_RIGHT);	
+				for(i=Screen->NumLWeapons();i>0;i--){
+					missile = Screen->LoadLWeapon(i);
+					if(missile->ID==LW_ARROW && Collision(ghost,missile)){
+						missile->DeadState =0;
+						Game->PlaySound(IMPACT_SFX);
+						hitcount++;
+					}
+				}
+				if(hitcount>20){
+					form = 2;
+					hitcount=0;
+					Ghost_Data = combo+2;
+				}
+				Gen_Leader_Waitframe(this,ghost);
+			}
+			while(form==2){
+				Ghost_ForceDir(DIR_RIGHT);
+				for(i=Screen->NumLWeapons();i>0;i--){
+					missile = Screen->LoadLWeapon(i);
+					if(missile->ID==LW_ARROW && Collision(ghost,missile)){
+						missile->DeadState =0;
+						Game->PlaySound(IMPACT_SFX);
+						hitcount++;
+					}
+				}
+				if(hitcount>20){
+					form = 3;
+					hitcount=0;
+					Ghost_Data = combo+3;
+					ghost->Defense[NPCD_ARROW]=NPCDT_NONE;
+					ghost->Defense[NPCD_MAGIC]=NPCDT_NONE;
+					ghost->Defense[NPCD_BEAM]=NPCDT_QUARTERDAMAGE;
+				}
+				Gen_Leader_Waitframe(this,ghost);
+			}
+			while(form==3){
+				Ghost_ForceDir(DIR_RIGHT);
+				LaserChance = (LaserChance+1)%120;
+				if(LaserChance==0){
+					angle = RadianAngle(Ghost_X + 64, Ghost_Y + 40, Link->X + 8, Link->Y + 8);
+					wait = 120;
+					direction = Choose(1,-1);
+					while(wait>0){
+						color= (color +1)%60;
+						if(direction ==1 && angle <=45)
+							angle = (angle+direction)%360;
+						else if(direction ==1 && angle >=45)
+							direction = -1;
+						if(direction ==-1 && angle >=315)
+							angle = (angle+direction)%360;
+						else if(direction ==-1 && angle <=315)
+							direction = 1;	
+						Laser(2, (Ghost_X + 64) + 1 * Cos(RadtoDeg(angle)),(Ghost_Y + 40) + 1 * Sin(RadtoDeg(angle)), 8, angle, ghost->WeaponDamage, color);      
+						//Reduce timers.
+						wait--;
+						Gen_Leader_Waitframe(this,ghost);
+					}
+				}
+				Gen_Leader_Waitframe(this,ghost);
+			}
+      while(form==0){
+				Ghost_ForceDir(DIR_RIGHT);
+				for(i=Screen->NumLWeapons();i>0;i--){
+					missile = Screen->LoadLWeapon(i);
+					if(missile->ID==LW_ARROW && Collision(ghost,missile)){
+						missile->DeadState =0;
+						Game->PlaySound(IMPACT_SFX);
+						hitcount++;
+					}
+				}
+				if(hitcount>10){
+					form = 1;
+					hitcount=0;
+					Ghost_Data = combo+1;
+				}
+				Gen_Leader_Waitframe(this,ghost);
+			}
+			while(form==1){
+				Ghost_ForceDir(DIR_RIGHT);	
+				for(i=Screen->NumLWeapons();i>0;i--){
+					missile = Screen->LoadLWeapon(i);
+					if(missile->ID==LW_ARROW && Collision(ghost,missile)){
+						missile->DeadState =0;
+						Game->PlaySound(IMPACT_SFX);
+						hitcount++;
+					}
+				}
+				if(hitcount>20){
+					form = 2;
+					hitcount=0;
+					Ghost_Data = combo+2;
+				}
+				Gen_Leader_Waitframe(this,ghost);
+			}
+			while(form==2){
+				Ghost_ForceDir(DIR_RIGHT);
+				for(i=Screen->NumLWeapons();i>0;i--){
+					missile = Screen->LoadLWeapon(i);
+					if(missile->ID==LW_ARROW && Collision(ghost,missile)){
+						missile->DeadState =0;
+						Game->PlaySound(IMPACT_SFX);
+						hitcount++;
+					}
+				}
+				if(hitcount>20){
+					form = 3;
+					hitcount=0;
+					Ghost_Data = combo+3;
+					ghost->Defense[NPCD_ARROW]=NPCDT_NONE;
+					ghost->Defense[NPCD_MAGIC]=NPCDT_NONE;
+				}
+				Gen_Leader_Waitframe(this,ghost);
+			}
+			while(form==3){
+				Ghost_ForceDir(DIR_RIGHT);
+				LaserChance = (LaserChance+1)%120;
+				if(LaserChance==0){
+					angle = RadianAngle(Ghost_X + 64, Ghost_Y + 40, Link->X + 8, Link->Y + 8);
+					wait = 120;
+					while(wait>0){
+						color= (color +1)%60;
+						Laser(2, (Ghost_X + 64) + 1 * Cos(RadtoDeg(angle)),(Ghost_Y + 40) + 1 * Sin(RadtoDeg(angle)), 8, angle, ghost->WeaponDamage, color);      
+						//Reduce timers.
+						wait--;
+						Gen_Leader_Waitframe(this,ghost);
+					}
+				}
+				Gen_Leader_Waitframe(this,ghost);
+			}
+			Gen_Leader_Waitframe(this,ghost);
+		}
+	}
+}
