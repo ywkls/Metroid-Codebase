@@ -1,0 +1,97 @@
+//Does the warp animation, and the phsyical warp. 
+void WarpSamus(int warp_id, int warpDuration,bool WaveEffect) {
+	int startHP = Link->HP;
+	int goDMAP = MetroidWarps[MET_SAVE_BASE + MET_SAVE_DMAP + ( warp_id * MET_SAVE_INDICES )];
+	int goSCREEN = MetroidWarps[MET_SAVE_BASE + MET_SAVE_SCREEN + ( warp_id * MET_SAVE_INDICES )];
+	int goX = MetroidWarps[MET_SAVE_BASE + MET_SAVE_X + ( warp_id * MET_SAVE_INDICES )];
+	int goY = MetroidWarps[MET_SAVE_BASE + MET_SAVE_Y + ( warp_id * MET_SAVE_INDICES )];	
+	
+	if ( SamusCanTeleport() ) {
+		//freezeAction();
+		SamusTeleporting(true);
+		SamusArriving(true);
+		if(WaveEffect){
+			Game->PlaySound(SFX_TELEPORT_TRANSITION);
+			for(int i = warpDuration; i > 0; i--){ //Duration of song/effect.
+				NoAction(); //Freeze Link
+				//Game->PlaySound(SFX_TELEPORT_TRANSITION);
+				//Create animation.
+				Screen->Circle ( 6, Link->X+8, Link->Y+8, 20*i/warpDuration, WARP_TEAL, 1, 0, 0, 0, false, 100 );
+				
+				FlashingGreen(false);
+
+				do {
+					for ( int j = 1; j > 0; j--){
+						ScreenToLayer(goDMAP, goSCREEN, 4, 75);
+						Screen->Rectangle(5, 0, 0, 256, 172, WARP_GREEN, 1, 0, 0, 0, true, 25);
+						Screen->Circle ( 6, Link->X+8, Link->Y+8, 20*i/warpDuration, 1, 1, 0, 0, 0, false, 100 );
+						FlashingGreen(true);
+						NoAction(); 
+						Waitframe();
+					}
+					NoAction(); 
+				} while(SamusTeleporting() && !FlashingGreen());
+					
+				do {	
+					for ( int j = 1; j > 0; j--){
+						ScreenToLayer(goDMAP, goSCREEN, 4, 80);
+						Screen->Rectangle(5, 0, 0, 256, 172, WARP_LTGREEN, 1, 0, 0, 0, true, 10);
+						Screen->Circle ( 6, Link->X+8, Link->Y+8, 20*i/warpDuration, WARP_TEAL, 1, 0, 0, 0, false, 100 );
+						FlashingGreen(false);
+						NoAction(); 
+						Waitframe();
+					}
+					NoAction(); 
+				} while(SamusTeleporting() && FlashingGreen());
+
+				if ( Link->HP < startHP ) 
+					return; //If Link is hurt, quit
+				Waitframe();
+				NoAction(); 
+			}
+			Screen->Wavy =60;
+		}
+		Link->PitWarp( goDMAP, goSCREEN );
+		Link->X = goX;
+		Link->Y = goY;
+
+		SamusTeleporting(false);
+		//unfreezeAction();
+		Waitframe();
+		SamusTeleporting(false);
+		FlashingGreen(false);
+
+	}
+            
+        else {
+            Game->PlaySound(SFX_WARP_ERROR);
+            SamusWarping(false);
+		//NotEnoughMP();
+            //return;
+        }
+	
+}
+
+//Does the warp animation, and the phsyical warp. 
+void WarpSamusForced(int warp_id, int warpDuration) {
+	int startHP = Link->HP;
+	int goDMAP = MetroidWarps[MET_SAVE_BASE + MET_SAVE_DMAP + ( warp_id * MET_SAVE_INDICES )];
+	int goSCREEN = MetroidWarps[MET_SAVE_BASE + MET_SAVE_SCREEN + ( warp_id * MET_SAVE_INDICES )];
+	int goX = MetroidWarps[MET_SAVE_BASE + MET_SAVE_X + ( warp_id * MET_SAVE_INDICES )];
+	int goY = MetroidWarps[MET_SAVE_BASE + MET_SAVE_Y + ( warp_id * MET_SAVE_INDICES )];	
+
+	Game->PlaySound(SFX_TELEPORT_TRANSITION);
+	//freezeAction();
+	SamusTeleporting(true);
+	SamusArriving(true);
+	
+	Link->PitWarp( goDMAP, goSCREEN );
+	Link->X = goX;
+	Link->Y = goY;
+	SetMapCoords(warp_id);
+	SamusTeleporting(false);
+	//unfreezeAction();
+	Waitframe();
+	SamusTeleporting(false);
+	FlashingGreen(false);
+}
