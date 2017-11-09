@@ -1,0 +1,260 @@
+//Section 35. Mother Brain Final Form
+
+const int MOTHER_BRAIN_BODY = 227;//Enemy Id for body.
+const int MOTHER_BRAIN_NECK = 210;//Enemy id for neck.
+const int MOTHER_BRAIN_WALK_TILE = 13260;//First tile of walking animation.
+const int MOTHER_BRAIN_NORMAL_TILE = 9360;//Normal Mother Brain appearance.
+const int MOTHER_BRAIN_NORMAL_CSET = 8;//Normal Mother Brain Cset.
+const int MOTHER_BRAIN_HURT_CSET = 6;//Mother Brain hurt CSet.
+const int MOTHER_BRAIN_LASER_SPRITE = 12;//Sprite for the laser.
+const int LASER_SFX = 32;//Sound the laser makes.
+const int SPR_SPREAD_SHOT = 102;//Spread shot sprite.
+const int SPR_MB_BOMB = 103;//Mother Brain bomb
+
+ffc script Mother_Brain_Final{
+	void run(int enemyID){
+		npc ghost = Ghost_InitAutoGhost(this, enemyID);
+		//Create the body.
+		npc body = Screen->CreateNPC(MOTHER_BRAIN_BODY);
+		//Create the neck.
+		npc neck[4];
+		int i;//Iterative variable.
+		//Position the head.
+		Ghost_X = 128;
+		Ghost_Y = 0;
+		//Position the bdoy.
+		body->X = Ghost_X-96;
+		body->Y = 32;
+		//For doing calculations.
+		int CalcX;
+		int CalcY;
+		//The aforementioned calculations.
+		CalcY = (Abs(body->Y-(Ghost_Y+48)))/4;
+		CalcX = (Abs((body->X+64)-Ghost_X))/4;
+		//Create and position the neck.
+		for(i=0;i<=3;i++){
+			neck[i] = Screen->CreateNPC(MOTHER_BRAIN_NECK);
+			neck[i]->X = (body->X+64)+(i*CalcX);
+			neck[i]->Y = body->Y-(CalcY*i);
+		}
+		//Resize the body.
+		body->Extend = 3;
+		body->TileWidth = 6;
+		body->TileHeight = 8;
+		body->HitWidth = 96;
+		body->HitHeight = 128;
+		int Mode;//Controls behavior.
+		int ModeTimer = Rand(180,240);//How long each mode lasts.
+		//Some eweapons we can use.
+		eweapon laser;
+		eweapon flame;
+		int WalkTimer;//Controls walking animation.
+		//Head size.
+		Ghost_SetSize(this,ghost,3,4);
+		//Set flags.
+		Ghost_SetFlag(GHF_IGNORE_ALL_TERRAIN);
+		Ghost_SetFlag(GHF_IGNORE_NO_ENEMY);
+		Ghost_SetFlag(GHF_NO_FALL);
+		Ghost_SetFlag(GHF_FAKE_Z);
+		//Whether we're moving right or not.
+		bool MovingRight = true;
+		//Used by laser code.
+		int FireChance;//Chance of laser firing.
+		float angle;//Used to rotate laser.
+		float TargetX;
+		float TargetY;
+		int direction;
+		int FireTimer;
+		int Dist;
+		bool Hit = false;
+		bool last = ghost->Attributes[0];
+		while(true){
+			//Position parts.
+			Ghost_ForceDir(DIR_DOWN);
+			body->X = Ghost_X-96;
+			CalcX = (Abs((body->X+64)-Ghost_X))/4;
+			CalcY = (Abs(body->Y-(Ghost_Y+48)))/4;
+			for(i=0;i<=3;i++){
+				neck[i]->X = (body->X+64)+(i*CalcX);
+				neck[i]->Y = body->Y-(CalcY*i);
+			}
+			WalkTimer = (WalkTimer+1)%8;
+			//Change appearance based on current tile.
+			if(WalkTimer ==0){
+				if(body->OriginalTile ==MOTHER_BRAIN_NORMAL_TILE)body->OriginalTile = MOTHER_BRAIN_WALK_TILE;
+				else if(body->OriginalTile ==MOTHER_BRAIN_WALK_TILE)body->OriginalTile = MOTHER_BRAIN_WALK_TILE+6;
+				else if(body->OriginalTile ==MOTHER_BRAIN_WALK_TILE+6)body->OriginalTile = MOTHER_BRAIN_WALK_TILE+12;
+				else if(body->OriginalTile ==MOTHER_BRAIN_WALK_TILE+12)body->OriginalTile = MOTHER_BRAIN_NORMAL_TILE;
+			}
+			if(WalkTimer ==0){
+				//Move right.
+				if(MovingRight && Ghost_X<=190)Ghost_X+=4;
+				//Gone too far.
+				else if(MovingRight && Ghost_X>190)MovingRight = false;
+				//Move left.
+				else if(!MovingRight && Ghost_X>=128)Ghost_X-=4;
+				//Too far left.
+				else if(!MovingRight && Ghost_X<128)MovingRight = true;
+			}
+			FireTimer= (FireTimer+1)%90;
+			if(FireTimer==0){
+				if(Mode==0){
+				//Chance of spread shot firing.
+					FireChance = Rand(0,100);
+					//You're firing an spread shot.
+					if(FireChance >=51){
+						TargetX = Link->X;
+						TargetY = Link->Y;
+						angle = Angle(body->X+80,body->Y+16,TargetX,TargetY);
+						Dist = 256-(body->X+80);
+						for(i= 0; i<=Dist;i+=8){
+							flame= FireEWeapon(ghost->Weapon, body->X+80+VectorX(i,angle), body->Y+16+VectorY(i,angle), DegtoRad(angle),300, 
+												ghost->WeaponDamage, RIDLEY_FLAME_SPRITE, 40,0);
+							SetEWeaponLifespan(flame,EWL_TIMER,60);
+							SetEWeaponDeathEffect(flame,EWD_EXPLODE, ghost->WeaponDamage);
+							MB_Waitframes(this,ghost,body,neck,10);
+						}
+					}
+				}
+				//Eye Laser
+				else if(Mode ==1){	
+					//Do a random calculation.
+					FireChance = Rand(0,100);
+					//Fire a laser.
+					if(FireChance >=51){
+						laser = FireBigEWeapon(ghost->Weapon, Ghost_X+48, Ghost_Y+32, DegtoRad(0), 300, ghost->WeaponDamage, MOTHER_BRAIN_LASER_SPRITE, LASER_SFX, 0,2,1);
+						SetEWeaponLifespan(laser,EWL_TIMER, 200);
+						SetEWeaponDeathEffect(laser,EWD_VANISH, 0);
+					}
+				}
+				else if(Mode==2){
+					//Chance of spread shot firing.
+					FireChance = Rand(0,100);
+					//You're firing an spread shot.
+					if(FireChance >=51){
+						TargetX = Link->X;
+						TargetY = Link->Y;
+						angle = Angle(Ghost_X+48,Ghost_Y+32,TargetX,TargetY);
+						direction = Choose(1,-1);
+						if(direction ==1){
+							for(i= angle; i<=angle+45;i+=5){
+								flame= FireEWeapon(ghost->Weapon, Ghost_X+48, Ghost_Y+32, DegtoRad(i),300, 
+													ghost->WeaponDamage, SPR_SPREAD_SHOT, LASER_SFX, EWF_ROTATE_360);
+								SetEWeaponDeathEffect(flame,EWD_EXPLODE, ghost->WeaponDamage);
+								MB_Waitframes(this,ghost,body,neck,10);
+							}
+						}
+						else{
+							for(i= angle; i>=angle-45;i-=5){
+								flame= FireEWeapon(ghost->Weapon, Ghost_X+48, Ghost_Y+32, DegtoRad(i),300, 
+													ghost->WeaponDamage, SPR_SPREAD_SHOT, LASER_SFX, EWF_ROTATE_360);
+								SetEWeaponDeathEffect(flame,EWD_EXPLODE, ghost->WeaponDamage);
+								MB_Waitframes(this,ghost,body,neck,10);
+							}
+						}
+					}
+				}
+				else if(Mode==3){
+					//Chance of spread shot firing.
+					FireChance = Rand(0,100);
+					//You're firing an spread shot.
+					if(FireChance >=51){
+						TargetX = Link->X;
+						TargetY = Link->Y;
+						angle = Angle(body->X+80,body->Y+16,TargetX,TargetY);
+						flame= FireEWeapon(ghost->Weapon, body->X+80,body->Y+16, DegtoRad(angle),300, 
+												ghost->WeaponDamage, SPR_MB_BOMB, LASER_SFX,0);
+						SetEWeaponMovement(flame,EWM_THROW,-1,EWMF_BOUNCE|EWMF_DIE);						
+						SetEWeaponDeathEffect(flame,EWD_EXPLODE, ghost->WeaponDamage);
+					}		
+				}
+				if(last){
+					//Track all lweapons.
+					for (i = 1; i <= Screen->NumLWeapons(); i++){
+						lweapon w = Screen->LoadLWeapon(i);
+						//If it hits the enemy.
+						if (Collision(ghost, w)){
+							//Tell the game it has been hit.
+							Hit= true;
+							//Kil the lweapon.
+							w->DeadState = 0;
+						}
+					}
+				}
+				//The enemy has been hit.
+				if(Hit){
+					Ghost_SetAllDefenses(ghost,NPCDT_BLOCK);
+					//Make head go up.
+					while(Ghost_X>body->X+64){
+						Ghost_ForceDir(DIR_DOWN);
+						Ghost_X--;
+						Ghost_Y--;
+						CalcX = (Abs((body->X+64)-Ghost_X))/4;
+						CalcY = (Abs(body->Y-(Ghost_Y+48)))/4;
+						for(i = 0;i<=3;i++){
+							neck[i]->X = (body->X+64) + (CalcX *i);
+							neck[i]->Y = body->Y-(CalcY*i);
+						}
+						MB_Waitframe(this,ghost,body,neck);
+					}
+					//Bring head back down.
+					while(Ghost_X<body->X+96){
+						Ghost_ForceDir(DIR_DOWN);
+						Ghost_X++;
+						Ghost_Y++;
+						CalcX = (Abs((body->X+64)-Ghost_X))/4;
+						CalcY = (Abs(body->Y-(Ghost_Y+48)))/4;
+						for(i = 0;i<=3;i++){
+							neck[i]->X = (body->X+64) + (CalcX *i);
+							neck[i]->Y = body->Y-(CalcY*i);	
+						}
+						MB_Waitframe(this,ghost,body,neck);
+					}
+					ghost->Defense[NPCD_BEAM]=  NPCDT_QUARTERDAMAGE;
+					ghost->Defense[NPCD_ARROW]=  NPCDT_QUARTERDAMAGE;
+					ghost->Defense[NPCD_MAGIC]=  NPCDT_HALFDAMAGE;
+					//Not hit any more.
+					Hit = false;
+				}
+				//Choose behavior randomly.
+				if(Mode ==0)Mode = Choose(1,2,3);
+				else if(Mode ==1)Mode = Choose(0,2,3);
+				else if(Mode ==2)Mode = Choose(0,1,3);
+				else if(Mode ==3)Mode = Choose(0,1,2);
+			}
+			MB_Waitframe(this,ghost,body,neck);
+		}
+	}
+	//Handle waitframe.
+	void MB_Waitframe(ffc this, npc ghost, npc body, npc neck){
+		ghost->Jump = 0;
+		//if hurt, change appearance.
+		if(Ghost_GotHit()){
+			Ghost_CSet = MOTHER_BRAIN_HURT_CSET;
+			body->CSet = MOTHER_BRAIN_HURT_CSET;
+			for(int i = 0;i<=3;i++)
+				neck[i]->CSet = MOTHER_BRAIN_HURT_CSET;
+			Ghost_Waitframes(this,ghost,false,false,5);
+		}
+		//Otherwise, go back to normal.
+		else{
+			Ghost_CSet = MOTHER_BRAIN_NORMAL_CSET;
+			body->CSet = MOTHER_BRAIN_NORMAL_CSET;
+			for(int i = 0;i<=3;i++)
+				neck[i]->CSet = MOTHER_BRAIN_NORMAL_CSET;
+		}
+		//The boss is dead.
+		if(!Ghost_Waitframe(this,ghost, false, false)){
+			Ghost_DeathAnimation(this,ghost,2);
+			body->HP = 0;
+			for(int i = 0;i<=3;i++)
+				neck[i]->HP= 0;
+			this->Data = 0;
+			Quit();
+		}
+	}
+	void MB_Waitframes(ffc this, npc ghost, npc body, npc neck, int frames){
+		for(;frames>0;frames--)
+			MB_Waitframe(this,ghost,body,neck);
+	}
+}
