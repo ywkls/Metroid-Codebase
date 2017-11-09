@@ -1,0 +1,41 @@
+ffc script Sideview_Hover{
+	void run(int enemyid){
+		npc ghost = Ghost_InitAutoGhost(this, enemyid);
+		Ghost_SetFlag(GHF_STUN);
+		Ghost_SetFlag(GHF_CLOCK);
+		Ghost_SetFlag(GHF_IGNORE_ALL_TERRAIN);
+		Ghost_SetFlag(GHF_IGNORE_NO_ENEMY);
+		Ghost_SetFlag(GHF_MOVE_OFFSCREEN);
+		Ghost_SetFlag(GHF_NO_FALL);
+		int HVS = ghost->Attributes[0];
+		int Misc1 = ghost->Attributes[1];
+		int Misc2 = ghost->Attributes[2];
+		int Misc3 = ghost->Attributes[3];
+		int Misc4 = ghost->Attributes[4];
+		int StartX = Ghost_X;
+		int StartY = Ghost_Y;
+		int T1 = 0;
+		int T2 = 0;
+		int Width = Ghost_GetAttribute(ghost,5,1);
+		int Height = Ghost_GetAttribute(ghost,6,1);
+		Ghost_CSet = Ghost_GetAttribute(ghost,7,0);
+		Ghost_SetSize(this,ghost,Width,Height);
+		while(true){
+			T1+=Misc2;
+			WrapDegrees(T1);
+			T2+=Misc4;
+			WrapDegrees(T2);
+			if(HVS==1){
+				Ghost_X = StartX + Misc1*Sin(T1);
+			}
+			else if(HVS==2){
+				Ghost_Y = StartY + Misc1*Sin(T1);
+			}
+			else if(HVS==3){
+				Ghost_X = StartX+Misc1*Sin(T1);
+				Ghost_Y = StartY+Misc3*Cos(T2);
+			}
+			Ghost_Waitframe(this, ghost);
+		}
+	}
+}
