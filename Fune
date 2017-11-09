@@ -1,0 +1,39 @@
+//Section 58. Fune
+//---COMMMENTING NEEDED--
+
+ffc script Fune{
+	void run(int enemyID){
+		npc ghost = Ghost_InitAutoGhost(this, enemyID);
+		Ghost_SetFlag(GHF_IGNORE_ALL_TERRAIN);
+		Ghost_SetFlag(GHF_IGNORE_NO_ENEMY);
+		Ghost_SetFlag(GHF_NO_FALL);
+		Ghost_SetFlag(GHF_FAKE_Z);
+		Ghost_SetFlag(GHF_STUN);
+		Ghost_SetSize(this,ghost,2,3);
+		int Side = Ghost_GetAttribute(ghost,0,0);
+		int combo = ghost->Attributes[10];
+		if(Side==1)
+			Ghost_Data = combo;
+		else
+			Ghost_Data = combo+1;
+		int FireTimer = Rand(90,150);
+		eweapon fireball;
+		while(true){
+			if(Side==1)
+				Ghost_ForceDir(DIR_RIGHT);
+			else
+				Ghost_ForceDir(DIR_LEFT);
+			if(FireTimer<0){
+				if(Side==1)
+					fireball = FireEWeapon(ghost->Weapon, Ghost_X+32, Ghost_Y+14, DegtoRad(0),100,ghost->WeaponDamage, SPR_GEN_FIREBALL,0, 0);
+				else
+					fireball = FireEWeapon(ghost->Weapon, Ghost_X, Ghost_Y+14, DegtoRad(180),100,ghost->WeaponDamage, SPR_GEN_FIREBALL,0, 0);
+				SetEWeaponLifespan(fireball,EWL_TIMER, 200);
+				SetEWeaponDeathEffect(fireball,EWD_VANISH, 0);
+				FireTimer = Rand(90,150);
+			}
+			FireTimer--;
+			Ghost_Waitframe(this,ghost,true,true);	
+		}
+	}
+}
