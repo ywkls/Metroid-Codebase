@@ -1,0 +1,903 @@
+//Section 28. Samus Appearance
+
+const int SAMUS_WALK_COMBO = 2716;//Normal walking animation.
+const int SAMUS_CSET = 8;///Normal Samus Cset.
+const int SAMUS_ATTACK_COMBO = 2732;//Normal Samus Attacking combo.
+const int SAMUS_GRAVITY_WALK_COMBO = 2816;//Normal gravity suit combo.
+const int SAMUS_GRAVITY_ATTACK_COMBO = 2832;//Gravity suit attack combo.
+const int SAMUS_GRAVITY_CSET = 11;//Gravity suit Cset.
+const int SAMUS_CROUCH_COMBO = 2996;//Combo of Samus crouching.
+const int SAMUS_AIM_COMBO = 3364;//Combo of Samus aiming up and left.
+
+void ScrollFix(){
+   //function by Saffith
+   if(Link->Action==LA_SCROLLING){
+       if(SamusVars[SCROLL_DIR]==-1){
+           if(Link->Y>160){
+				SamusVars[SCROLL_DIR]=DIR_UP;
+				SamusVars[SCROLL_COUNTER]=45;
+           }
+           else if(Link->Y<0){
+				SamusVars[SCROLL_DIR]=DIR_DOWN;
+				SamusVars[SCROLL_COUNTER]=45;
+           }
+           else if(Link->X>240){
+				SamusVars[SCROLL_DIR]=DIR_LEFT;
+				SamusVars[SCROLL_COUNTER]=65;
+           }
+           else{
+				SamusVars[SCROLL_DIR]=DIR_RIGHT;
+				SamusVars[SCROLL_COUNTER]=65;
+           }
+       }
+       if(SamusVars[SCROLL_DIR]==DIR_UP && SamusVars[SCROLL_COUNTER]<45 && SamusVars[SCROLL_COUNTER]>4)
+           SamusVars[DRAW_Y]+=4;
+       else if(SamusVars[SCROLL_DIR]==DIR_DOWN && SamusVars[SCROLL_COUNTER]<45 && SamusVars[SCROLL_COUNTER]>4)
+           SamusVars[DRAW_Y]-=4;
+       else if(SamusVars[SCROLL_DIR]==DIR_LEFT && SamusVars[SCROLL_COUNTER]<65 && SamusVars[SCROLL_COUNTER]>4)
+           SamusVars[DRAW_X]+=4;
+       else if(SamusVars[SCROLL_DIR]==DIR_RIGHT && SamusVars[SCROLL_COUNTER]<65 && SamusVars[SCROLL_COUNTER]>4)
+           SamusVars[DRAW_X]-=4;
+       SamusVars[SCROLL_COUNTER]--;
+   }
+   else{
+       SamusVars[DRAW_X]=Link->X;
+       SamusVars[DRAW_Y]=Link->Y;
+       if(SamusVars[SCROLL_DIR]!=-1)
+           SamusVars[SCROLL_DIR]=-1;
+   }
+}
+
+//Draws Samus.
+
+void Draw_Samus(){
+	if(!SamusVars[IS_INVISIBLE]){
+		if(PressJump() && SamusVars[SAMUS_ACTION]==SAMUS_ACTION_CROUCH)
+			SamusVars[SAMUS_ACTION]=SAMUS_ACTION_NONE;
+		if(Link->Item[I_GRAVITY_SUIT]){
+			if(SamusVars[LINK_ACTION] != LA_ATTACKING && SamusVars[LINK_ACTION] !=LA_CASTING){
+				if(Link->Dir == DIR_LEFT && !Link->PressLeft && !Link->InputLeft){
+					if(!SamusVars[IS_SHINE_SPARK] && !SamusVars[IS_JUMPING]){
+						if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_NONE)
+							Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_WALK_COMBO, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+						else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_HANGING_LEFT)
+							Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_WALK_COMBO+54, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+						else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_HANGING_RIGHT)
+							Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_WALK_COMBO+33, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+						else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_HANGING_UP)
+							Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_WALK_COMBO+43, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+						else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_CROUCH)
+							Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_CROUCH_COMBO+8, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);	
+					}
+					else if(SamusVars[IS_JUMPING] && !SamusVars[IS_SPEED_BOOSTING] && !OnGround() && SamusVars[SAMUS_ACTION]== SAMUS_ACTION_NONE)
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_WALK_COMBO, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+					else if(SamusVars[IS_JUMPING] && SamusVars[IS_SPEED_BOOSTING] && !OnGround() && SamusVars[SAMUS_ACTION]== SAMUS_ACTION_NONE){
+						Screen->DrawCombo(2, SamusVars[DRAW_X]+8, SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_WALK_COMBO, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 64);	
+						Screen->DrawCombo(2, SamusVars[DRAW_X]+16, SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_WALK_COMBO, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 64);	
+					}
+					else if(!SamusVars[IS_JUMPING] && SamusVars[IS_SPEED_BOOSTING]){
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_WALK_COMBO, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+						Screen->DrawCombo(2, SamusVars[DRAW_X]+2, SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_WALK_COMBO, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 64);
+					}
+					else if(SamusVars[IS_SHINE_SPARK] && !SamusVars[IS_JUMPING]){
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_WALK_COMBO, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+						Screen->DrawCombo(2, SamusVars[DRAW_X]+2, SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_WALK_COMBO, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 64);
+					}
+				}
+				else if(Link->InputLeft && SamusVars[SAMUS_ACTION]!=SAMUS_ACTION_CROUCH){
+					if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_NONE && !SamusVars[IS_JUMPING])Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_WALK_COMBO+2, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+					else if(SamusVars[SAMUS_ACTION] ==SAMUS_ACTION_HANGING_LEFT )Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_WALK_COMBO+54, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+					else if(SamusVars[SAMUS_ACTION] ==SAMUS_ACTION_HANGING_RIGHT)Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_WALK_COMBO+33, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+					else if(SamusVars[SAMUS_ACTION] ==SAMUS_ACTION_HANGING_UP)Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_WALK_COMBO+43, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+					if(SamusVars[IS_SPEED_BOOSTING] && !SamusVars[IS_JUMPING] && !SamusVars[IS_SHINE_SPARK]){
+						Screen->DrawCombo(2, SamusVars[DRAW_X]+8, SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_WALK_COMBO+2, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 64);
+						Screen->DrawCombo(2, SamusVars[DRAW_X]+16, SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_WALK_COMBO+2, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 64);
+					}
+					else if(SamusVars[IS_SHINE_SPARK] && !SamusVars[IS_JUMPING] ){
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_WALK_COMBO+2, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+						Screen->DrawCombo(2, SamusVars[DRAW_X]+2, SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_WALK_COMBO+2, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 64);
+					}
+					else if(SamusVars[IS_JUMPING] && !SamusVars[IS_SPEED_BOOSTING] && !OnGround() && SamusVars[SAMUS_ACTION]== SAMUS_ACTION_NONE)
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_CROUCH_COMBO+18, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);	
+					else if(SamusVars[IS_JUMPING] && SamusVars[IS_SPEED_BOOSTING] && !OnGround() && SamusVars[SAMUS_ACTION]== SAMUS_ACTION_NONE){
+						Screen->DrawCombo(2, SamusVars[DRAW_X]+8, SamusVars[DRAW_Y]-16, SAMUS_CROUCH_COMBO+18, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 64);	
+						Screen->DrawCombo(2, SamusVars[DRAW_X]+16, SamusVars[DRAW_Y]-16, SAMUS_CROUCH_COMBO+18, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 64);	
+					}
+				}
+				else if(Link->PressLeft && SamusVars[SAMUS_ACTION]!=SAMUS_ACTION_CROUCH){
+					if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_NONE && !SamusVars[IS_JUMPING])Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_WALK_COMBO+2, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+					else if(SamusVars[SAMUS_ACTION] ==SAMUS_ACTION_HANGING_LEFT )Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_WALK_COMBO+54, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+					else if(SamusVars[SAMUS_ACTION] ==SAMUS_ACTION_HANGING_RIGHT)Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_WALK_COMBO+33, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+					else if(SamusVars[SAMUS_ACTION] ==SAMUS_ACTION_HANGING_UP)Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_WALK_COMBO+43, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+					if(SamusVars[IS_SPEED_BOOSTING] && !SamusVars[IS_JUMPING] && !SamusVars[IS_SHINE_SPARK]){
+						Screen->DrawCombo(2, SamusVars[DRAW_X]+8, SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_WALK_COMBO+2, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 64);
+						Screen->DrawCombo(2, SamusVars[DRAW_X]+16, SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_WALK_COMBO+2, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 64);
+					}
+					else if(SamusVars[IS_SHINE_SPARK] && !SamusVars[IS_JUMPING] ){
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_WALK_COMBO+2, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+						Screen->DrawCombo(2, SamusVars[DRAW_X]+2, SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_WALK_COMBO+2, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 64);
+					}
+					else if(SamusVars[IS_JUMPING] && !SamusVars[IS_SPEED_BOOSTING] && !OnGround() && SamusVars[SAMUS_ACTION]== SAMUS_ACTION_NONE)
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_CROUCH_COMBO+18, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);	
+					else if(SamusVars[IS_JUMPING] && SamusVars[IS_SPEED_BOOSTING] && !OnGround() && SamusVars[SAMUS_ACTION]== SAMUS_ACTION_NONE){
+						Screen->DrawCombo(2, SamusVars[DRAW_X]+8, SamusVars[DRAW_Y]-16, SAMUS_CROUCH_COMBO+18, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 64);	
+						Screen->DrawCombo(2, SamusVars[DRAW_X]+16, SamusVars[DRAW_Y]-16, SAMUS_CROUCH_COMBO+18, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 64);	
+					}
+				}
+				else if(Link->Dir==DIR_LEFT && SamusVars[SAMUS_ACTION]==SAMUS_ACTION_CROUCH){
+					Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_CROUCH_COMBO+8, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);	
+					Link->InputLeft = false;
+					if(Link->PressLeft)SamusVars[SAMUS_ACTION]=SAMUS_ACTION_NONE;
+				}
+				else if(Link->Dir == DIR_RIGHT && !Link->PressRight && !Link->InputRight){
+					if(!SamusVars[IS_SHINE_SPARK] && !SamusVars[IS_JUMPING]){
+						if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_NONE )
+							Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_WALK_COMBO+1, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+						else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_HANGING_LEFT)
+							Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_WALK_COMBO+32, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+						else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_HANGING_RIGHT )
+							Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_WALK_COMBO+60, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+						else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_HANGING_UP)
+							Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_WALK_COMBO+42, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+						else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_CROUCH)
+							Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_CROUCH_COMBO+9, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);	
+					}
+					else if(SamusVars[IS_JUMPING] && !SamusVars[IS_SPEED_BOOSTING] && !OnGround() && SamusVars[SAMUS_ACTION]== SAMUS_ACTION_NONE)
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_WALK_COMBO+1, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);	
+					else if(SamusVars[IS_JUMPING] && SamusVars[IS_SPEED_BOOSTING] && !OnGround() && SamusVars[SAMUS_ACTION]== SAMUS_ACTION_NONE){
+						Screen->DrawCombo(2, SamusVars[DRAW_X]-8, SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_WALK_COMBO+1, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 64);	
+						Screen->DrawCombo(2, SamusVars[DRAW_X]-16, SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_WALK_COMBO+1, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 64);	
+					}
+					else if(!SamusVars[IS_JUMPING] && SamusVars[IS_SPEED_BOOSTING] ){
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_WALK_COMBO, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+						Screen->DrawCombo(2, SamusVars[DRAW_X]-2, SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_WALK_COMBO, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 64);
+					}
+					else if(SamusVars[IS_SHINE_SPARK] && !SamusVars[IS_JUMPING] ){
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_WALK_COMBO+1, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+						Screen->DrawCombo(2, SamusVars[DRAW_X]-2, SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_WALK_COMBO+1, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 64);
+					}
+				}
+				else if(Link->InputRight && SamusVars[SAMUS_ACTION]!=SAMUS_ACTION_CROUCH){
+					if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_NONE && !SamusVars[IS_JUMPING])Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_WALK_COMBO+3, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+					else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_HANGING_LEFT)Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_WALK_COMBO+32, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+					else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_HANGING_RIGHT )Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_WALK_COMBO+60, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+					else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_HANGING_UP)Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_WALK_COMBO+42, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+					if(SamusVars[IS_SPEED_BOOSTING] && !SamusVars[IS_JUMPING] && !SamusVars[IS_SHINE_SPARK]){
+						Screen->DrawCombo(2, SamusVars[DRAW_X]-8, SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_WALK_COMBO+3, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 64);
+						Screen->DrawCombo(2, SamusVars[DRAW_X]-16, SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_WALK_COMBO+3, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 64);
+					}
+					else if(SamusVars[IS_SHINE_SPARK] && !SamusVars[IS_JUMPING] ){
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_WALK_COMBO+3, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+						Screen->DrawCombo(2, SamusVars[DRAW_X]-2, SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_WALK_COMBO+3, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 64);
+					}
+					else if(SamusVars[IS_JUMPING] && !SamusVars[IS_SPEED_BOOSTING] && !OnGround() && SamusVars[SAMUS_ACTION]== SAMUS_ACTION_NONE)
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_CROUCH_COMBO+19, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);	
+					else if(SamusVars[IS_JUMPING] && SamusVars[IS_SPEED_BOOSTING] && !OnGround()&& SamusVars[SAMUS_ACTION]== SAMUS_ACTION_NONE){
+						Screen->DrawCombo(2, SamusVars[DRAW_X]+8, SamusVars[DRAW_Y]-16, SAMUS_CROUCH_COMBO+19, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 64);	
+						Screen->DrawCombo(2, SamusVars[DRAW_X]+16, SamusVars[DRAW_Y]-16, SAMUS_CROUCH_COMBO+19, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 64);	
+					}
+				}
+				else if(Link->PressRight && SamusVars[SAMUS_ACTION]!=SAMUS_ACTION_CROUCH){
+					if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_NONE && !SamusVars[IS_JUMPING])Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_WALK_COMBO+3, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+					else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_HANGING_LEFT)Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_WALK_COMBO+32, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+					else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_HANGING_RIGHT)Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_WALK_COMBO+60, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+					else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_HANGING_UP)Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_WALK_COMBO+42, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+					if(SamusVars[IS_SPEED_BOOSTING] && !SamusVars[IS_JUMPING]){
+						Screen->DrawCombo(2, SamusVars[DRAW_X]-8, SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_WALK_COMBO+3, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 64);
+						Screen->DrawCombo(2, SamusVars[DRAW_X]-16, SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_WALK_COMBO+3, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 64);
+					}
+					else if(SamusVars[IS_SHINE_SPARK] && !SamusVars[IS_JUMPING]){
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_WALK_COMBO+3, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+						Screen->DrawCombo(2, SamusVars[DRAW_X]-2, SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_WALK_COMBO+3, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 64);
+					}
+					else if(SamusVars[IS_JUMPING] && !SamusVars[IS_SPEED_BOOSTING] && !OnGround()&& SamusVars[SAMUS_ACTION]== SAMUS_ACTION_NONE)
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_CROUCH_COMBO+19, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);	
+					else if(SamusVars[IS_JUMPING] && SamusVars[IS_SPEED_BOOSTING] && !OnGround()&& SamusVars[SAMUS_ACTION]== SAMUS_ACTION_NONE){
+						Screen->DrawCombo(2, SamusVars[DRAW_X]+8, SamusVars[DRAW_Y]-16, SAMUS_CROUCH_COMBO+19, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 64);	
+						Screen->DrawCombo(2, SamusVars[DRAW_X]+16, SamusVars[DRAW_Y]-16, SAMUS_CROUCH_COMBO+19, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 64);	
+					}
+				}
+				else if(Link->Dir==DIR_RIGHT && SamusVars[SAMUS_ACTION]==SAMUS_ACTION_CROUCH){
+					Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_CROUCH_COMBO+9, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);	
+					Link->InputRight = false;
+					if(Link->PressRight)SamusVars[SAMUS_ACTION]=SAMUS_ACTION_NONE;
+				}
+				else if(Link->Dir == DIR_UP && !Link->PressUp && !Link->InputUp){
+					if(!SamusVars[IS_SHINE_SPARK] && !SamusVars[IS_JUMPING] ){
+						if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_NONE)
+							Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_WALK_COMBO+8, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+						else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_HANGING_LEFT)
+							Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_WALK_COMBO+63, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 1, true, 128);
+						else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_HANGING_RIGHT)
+							Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_WALK_COMBO+40, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 1, true, 128);
+						else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_HANGING_UP)
+							Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_WALK_COMBO+53, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);	
+					}
+					else if(SamusVars[IS_JUMPING] && !SamusVars[IS_SHINE_SPARK] && !OnGround() && SamusVars[SAMUS_ACTION]== SAMUS_ACTION_NONE)
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_WALK_COMBO+8, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+					else{
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_WALK_COMBO+8, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);	
+						Screen->DrawCombo(2, SamusVars[DRAW_X]+2, SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_WALK_COMBO+8, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 64);	
+					}
+				}
+				else if(Link->PressUp ||Link->InputUp){
+					if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_NONE && !SamusVars[IS_JUMPING])
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_WALK_COMBO+9, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);	
+					else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_HANGING_LEFT)
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_WALK_COMBO+63, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 1, true, 128);	
+					else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_HANGING_RIGHT)
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_WALK_COMBO+40, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 1, true, 128);	
+					else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_HANGING_UP)
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_WALK_COMBO+52, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);	
+					else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_CROUCH)
+						SamusVars[SAMUS_ACTION]=SAMUS_ACTION_NONE;
+					if(SamusVars[IS_SHINE_SPARK] && !SamusVars[IS_JUMPING] ){
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_WALK_COMBO+9, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);	
+						Screen->DrawCombo(2, SamusVars[DRAW_X]+2, SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_WALK_COMBO+9, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 64);	
+					}
+					else if(SamusVars[IS_JUMPING] && !SamusVars[IS_SHINE_SPARK] && !OnGround() && SamusVars[SAMUS_ACTION]== SAMUS_ACTION_NONE)
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_WALK_COMBO+9, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);	
+				}
+				else if(Link->Dir == DIR_DOWN && !Link->PressDown && !Link->InputDown){
+					if(!SamusVars[IS_MORPHED] && !SamusVars[IS_SHINE_SPARK] && !SamusVars[IS_JUMPING]){
+						if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_NONE )
+							Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_WALK_COMBO+10, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+						else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_HANGING_LEFT)
+							Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_WALK_COMBO+63, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 1, true, 128);
+						else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_HANGING_RIGHT)
+							Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_WALK_COMBO+68, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 1, true, 128);
+						else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_HANGING_UP)
+							Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_WALK_COMBO+41, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+						else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_CROUCH)
+							Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_CROUCH_COMBO+8, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);	
+					}
+					else if(SamusVars[IS_JUMPING] && !SamusVars[IS_SHINE_SPARK] && !OnGround()&& SamusVars[SAMUS_ACTION]== SAMUS_ACTION_NONE)
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_WALK_COMBO+10, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+					else if(SamusVars[IS_SHINE_SPARK]&& !SamusVars[IS_JUMPING]){
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_WALK_COMBO+10, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+						Screen->DrawCombo(2, SamusVars[DRAW_X]+2, SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_WALK_COMBO+10, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 64);
+					}
+				}
+				else if(Link->PressDown){
+					if(!SamusVars[IS_MORPHED] && !SamusVars[IS_SHINE_SPARK] && !SamusVars[IS_JUMPING]){
+						if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_NONE ){
+							Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_WALK_COMBO+10, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+							if(OnGround())
+								SamusVars[SAMUS_ACTION] = SAMUS_ACTION_CROUCH;
+						}
+						else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_HANGING_LEFT)
+							Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_WALK_COMBO+63, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 1, true, 128);
+						else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_HANGING_RIGHT)
+							Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_WALK_COMBO+68, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 1, true, 128);
+						else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_HANGING_UP)
+							Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_WALK_COMBO+41, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+						else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_CROUCH)
+							Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_CROUCH_COMBO+8, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);	
+					}
+					else if(SamusVars[IS_JUMPING] && !SamusVars[IS_SHINE_SPARK] && !OnGround()&& SamusVars[SAMUS_ACTION]== SAMUS_ACTION_NONE)
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_WALK_COMBO+10, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);	
+					else if(SamusVars[IS_SHINE_SPARK]&& !SamusVars[IS_JUMPING]){
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_CROUCH_COMBO+8, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+						Screen->DrawCombo(2, SamusVars[DRAW_X]+2, SamusVars[DRAW_Y]-16, SAMUS_CROUCH_COMBO+8, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 64);
+					}
+				}		
+				else if(Link->InputDown){
+					if(!SamusVars[IS_MORPHED] && !SamusVars[IS_SHINE_SPARK] && !SamusVars[IS_JUMPING]){
+						if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_NONE ){
+							Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_WALK_COMBO+10, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+							if(OnGround())
+								SamusVars[SAMUS_ACTION] = SAMUS_ACTION_CROUCH;
+						}
+						else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_HANGING_LEFT)
+							Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_WALK_COMBO+63, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 1, true, 128);
+						else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_HANGING_RIGHT)
+							Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_WALK_COMBO+68, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 1, true, 128);
+						else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_HANGING_UP)
+							Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_WALK_COMBO+41, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+						else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_CROUCH)
+							Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_CROUCH_COMBO+8, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);	
+					}
+					else if(SamusVars[IS_JUMPING] && !SamusVars[IS_SHINE_SPARK] && !OnGround()&& SamusVars[SAMUS_ACTION]== SAMUS_ACTION_NONE)
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_WALK_COMBO+10, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);	
+					else if(SamusVars[IS_SHINE_SPARK] && !SamusVars[IS_JUMPING]){
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_CROUCH_COMBO+8, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+						Screen->DrawCombo(2, SamusVars[DRAW_X]+2, SamusVars[DRAW_Y]-16, SAMUS_CROUCH_COMBO+8, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 64);
+					}
+				}
+				else if(Link->Dir==DIR_LEFTUP){
+					if(SamusVars[SAMUS_ACTION]!=SAMUS_ACTION_CROUCH && SamusVars[SAMUS_ACTION]!=SAMUS_ACTION_SS_DIAG_LEFT
+						&& !SamusVars[IS_SHINE_SPARK])
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_AIM_COMBO+32, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+					else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_CROUCH && !SamusVars[IS_SHINE_SPARK])
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_AIM_COMBO+48, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+					else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_SS_DIAG_LEFT || SamusVars[IS_SHINE_SPARK]){
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_AIM_COMBO+33, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+						Screen->DrawCombo(2, SamusVars[DRAW_X]+2, SamusVars[DRAW_Y]-16, SAMUS_AIM_COMBO+33, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 64);
+					}
+				}
+				else if(Link->Dir==DIR_RIGHTUP){
+					if(SamusVars[SAMUS_ACTION]!=SAMUS_ACTION_CROUCH && SamusVars[SAMUS_ACTION]!=SAMUS_ACTION_SS_DIAG_RIGHT
+						&& !SamusVars[IS_SHINE_SPARK])
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_AIM_COMBO+33, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+					else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_CROUCH && !SamusVars[IS_SHINE_SPARK])
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_AIM_COMBO+49, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+					else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_SS_DIAG_RIGHT || SamusVars[IS_SHINE_SPARK]){
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_AIM_COMBO+33, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+						Screen->DrawCombo(2, SamusVars[DRAW_X]-2, SamusVars[DRAW_Y]-16, SAMUS_AIM_COMBO+33, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 64);
+					}
+				}
+				else if(Link->Dir==DIR_LEFTDOWN){
+					if(SamusVars[SAMUS_ACTION]!=SAMUS_ACTION_CROUCH && !SamusVars[IS_SHINE_SPARK])
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_AIM_COMBO+34, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+					else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_CROUCH && !SamusVars[IS_SHINE_SPARK])
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_AIM_COMBO+50, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+					else if(SamusVars[IS_SHINE_SPARK]){
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_AIM_COMBO+34, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+						Screen->DrawCombo(2, SamusVars[DRAW_X]+2, SamusVars[DRAW_Y]-16, SAMUS_AIM_COMBO+34, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 64);
+					}
+				}
+				else if(Link->Dir==DIR_RIGHTDOWN){
+					if(SamusVars[SAMUS_ACTION]!=SAMUS_ACTION_CROUCH && !SamusVars[IS_SHINE_SPARK])
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_AIM_COMBO+35, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+					else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_CROUCH && !SamusVars[IS_SHINE_SPARK])
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_AIM_COMBO+51, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+					else if(SamusVars[IS_SHINE_SPARK]){
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_AIM_COMBO+35, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+						Screen->DrawCombo(2, SamusVars[DRAW_X]-2, SamusVars[DRAW_Y]-16, SAMUS_AIM_COMBO+35, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 64);
+					}
+				}
+			}
+			else if(SamusVars[LINK_ACTION] == LA_ATTACKING||SamusVars[LINK_ACTION] ==LA_CASTING){
+				if(Link->Dir == DIR_UP){
+					if(!SamusVars[IS_SHINE_SPARK] && !SamusVars[IS_JUMPING] ){
+						if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_HANGING_UP)
+							Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_WALK_COMBO+53, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+						else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_HANGING_LEFT)
+							Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_WALK_COMBO+40, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+						else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_HANGING_RIGHT)
+							Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_WALK_COMBO+40, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 1, true, 128);
+						else 						
+							Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_ATTACK_COMBO, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+					}
+					else if(SamusVars[IS_JUMPING] && !SamusVars[IS_SHINE_SPARK] && !OnGround()&& SamusVars[SAMUS_ACTION]== SAMUS_ACTION_NONE)
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_ATTACK_COMBO, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+					else{
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_ATTACK_COMBO, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+						Screen->DrawCombo(2, SamusVars[DRAW_X]+2, SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_ATTACK_COMBO, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 64);
+					}
+				}
+				else if(Link->Dir== DIR_DOWN){
+					if(!SamusVars[IS_SHINE_SPARK] && !SamusVars[IS_JUMPING] ){
+						if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_HANGING_UP)
+							Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_WALK_COMBO+41, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+						else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_HANGING_LEFT)
+							Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_WALK_COMBO+99, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+						else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_HANGING_RIGHT)
+							Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_WALK_COMBO+96, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+						else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_CROUCH)
+							Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_CROUCH_COMBO+10, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);	
+						else
+							Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_ATTACK_COMBO+1, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+					}
+					else if(SamusVars[IS_JUMPING] && !SamusVars[IS_SHINE_SPARK] && !OnGround()&& SamusVars[SAMUS_ACTION]== SAMUS_ACTION_NONE)
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_ATTACK_COMBO+1, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+					else{
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_ATTACK_COMBO+1, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+						Screen->DrawCombo(2, SamusVars[DRAW_X]+2, SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_ATTACK_COMBO+1, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 64);
+					}
+				}
+				else if(Link->Dir==DIR_LEFT){
+					if(!SamusVars[IS_SHINE_SPARK] && !SamusVars[IS_JUMPING]){
+						if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_HANGING_UP)
+							Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_WALK_COMBO+52, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+						else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_HANGING_LEFT)
+							Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_WALK_COMBO+62, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+						else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_HANGING_RIGHT)
+							Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16,  SAMUS_GRAVITY_WALK_COMBO+35, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+						else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_CROUCH)
+							Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_CROUCH_COMBO+10, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);	
+						else
+							Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_ATTACK_COMBO+2, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+					}
+					else if(SamusVars[IS_JUMPING] && !SamusVars[IS_SHINE_SPARK] && !OnGround()&& SamusVars[SAMUS_ACTION]== SAMUS_ACTION_NONE)
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_ATTACK_COMBO+2, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+					else{
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_ATTACK_COMBO+2, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+						Screen->DrawCombo(2, SamusVars[DRAW_X]+2, SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_ATTACK_COMBO+2, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 64);
+					}
+				}
+				else if(Link->Dir==DIR_RIGHT){
+					if(!SamusVars[IS_SHINE_SPARK] && !SamusVars[IS_JUMPING]){
+						if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_HANGING_UP)
+							Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16,  SAMUS_GRAVITY_WALK_COMBO+27, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+						else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_HANGING_LEFT)
+							Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16,  SAMUS_GRAVITY_WALK_COMBO+34, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+						else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_HANGING_RIGHT)
+							Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_WALK_COMBO+61, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+						else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_CROUCH)
+							Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_CROUCH_COMBO+11, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);	
+						else
+							Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_ATTACK_COMBO+3, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+					}
+					else if(SamusVars[IS_JUMPING] && !SamusVars[IS_SHINE_SPARK] && !OnGround()&& SamusVars[SAMUS_ACTION]== SAMUS_ACTION_NONE)
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_ATTACK_COMBO+3, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+					else{
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_ATTACK_COMBO+3, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+						Screen->DrawCombo(2, SamusVars[DRAW_X]-2, SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_ATTACK_COMBO+3, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 64);
+					}
+				}
+				else if(Link->Dir==DIR_LEFTUP){
+					if(SamusVars[SAMUS_ACTION]!=SAMUS_ACTION_CROUCH && SamusVars[SAMUS_ACTION]!=SAMUS_ACTION_SS_DIAG_LEFT
+						&& !SamusVars[IS_SHINE_SPARK])
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_AIM_COMBO+40, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+					else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_CROUCH && !SamusVars[IS_SHINE_SPARK])
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_AIM_COMBO+56, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+					else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_SS_DIAG_LEFT || SamusVars[IS_SHINE_SPARK]){
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_AIM_COMBO+40, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+						Screen->DrawCombo(2, SamusVars[DRAW_X]+2, SamusVars[DRAW_Y]-16, SAMUS_AIM_COMBO+40, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 64);
+					}
+				}
+				else if(Link->Dir==DIR_RIGHTUP){
+					if(SamusVars[SAMUS_ACTION]!=SAMUS_ACTION_CROUCH && SamusVars[SAMUS_ACTION]!=SAMUS_ACTION_SS_DIAG_RIGHT
+						&& !SamusVars[IS_SHINE_SPARK])
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_AIM_COMBO+41, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+					else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_CROUCH && !SamusVars[IS_SHINE_SPARK])
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_AIM_COMBO+57, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+					else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_SS_DIAG_RIGHT || SamusVars[IS_SHINE_SPARK]){
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_AIM_COMBO+41, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+						Screen->DrawCombo(2, SamusVars[DRAW_X]-2, SamusVars[DRAW_Y]-16, SAMUS_AIM_COMBO+41, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 64);
+					}
+				}
+				else if(Link->Dir==DIR_LEFTDOWN){
+					if(SamusVars[SAMUS_ACTION]!=SAMUS_ACTION_CROUCH && !SamusVars[IS_SHINE_SPARK])
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_AIM_COMBO+42, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+					else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_CROUCH && !SamusVars[IS_SHINE_SPARK])
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_AIM_COMBO+58, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+					else if(SamusVars[IS_SHINE_SPARK]){
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_AIM_COMBO+42, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+						Screen->DrawCombo(2, SamusVars[DRAW_X]+2, SamusVars[DRAW_Y]-16, SAMUS_AIM_COMBO+42, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 64);
+					}
+				}
+				else if(Link->Dir==DIR_RIGHTDOWN){
+					if(SamusVars[SAMUS_ACTION]!=SAMUS_ACTION_CROUCH && !SamusVars[IS_SHINE_SPARK])
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_AIM_COMBO+43, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+					else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_CROUCH && !SamusVars[IS_SHINE_SPARK])
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_AIM_COMBO+59, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+					else if(SamusVars[IS_SHINE_SPARK]){
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_AIM_COMBO+43, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+						Screen->DrawCombo(2, SamusVars[DRAW_X]-2, SamusVars[DRAW_Y]-16, SAMUS_AIM_COMBO+43, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 64);
+					}
+				}
+			}
+			else if(SamusVars[LINK_ACTION] ==LA_HOLD1LAND)
+				Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_WALK_COMBO+24, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+			else if(SamusVars[LINK_ACTION] ==LA_HOLD2LAND)
+				Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_WALK_COMBO+25, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+			else if(SamusVars[LINK_ACTION] ==LA_GOTHURTLAND|| SamusVars[LINK_ACTION]== LA_DYING)
+				Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_WALK_COMBO+26, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, 48, 0, true, 64);
+		}	
+		else{
+			if(SamusVars[LINK_ACTION] != LA_ATTACKING && SamusVars[LINK_ACTION] !=LA_CASTING){
+				if(Link->Dir == DIR_LEFT && !Link->PressLeft && !Link->InputLeft){
+					if(!SamusVars[IS_SHINE_SPARK] && !SamusVars[IS_JUMPING]){
+						if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_NONE )
+							Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_WALK_COMBO, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+						else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_HANGING_LEFT)
+							Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_WALK_COMBO+55, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+						else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_HANGING_RIGHT)
+							Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_WALK_COMBO+33, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+						else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_HANGING_UP)
+							Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_WALK_COMBO+43, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+						else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_CROUCH)
+							Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_CROUCH_COMBO, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);	
+					}
+					else if(SamusVars[IS_JUMPING] && !SamusVars[IS_SPEED_BOOSTING] && !OnGround()&& SamusVars[SAMUS_ACTION]== SAMUS_ACTION_NONE)
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_WALK_COMBO, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);	
+					else if(SamusVars[IS_JUMPING] && SamusVars[IS_SPEED_BOOSTING] && !OnGround()&& SamusVars[SAMUS_ACTION]== SAMUS_ACTION_NONE){
+						Screen->DrawCombo(2, SamusVars[DRAW_X]+8, SamusVars[DRAW_Y]-16, SAMUS_WALK_COMBO, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 64);	
+						Screen->DrawCombo(2, SamusVars[DRAW_X]+16, SamusVars[DRAW_Y]-16, SAMUS_WALK_COMBO, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 64);	
+					}
+					else if(!SamusVars[IS_JUMPING] && SamusVars[IS_SPEED_BOOSTING]){
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_WALK_COMBO, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+						Screen->DrawCombo(2, SamusVars[DRAW_X]+2, SamusVars[DRAW_Y]-16, SAMUS_WALK_COMBO, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 64);
+					}
+					else if(SamusVars[IS_SHINE_SPARK] && !SamusVars[IS_JUMPING]){
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_WALK_COMBO, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+						Screen->DrawCombo(2, SamusVars[DRAW_X]+2, SamusVars[DRAW_Y]-16, SAMUS_WALK_COMBO, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 64);
+					}
+				}
+				else if(Link->PressLeft && SamusVars[SAMUS_ACTION]!=SAMUS_ACTION_CROUCH){
+					if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_NONE && !SamusVars[IS_JUMPING])Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_WALK_COMBO+2, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+					else if(SamusVars[SAMUS_ACTION] ==SAMUS_ACTION_HANGING_LEFT)Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_WALK_COMBO+55, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+					else if(SamusVars[SAMUS_ACTION] ==SAMUS_ACTION_HANGING_RIGHT)Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_WALK_COMBO+33, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+					else if(SamusVars[SAMUS_ACTION] ==SAMUS_ACTION_HANGING_UP)Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_WALK_COMBO+43, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+					if(SamusVars[IS_SPEED_BOOSTING] && !SamusVars[IS_JUMPING]){
+						Screen->DrawCombo(2, SamusVars[DRAW_X]+8, SamusVars[DRAW_Y]-16, SAMUS_WALK_COMBO+2, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 64);
+						Screen->DrawCombo(2, SamusVars[DRAW_X]+16, SamusVars[DRAW_Y]-16, SAMUS_WALK_COMBO+2, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 64);
+					}
+					else if(SamusVars[IS_SHINE_SPARK] && !SamusVars[IS_JUMPING]){
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_WALK_COMBO+2, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+						Screen->DrawCombo(2, SamusVars[DRAW_X]+2, SamusVars[DRAW_Y]-16, SAMUS_WALK_COMBO+2, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 64);
+					}
+					else if(SamusVars[IS_JUMPING] && !SamusVars[IS_SPEED_BOOSTING] && !OnGround()&& SamusVars[SAMUS_ACTION]== SAMUS_ACTION_NONE)
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_CROUCH_COMBO+16, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);	
+					else if(SamusVars[IS_JUMPING] && SamusVars[IS_SPEED_BOOSTING] && !OnGround()&& SamusVars[SAMUS_ACTION]== SAMUS_ACTION_NONE){
+						Screen->DrawCombo(2, SamusVars[DRAW_X]+8, SamusVars[DRAW_Y]-16, SAMUS_CROUCH_COMBO+16, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 64);	
+						Screen->DrawCombo(2, SamusVars[DRAW_X]+16, SamusVars[DRAW_Y]-16, SAMUS_CROUCH_COMBO+16, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 64);	
+					}
+				}
+				else if(Link->InputLeft && SamusVars[SAMUS_ACTION]!=SAMUS_ACTION_CROUCH){
+					if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_NONE && !SamusVars[IS_JUMPING] )Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_WALK_COMBO+2, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+					else if(SamusVars[SAMUS_ACTION] ==SAMUS_ACTION_HANGING_LEFT)Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_WALK_COMBO+55, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+					else if(SamusVars[SAMUS_ACTION] ==SAMUS_ACTION_HANGING_RIGHT)Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_WALK_COMBO+33, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+					else if(SamusVars[SAMUS_ACTION] ==SAMUS_ACTION_HANGING_UP)Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_WALK_COMBO+43, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+					if(SamusVars[IS_SPEED_BOOSTING] && !SamusVars[IS_JUMPING]){
+						Screen->DrawCombo(2, SamusVars[DRAW_X]+8, SamusVars[DRAW_Y]-16, SAMUS_WALK_COMBO+2, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 64);
+						Screen->DrawCombo(2, SamusVars[DRAW_X]+16, SamusVars[DRAW_Y]-16, SAMUS_WALK_COMBO+2, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 64);
+					}
+					else if(SamusVars[IS_SHINE_SPARK] && !SamusVars[IS_JUMPING]){
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_WALK_COMBO+2, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+						Screen->DrawCombo(2, SamusVars[DRAW_X]+2, SamusVars[DRAW_Y]-16, SAMUS_WALK_COMBO+2, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 64);
+					}
+					else if(SamusVars[IS_JUMPING] && !SamusVars[IS_SPEED_BOOSTING] && !OnGround()&& SamusVars[SAMUS_ACTION]== SAMUS_ACTION_NONE)
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_CROUCH_COMBO+16, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);	
+					else if(SamusVars[IS_JUMPING] && SamusVars[IS_SPEED_BOOSTING] && !OnGround()&& SamusVars[SAMUS_ACTION]== SAMUS_ACTION_NONE){
+						Screen->DrawCombo(2, SamusVars[DRAW_X]+8, SamusVars[DRAW_Y]-16, SAMUS_CROUCH_COMBO+16, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 64);	
+						Screen->DrawCombo(2, SamusVars[DRAW_X]+16, SamusVars[DRAW_Y]-16, SAMUS_CROUCH_COMBO+16, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 64);	
+					}
+				}
+				else if(Link->Dir==DIR_LEFT && SamusVars[SAMUS_ACTION]==SAMUS_ACTION_CROUCH){
+					Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_CROUCH_COMBO+1, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);	
+					Link->InputLeft = false;
+					if(Link->PressLeft)SamusVars[SAMUS_ACTION]=SAMUS_ACTION_NONE;
+				}
+				else if(Link->Dir == DIR_RIGHT && !Link->PressRight && !Link->InputRight){
+					if(!SamusVars[IS_SHINE_SPARK] && !SamusVars[IS_JUMPING]){
+						if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_NONE )
+							Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_WALK_COMBO+1, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+						else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_HANGING_LEFT)
+							Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_WALK_COMBO+32, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+						else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_HANGING_RIGHT)
+							Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_WALK_COMBO+60, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+						else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_HANGING_UP)
+							Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_WALK_COMBO+42, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+						else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_CROUCH)
+							Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_CROUCH_COMBO+1, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 1, true, 128);	
+					}
+					else if(SamusVars[IS_JUMPING] && !SamusVars[IS_SPEED_BOOSTING] && !OnGround()&& SamusVars[SAMUS_ACTION]== SAMUS_ACTION_NONE)
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_WALK_COMBO+1, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);	
+					else if(SamusVars[IS_JUMPING] && SamusVars[IS_SPEED_BOOSTING] && !OnGround()&& SamusVars[SAMUS_ACTION]== SAMUS_ACTION_NONE){
+						Screen->DrawCombo(2, SamusVars[DRAW_X]-8, SamusVars[DRAW_Y]-16, SAMUS_WALK_COMBO+1, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 64);	
+						Screen->DrawCombo(2, SamusVars[DRAW_X]-16, SamusVars[DRAW_Y]-16, SAMUS_WALK_COMBO+1, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 64);	
+					}
+					else if(!SamusVars[IS_JUMPING] && SamusVars[IS_SPEED_BOOSTING] ){
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_WALK_COMBO+1, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+						Screen->DrawCombo(2, SamusVars[DRAW_X]-2, SamusVars[DRAW_Y]-16, SAMUS_WALK_COMBO+1, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 64);
+					}
+					else if(SamusVars[IS_SHINE_SPARK] && !SamusVars[IS_JUMPING]){
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_WALK_COMBO+1, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+						Screen->DrawCombo(2, SamusVars[DRAW_X]-2, SamusVars[DRAW_Y]-16, SAMUS_WALK_COMBO+1, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 64);
+					}
+				}
+				else if(Link->PressRight && SamusVars[SAMUS_ACTION]!=SAMUS_ACTION_CROUCH){
+					if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_NONE && !SamusVars[IS_JUMPING] )Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_WALK_COMBO+3, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+					else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_HANGING_LEFT)Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_WALK_COMBO+32, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+					else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_HANGING_RIGHT)Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_WALK_COMBO+60, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+					else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_HANGING_UP)Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_WALK_COMBO+42, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+					if(SamusVars[IS_SPEED_BOOSTING] && !SamusVars[IS_JUMPING] ){
+						Screen->DrawCombo(2, SamusVars[DRAW_X]-8, SamusVars[DRAW_Y]-16, SAMUS_WALK_COMBO+3, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 64);
+						Screen->DrawCombo(2, SamusVars[DRAW_X]-16, SamusVars[DRAW_Y]-16, SAMUS_WALK_COMBO+3, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 64);
+					}
+					else if(SamusVars[IS_SHINE_SPARK] && !SamusVars[IS_JUMPING]){
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_WALK_COMBO+3, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+						Screen->DrawCombo(2, SamusVars[DRAW_X]-2, SamusVars[DRAW_Y]-16, SAMUS_WALK_COMBO+3, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 64);
+					}
+					else if(SamusVars[IS_JUMPING] && !SamusVars[IS_SPEED_BOOSTING]  && !OnGround()&& SamusVars[SAMUS_ACTION]== SAMUS_ACTION_NONE)
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_CROUCH_COMBO+17, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);	
+					else if(SamusVars[IS_JUMPING] && SamusVars[IS_SPEED_BOOSTING] && !OnGround()&& SamusVars[SAMUS_ACTION]== SAMUS_ACTION_NONE){
+						Screen->DrawCombo(2, SamusVars[DRAW_X]+8, SamusVars[DRAW_Y]-16, SAMUS_CROUCH_COMBO+17, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 64);	
+						Screen->DrawCombo(2, SamusVars[DRAW_X]+16, SamusVars[DRAW_Y]-16, SAMUS_CROUCH_COMBO+17, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 64);	
+					}
+				}
+				else if(Link->InputRight && SamusVars[SAMUS_ACTION]!=SAMUS_ACTION_CROUCH){
+					if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_NONE && !SamusVars[IS_JUMPING] )Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_WALK_COMBO+3, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+					else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_HANGING_LEFT)Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_WALK_COMBO+32, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+					else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_HANGING_RIGHT)Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_WALK_COMBO+60, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+					else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_HANGING_UP)Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_WALK_COMBO+42, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+					if(SamusVars[IS_SPEED_BOOSTING] && !SamusVars[IS_JUMPING] ){
+						Screen->DrawCombo(2, SamusVars[DRAW_X]-8, SamusVars[DRAW_Y]-16, SAMUS_WALK_COMBO+3, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 64);
+						Screen->DrawCombo(2, SamusVars[DRAW_X]-16, SamusVars[DRAW_Y]-16, SAMUS_WALK_COMBO+3, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 64);
+					}
+					else if(SamusVars[IS_SHINE_SPARK] && !SamusVars[IS_JUMPING] ){
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_WALK_COMBO+3, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+						Screen->DrawCombo(2, SamusVars[DRAW_X]-2, SamusVars[DRAW_Y]-16, SAMUS_WALK_COMBO+3, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 64);
+					}
+					else if(SamusVars[IS_JUMPING] && !SamusVars[IS_SPEED_BOOSTING] && !OnGround()&& SamusVars[SAMUS_ACTION]== SAMUS_ACTION_NONE)
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_CROUCH_COMBO+17, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);	
+					else if(SamusVars[IS_JUMPING] && SamusVars[IS_SPEED_BOOSTING] && !OnGround()&& SamusVars[SAMUS_ACTION]== SAMUS_ACTION_NONE){
+						Screen->DrawCombo(2, SamusVars[DRAW_X]+8, SamusVars[DRAW_Y]-16, SAMUS_CROUCH_COMBO+17, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 64);	
+						Screen->DrawCombo(2, SamusVars[DRAW_X]+16, SamusVars[DRAW_Y]-16, SAMUS_CROUCH_COMBO+17, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 64);	
+					}
+				}
+				else if(Link->Dir==DIR_RIGHT && SamusVars[SAMUS_ACTION]==SAMUS_ACTION_CROUCH){
+					Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_CROUCH_COMBO+1, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 1, true, 128);	
+					Link->InputRight = false;
+					if(Link->PressRight)SamusVars[SAMUS_ACTION]=SAMUS_ACTION_NONE;
+				}
+				else if(Link->Dir == DIR_UP && !Link->PressUp && !Link->InputUp){
+					if(!SamusVars[IS_SHINE_SPARK] && !SamusVars[IS_JUMPING]){
+						if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_NONE )
+							Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_WALK_COMBO+8, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+						else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_HANGING_LEFT)
+							Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_WALK_COMBO+25, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+						else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_HANGING_RIGHT)
+							Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_WALK_COMBO+24, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+						else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_HANGING_UP)
+							Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_WALK_COMBO+52, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+					}
+					else if(SamusVars[IS_JUMPING] && !SamusVars[IS_SHINE_SPARK] && !OnGround()&& SamusVars[SAMUS_ACTION]== SAMUS_ACTION_NONE)
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_WALK_COMBO+8, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);	
+					else{
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_WALK_COMBO+8, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);	
+						Screen->DrawCombo(2, SamusVars[DRAW_X]+2, SamusVars[DRAW_Y]-16, SAMUS_WALK_COMBO+8, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 64);	
+					}
+				}
+				else if(Link->PressUp ||Link->InputUp){
+					if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_NONE && !SamusVars[IS_JUMPING] )
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_WALK_COMBO+8, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);	
+					else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_HANGING_LEFT)
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_WALK_COMBO+25, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);	
+					else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_HANGING_RIGHT)
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_WALK_COMBO+24, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);	
+					else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_HANGING_UP)
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_WALK_COMBO+52, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);	
+					else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_CROUCH)
+						SamusVars[SAMUS_ACTION]= SAMUS_ACTION_NONE;
+					if(SamusVars[IS_SHINE_SPARK] && !SamusVars[IS_JUMPING] ){
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_WALK_COMBO+8, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);	
+						Screen->DrawCombo(2, SamusVars[DRAW_X]+2, SamusVars[DRAW_Y]-16, SAMUS_WALK_COMBO+8, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 64);	
+					}
+					else if(SamusVars[IS_JUMPING] && !OnGround()&& SamusVars[SAMUS_ACTION]== SAMUS_ACTION_NONE)
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_CROUCH_COMBO+17, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);	
+				}
+				else if(Link->Dir == DIR_DOWN && !Link->PressDown && !Link->InputDown){
+					if(!SamusVars[IS_MORPHED] && !SamusVars[IS_SHINE_SPARK] && !SamusVars[IS_JUMPING]){
+						if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_NONE )
+							Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_WALK_COMBO+10, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+						else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_HANGING_LEFT)
+							Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_WALK_COMBO+68, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+						else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_HANGING_RIGHT)
+							Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_WALK_COMBO+63, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+						else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_HANGING_UP)
+							Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_WALK_COMBO+41, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+						else if(SamusVars[SAMUS_ACTION] ==SAMUS_ACTION_CROUCH)
+							Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_CROUCH_COMBO, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);	
+					}
+					else if(SamusVars[IS_SHINE_SPARK] && !SamusVars[IS_JUMPING] ){
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_WALK_COMBO+10, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+						Screen->DrawCombo(2, SamusVars[DRAW_X]+2, SamusVars[DRAW_Y]-16, SAMUS_WALK_COMBO+10, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 64);
+					}
+					else if(SamusVars[IS_JUMPING] && !OnGround()&& SamusVars[SAMUS_ACTION]== SAMUS_ACTION_NONE)
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_WALK_COMBO+10, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);	
+				}
+				else if(Link->PressDown){
+					if(!SamusVars[IS_MORPHED] && !SamusVars[IS_SHINE_SPARK] && !SamusVars[IS_JUMPING]){
+						if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_NONE ){
+							Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_WALK_COMBO+10, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+							if(OnGround())
+								SamusVars[SAMUS_ACTION] = SAMUS_ACTION_CROUCH;
+						}
+						else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_HANGING_LEFT)
+							Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_WALK_COMBO+68, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 1, true, 128);
+						else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_HANGING_RIGHT)
+							Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_WALK_COMBO+63, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+						else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_HANGING_UP)
+							Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_WALK_COMBO+41, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+						else if(SamusVars[SAMUS_ACTION] ==SAMUS_ACTION_CROUCH)
+							Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_CROUCH_COMBO, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);	
+						
+					}
+					else if(SamusVars[IS_SHINE_SPARK] && !SamusVars[IS_JUMPING] ){
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_WALK_COMBO+10, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+						Screen->DrawCombo(2, SamusVars[DRAW_X]+2, SamusVars[DRAW_Y]-16, SAMUS_WALK_COMBO+10, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 64);
+					}
+					else if(SamusVars[IS_JUMPING] && !SamusVars[IS_SHINE_SPARK] && !OnGround()&& SamusVars[SAMUS_ACTION]== SAMUS_ACTION_NONE)
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_WALK_COMBO+10, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+				}
+				else if(Link->InputDown){
+					if(!SamusVars[IS_MORPHED] && !SamusVars[IS_SHINE_SPARK] && !SamusVars[IS_JUMPING]){
+						if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_NONE ){
+							Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_WALK_COMBO+10, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+							if(OnGround())
+								SamusVars[SAMUS_ACTION] = SAMUS_ACTION_CROUCH;
+						}
+						else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_HANGING_LEFT)
+							Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_WALK_COMBO+68, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+						else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_HANGING_RIGHT)
+							Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_WALK_COMBO+63, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+						else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_HANGING_UP)
+							Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_WALK_COMBO+41, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+						else if(SamusVars[SAMUS_ACTION] ==SAMUS_ACTION_CROUCH)
+							Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_CROUCH_COMBO, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);	
+					}
+					else if(SamusVars[IS_SHINE_SPARK] && !SamusVars[IS_JUMPING] ){
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_CROUCH_COMBO, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+						Screen->DrawCombo(2, SamusVars[DRAW_X]+2, SamusVars[DRAW_Y]-16, SAMUS_CROUCH_COMBO, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 64);
+					}
+					else if(SamusVars[IS_JUMPING] && !SamusVars[IS_SHINE_SPARK] && !OnGround() && SamusVars[SAMUS_ACTION]== SAMUS_ACTION_NONE)
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_WALK_COMBO+10, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+				}
+				else if(Link->Dir==DIR_LEFTUP){
+					if(SamusVars[SAMUS_ACTION]!=SAMUS_ACTION_CROUCH && SamusVars[SAMUS_ACTION]!=SAMUS_ACTION_SS_DIAG_LEFT
+						&& !SamusVars[IS_SHINE_SPARK])
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_AIM_COMBO, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+					else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_CROUCH && !SamusVars[IS_SHINE_SPARK])
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_AIM_COMBO+16, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+					else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_SS_DIAG_LEFT || SamusVars[IS_SHINE_SPARK]){
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_AIM_COMBO, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+						Screen->DrawCombo(2, SamusVars[DRAW_X]+2, SamusVars[DRAW_Y]-16, SAMUS_AIM_COMBO, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 64);
+					}
+				}
+				else if(Link->Dir==DIR_RIGHTUP){
+					if(SamusVars[SAMUS_ACTION]!=SAMUS_ACTION_CROUCH && SamusVars[SAMUS_ACTION]!=SAMUS_ACTION_SS_DIAG_RIGHT
+						&& !SamusVars[IS_SHINE_SPARK])
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_AIM_COMBO+1, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+					else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_CROUCH && !SamusVars[IS_SHINE_SPARK])
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_AIM_COMBO+17, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+					else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_SS_DIAG_RIGHT || SamusVars[IS_SHINE_SPARK]){
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_AIM_COMBO+1, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+						Screen->DrawCombo(2, SamusVars[DRAW_X]-2, SamusVars[DRAW_Y]-16, SAMUS_AIM_COMBO+1, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 64);
+					}
+				}
+				else if(Link->Dir==DIR_LEFTDOWN){
+					if(SamusVars[SAMUS_ACTION]!=SAMUS_ACTION_CROUCH && !SamusVars[IS_SHINE_SPARK])
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_AIM_COMBO+2, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+					else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_CROUCH && !SamusVars[IS_SHINE_SPARK])
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_AIM_COMBO+18, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+					else if(SamusVars[IS_SHINE_SPARK]){
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_AIM_COMBO+2, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+						Screen->DrawCombo(2, SamusVars[DRAW_X]+2, SamusVars[DRAW_Y]-16, SAMUS_AIM_COMBO+2, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 64);
+					}
+				}
+				else if(Link->Dir==DIR_RIGHTDOWN){
+					if(SamusVars[SAMUS_ACTION]!=SAMUS_ACTION_CROUCH && !SamusVars[IS_SHINE_SPARK])
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_AIM_COMBO+3, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+					else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_CROUCH && !SamusVars[IS_SHINE_SPARK])
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_AIM_COMBO+19, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+					else if(SamusVars[IS_SHINE_SPARK]){
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_AIM_COMBO+3, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+						Screen->DrawCombo(2, SamusVars[DRAW_X]-2, SamusVars[DRAW_Y]-16, SAMUS_AIM_COMBO+3, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 64);
+					}
+				}	
+			}	
+			else if(SamusVars[LINK_ACTION] == LA_ATTACKING||SamusVars[LINK_ACTION] ==LA_CASTING){
+				if(Link->Dir == DIR_UP){
+					if(!SamusVars[IS_SHINE_SPARK] && !SamusVars[IS_JUMPING] ){
+						if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_HANGING_UP)
+							Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_WALK_COMBO+53, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+						else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_HANGING_LEFT)
+							Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_WALK_COMBO+40, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+						else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_HANGING_RIGHT)
+							Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_WALK_COMBO+24, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+						else
+							Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_ATTACK_COMBO, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+					}
+					else if(SamusVars[IS_JUMPING] && !SamusVars[IS_SHINE_SPARK] && !OnGround()&& SamusVars[SAMUS_ACTION]== SAMUS_ACTION_NONE)
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_ATTACK_COMBO, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+					else{
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_ATTACK_COMBO, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+						Screen->DrawCombo(2, SamusVars[DRAW_X]+2, SamusVars[DRAW_Y]-16, SAMUS_ATTACK_COMBO, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 64);
+					}
+				}
+				else if(Link->Dir== DIR_DOWN){
+					if(!SamusVars[IS_SHINE_SPARK] && !SamusVars[IS_JUMPING] ){
+						if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_HANGING_UP)
+							Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_WALK_COMBO+11, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 1, true, 128);
+						else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_HANGING_LEFT)
+							Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_WALK_COMBO+71, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 1, true, 128);
+						else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_HANGING_RIGHT)
+							Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_WALK_COMBO+70, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+						else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_CROUCH)
+							Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_CROUCH_COMBO+2, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);	
+						else
+							Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_ATTACK_COMBO+1, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+					}
+					else if(SamusVars[IS_JUMPING] && !SamusVars[IS_SHINE_SPARK] && !OnGround()&& SamusVars[SAMUS_ACTION]== SAMUS_ACTION_NONE)
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_ATTACK_COMBO+1, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+					else{
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_ATTACK_COMBO+1, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+						Screen->DrawCombo(2, SamusVars[DRAW_X]+2, SamusVars[DRAW_Y]-16, SAMUS_ATTACK_COMBO+1, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 64);
+					}
+				}
+				else if(Link->Dir==DIR_LEFT){
+					if(!SamusVars[IS_SHINE_SPARK] && !SamusVars[IS_JUMPING]){
+						if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_HANGING_UP)
+							Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_WALK_COMBO+26, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+						else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_HANGING_LEFT)
+							Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_WALK_COMBO+68, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+						else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_HANGING_RIGHT)
+							Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16,  SAMUS_WALK_COMBO+35, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+						else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_CROUCH)
+							Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_CROUCH_COMBO+2, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);	
+						else
+							Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_ATTACK_COMBO+2, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+					}
+					else if(SamusVars[IS_JUMPING] && !SamusVars[IS_SHINE_SPARK] && !OnGround()&& SamusVars[SAMUS_ACTION]== SAMUS_ACTION_NONE)
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_ATTACK_COMBO+2, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+					else{
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_ATTACK_COMBO+2, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+						Screen->DrawCombo(2, SamusVars[DRAW_X]+2, SamusVars[DRAW_Y]-16, SAMUS_ATTACK_COMBO+2, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 64);
+					}
+				}
+				else if(Link->Dir==DIR_RIGHT){
+					if(!SamusVars[IS_SHINE_SPARK] && !SamusVars[IS_JUMPING]){
+						if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_HANGING_UP)
+							Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16,  SAMUS_WALK_COMBO+27, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+						else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_HANGING_LEFT)
+							Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16,  SAMUS_WALK_COMBO+34, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+						else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_HANGING_RIGHT)
+							Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_WALK_COMBO+61, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+						else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_CROUCH)
+							Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_CROUCH_COMBO+3, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 1, true, 128);	
+						else
+							Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_ATTACK_COMBO+3, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+					}
+					else if(SamusVars[IS_JUMPING] && !SamusVars[IS_SHINE_SPARK] && !OnGround() && SamusVars[SAMUS_ACTION]== SAMUS_ACTION_NONE)
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_ATTACK_COMBO+3, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+					else{
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_ATTACK_COMBO+3, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+						Screen->DrawCombo(2, SamusVars[DRAW_X]-2, SamusVars[DRAW_Y]-16, SAMUS_ATTACK_COMBO+3, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 64);
+					}
+				}
+				else if(Link->Dir==DIR_LEFTUP){
+					if(SamusVars[SAMUS_ACTION]!=SAMUS_ACTION_CROUCH && SamusVars[SAMUS_ACTION]!=SAMUS_ACTION_SS_DIAG_LEFT
+						&& !SamusVars[IS_SHINE_SPARK])
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_AIM_COMBO+8, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+					else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_CROUCH && !SamusVars[IS_SHINE_SPARK])
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_AIM_COMBO+24, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+					else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_SS_DIAG_LEFT || SamusVars[IS_SHINE_SPARK]){
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_AIM_COMBO+8, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+						Screen->DrawCombo(2, SamusVars[DRAW_X]+2, SamusVars[DRAW_Y]-16, SAMUS_AIM_COMBO+8, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 64);
+					}
+				}
+				else if(Link->Dir==DIR_RIGHTUP){
+					if(SamusVars[SAMUS_ACTION]!=SAMUS_ACTION_CROUCH && SamusVars[SAMUS_ACTION]!=SAMUS_ACTION_SS_DIAG_RIGHT
+						&& !SamusVars[IS_SHINE_SPARK])
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_AIM_COMBO+9, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+					else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_CROUCH && !SamusVars[IS_SHINE_SPARK])
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_AIM_COMBO+25, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+					else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_SS_DIAG_RIGHT || SamusVars[IS_SHINE_SPARK]){
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_AIM_COMBO+9, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+						Screen->DrawCombo(2, SamusVars[DRAW_X]-2, SamusVars[DRAW_Y]-16, SAMUS_AIM_COMBO+9, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 64);
+					}
+				}
+				else if(Link->Dir==DIR_LEFTDOWN){
+					if(SamusVars[SAMUS_ACTION]!=SAMUS_ACTION_CROUCH && !SamusVars[IS_SHINE_SPARK])
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_AIM_COMBO+10, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+					else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_CROUCH && !SamusVars[IS_SHINE_SPARK])
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_AIM_COMBO+26, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+					else if(SamusVars[IS_SHINE_SPARK]){
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_AIM_COMBO+10, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+						Screen->DrawCombo(2, SamusVars[DRAW_X]+2, SamusVars[DRAW_Y]-16, SAMUS_AIM_COMBO+10, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 64);
+					}
+				}
+				else if(Link->Dir==DIR_RIGHTDOWN){
+					if(SamusVars[SAMUS_ACTION]!=SAMUS_ACTION_CROUCH && !SamusVars[IS_SHINE_SPARK])
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_AIM_COMBO+11, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+					else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_CROUCH && !SamusVars[IS_SHINE_SPARK])
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_AIM_COMBO+27, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+					else if(SamusVars[IS_SHINE_SPARK]){
+						Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_AIM_COMBO+11, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+						Screen->DrawCombo(2, SamusVars[DRAW_X]-2, SamusVars[DRAW_Y]-16, SAMUS_AIM_COMBO+11, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 64);
+					}
+				}	
+			}
+			else if(SamusVars[LINK_ACTION] ==LA_HOLD1LAND)
+				Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_WALK_COMBO+10, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+			else if(SamusVars[LINK_ACTION] ==LA_HOLD2LAND)
+				Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_WALK_COMBO+10, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+			else if(SamusVars[LINK_ACTION] ==LA_GOTHURTLAND|| SamusVars[LINK_ACTION]== LA_DYING)
+				Screen->DrawCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_WALK_COMBO+10, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, 48, 0, true, 64);
+		}
+	}
+}
