@@ -126,3 +126,40 @@ void ScrewAttack(){
 bool isScrewAttackBlock(int loc){
 	return (ComboFI(loc,CF_DASH) && Screen->ComboT[loc]== CT_OVERHEAD);
 }
+
+//Return placed flag at combo location.
+int ComboF(int loc){
+	return Screen->ComboF[loc];
+}
+
+int DashCheck(int x, int y, bool xy){
+     int xoffset; int yoffset;
+     bool Solid;
+     if(xy) xoffset = 4;
+     else yoffset = 3;
+     if(Screen->isSolid(x-xoffset,y-yoffset) || Screen->isSolid(x+xoffset,y+yoffset)) Solid = true;
+     if(!Solid && !ComboFI(x-xoffset,y-yoffset,CF_DASH)
+		&& !ComboFI(x+xoffset,y+yoffset,CF_DASH)) return 0;
+     else if(Solid && (ComboFI(x-xoffset,y-yoffset,CF_DASH)
+         || ComboFI(x+xoffset,y+yoffset,CF_DASH))) return 1;
+     else return 2;
+}
+
+void DustDrawLW(){
+   lweapon Dust;
+   if(SamusVars[SA_DASH_COUNTER]%4 == 0){
+      for(int j=1;j<=Screen->NumLWeapons();j++){
+         Dust = Screen->LoadLWeapon(j);
+         if(Dust->ID != LW_SCRIPT10) continue;
+         if(Link->Dir < 1) Dust->Y-=3;
+         else if(Link->Dir < 2) Dust->Y+=3;
+         else if(Link->Dir < 3) Dust->X-=3;
+         else if(Link->Dir < 4) Dust->X+=3;
+      }//end for loop
+      Dust = Screen->CreateLWeapon(LW_SCRIPT10);
+	  Dust->UseSprite(SCREW_ATTACK_SPRITE);
+      Dust->Y = Link->Y+8;
+      Dust->X = Link->X;
+      Dust->DeadState =  Dust->NumFrames*Dust->ASpeed;
+   }//end dust if
+}
