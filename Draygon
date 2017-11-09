@@ -1,0 +1,245 @@
+//Section 33. Draygon Script.
+
+const int DRAYGON_BODY = 212;//Enemy Id for body.
+const int DRAYGON_BLOB_SPRITE = 44;//Weapon sprite for blob.
+const int DRAYGON_BODY_LEFT_TILE = 11960;//Tile of the body facing left.
+const int DRAYGON_NORMAL_CSET =7;//Normal Draygon Cset.
+const int DRAYGON_HURT_CSET = 6;//Draygon Hurt Cset.
+const int DRAYGON_BODY_RIGHT_TILE = 8580;////Tile of the body facing left.
+
+ffc script Draygon{
+	void run(int enemyID){
+		npc ghost = Ghost_InitAutoGhost(this, enemyID);
+		//Create body.
+		npc body = Screen->CreateNPC(DRAYGON_BODY);
+		eweapon blob[6];///Some eweapons we can use.
+		int Mode = 0;//Controls behavior.
+		int ModeTimer = Rand(240,300);///Determines how long each mode lasts.
+		//Set flags.
+		Ghost_SetFlag(GHF_IGNORE_ALL_TERRAIN);
+		Ghost_SetFlag(GHF_IGNORE_NO_ENEMY);
+		Ghost_SetFlag(GHF_NO_FALL);
+		Ghost_SetFlag(GHF_FAKE_Z);
+		//Hover code from sideview enemies.
+		int Misc1 = ghost->Attributes[1];//Half width of horizontal movement
+		int Misc2 = ghost->Attributes[2];//X speed
+		int Misc3 = ghost->Attributes[3];//Half Height of vertical movement
+		int Misc4 = ghost->Attributes[4];//Y speed
+		//These four variables handle the parametric movement.
+		int StartX= 136;
+		int StartY= 48;
+		int T1 = 0;
+		int T2 = 0;
+		Ghost_X = 32;
+		Ghost_Y= 48;
+		//Position and resize body.
+		body->X = Ghost_X-64;
+		body->Y = Ghost_Y-64;
+		body->Extend = 3;
+		body->TileWidth = 9;
+		body->TileHeight = 9;
+		body->HitWidth = 114;
+		body->HitHeight = 114;
+		//Resize core.
+		Ghost_SetSize(this,ghost,3,3);
+		//Make core invisible.
+		Ghost_Data = GH_INVISIBLE_COMBO;
+		//Tells if you are moving left/
+		bool MovingLeft = false;
+		int i;//Iterative variable.
+		int Blob_Timer;
+		int GrabCoolDown;
+		int GrabChance;
+		while(true){
+			//Body never moves relative to core.
+			body->X = Ghost_X-64;
+			body->Y = Ghost_Y-64;
+			//Parabolic motion.
+			if(Mode == 0 && ModeTimer>=0){
+				//Move right.
+				if(Ghost_X<250 && !MovingLeft){
+					//Move the enemy.
+					T1+=Misc2;
+					WrapDegrees(T1);
+					T2+=Misc4;
+					WrapDegrees(T2);
+					//Align parts.
+					Ghost_X = StartX+Misc1*Sin(T1);
+					Ghost_Y = StartY+Misc3*Cos(2*T2);
+					//Change appearance.
+					body->OriginalTile = DRAYGON_BODY_RIGHT_TILE;
+					Ghost_ForceDir(DIR_RIGHT);
+				}
+				//You've reached the right side. Start going left.
+				else if(Ghost_X>=250 && !MovingLeft){
+					MovingLeft = true;
+					//Change appearance.
+					body->OriginalTile = DRAYGON_BODY_LEFT_TILE;
+				}
+				//Moving left.
+				else if(Ghost_X>0 && MovingLeft){
+					//Move the enemy.
+					T1+=Misc2;
+					WrapDegrees(T1);
+					T2+=Misc4;
+					WrapDegrees(T2);
+					//Align parts.
+					Ghost_X = StartX+Misc1*Sin(T1);
+					Ghost_Y = StartY+Misc3*Cos(2*T2);
+					body->OriginalTile = DRAYGON_BODY_LEFT_TILE;
+					Ghost_ForceDir(DIR_LEFT);
+				}
+				//You've reached the left side. Start going right.
+				else if(Ghost_X<=0 && MovingLeft){
+					MovingLeft = false;
+					body->OriginalTile = DRAYGON_BODY_RIGHT_TILE;
+				}
+			}
+			//Change to firing mode.
+			else if(Mode == 0 && ModeTimer<0){
+				Mode = 1;
+				//Set timer.
+				ModeTimer = Rand(240,300);
+			}
+			//Firing mode.
+			else if(Mode == 1 && ModeTimer >=0){
+				//Going right.
+				if(Ghost_X<176 && !MovingLeft){
+					Ghost_X++;
+					if(Ghost_Y<48)Ghost_Y=48;
+					body->OriginalTile = DRAYGON_BODY_RIGHT_TILE;
+					body->X = Ghost_X-64;
+					body->Y = Ghost_Y-64;
+					Ghost_ForceDir(DIR_RIGHT);
+					Blob_Timer= (Blob_Timer+1)%30;
+					//Fire blobs.
+					if(Blob_Timer==0){
+						for(i=0;i<=5;i++){
+							if(!MovingLeft)blob[i] = FireEWeapon(ghost->Weapon, body->X+80, body->Y+32, DegtoRad(Choose(Rand(0,45),Rand(315,359))), 300, ghost->WeaponDamage, DRAYGON_BLOB_SPRITE, 40, 0);
+							else blob[i] = FireEWeapon(ghost->Weapon, body->X+32, body->Y+32, DegtoRad(Rand(135,225)), 300, ghost->WeaponDamage, DRAYGON_BLOB_SPRITE, 40, 0);
+							SetEWeaponLifespan(blob[i],EWL_TIMER, 60);
+							SetEWeaponDeathEffect(blob[i],EWD_VANISH, 0);
+						}
+					}
+					if(GrabCoolDown ==0){
+						//If you haven't been grabbed recently.
+						GrabChance = Rand(0,100);
+						//If you've been grabbed.
+						if(GrabChance>=50)
+							Grab_Routine(this,ghost,body,false);
+					}
+					GrabCoolDown = 180;
+				}
+				//You've reached the right side. Go left now.
+				else if(Ghost_X>=176 && !MovingLeft){
+					MovingLeft = true;
+					body->OriginalTile = DRAYGON_BODY_RIGHT_TILE;
+				}
+				//Going left.
+				else if(Ghost_X>32 && MovingLeft){
+					Ghost_X--;
+					if(Ghost_Y<48)Ghost_Y=48;;
+					body->OriginalTile = DRAYGON_BODY_LEFT_TILE;
+					body->X = Ghost_X-64;
+					body->Y = Ghost_Y-64;
+					Ghost_ForceDir(DIR_LEFT);
+					Blob_Timer= (Blob_Timer+1)%30;
+					//Create blobs.
+					if(Blob_Timer==0){
+						for(i=0;i<=5;i++){
+							if(!MovingLeft)blob[i] = FireEWeapon(ghost->Weapon, body->X+80, body->Y+32, DegtoRad(Choose(Rand(0,45),Rand(315,359))), 300, ghost->WeaponDamage, DRAYGON_BLOB_SPRITE, 40, 0);
+							else blob[i] = FireEWeapon(ghost->Weapon, body->X+32, body->Y+32, DegtoRad(Rand(135,225)), 300, ghost->WeaponDamage, DRAYGON_BLOB_SPRITE, 40, 0);
+							SetEWeaponLifespan(blob[i],EWL_TIMER, 60);
+							SetEWeaponDeathEffect(blob[i],EWD_VANISH, 0);
+						}
+					}
+					if(GrabCoolDown ==0){
+						//If you haven't been grabbed recently.
+						GrabChance = Rand(0,100);
+						//If you've been grabbed.
+						if(GrabChance>=50)
+							Grab_Routine(this,ghost,body,true);
+					}
+					//Set grab cooldown timer.
+					GrabCoolDown = 180;
+				}
+				//Going right now.
+				else if(Ghost_X<=32 && MovingLeft){
+					MovingLeft = false;
+					body->OriginalTile = DRAYGON_BODY_RIGHT_TILE;
+				}
+			}
+			//End of firing mode.
+			else if(Mode == 1 && ModeTimer<0){
+				Mode = 0;
+				ModeTimer = Rand(240,300);
+			}
+			//Reduce timer.
+			ModeTimer--;
+			//Grab cooldown timer exists, so reduce it.
+			if(GrabCoolDown>0)GrabCoolDown--;
+			else GrabCoolDown = 0;//Otherwise set it to zero.
+			Draygon_Waitframe(this,ghost,body);
+		}
+	}
+	//Handles waitframe.
+	void Draygon_Waitframe(ffc this, npc ghost, npc body){
+		ghost->Jump = 0;//Keep enemy in midair.
+		//If hit, change Cset of all parts.
+		if(Ghost_GotHit()){
+			body->CSet = DRAYGON_HURT_CSET;
+			Ghost_Waitframes(this,ghost,false,false,5);
+		}
+		//Otherwise, use normal Cset.
+		else
+			body->CSet = DRAYGON_NORMAL_CSET;
+		//The core has died. Kill the parts.
+		if(!Ghost_Waitframe(this,ghost, false, false)){
+			Ghost_DeathAnimation(this,ghost,2);
+			body->HP = 0;
+			this->Data = 0;
+			Quit();
+		}
+	}
+	void Grab_Routine(ffc this, npc ghost, npc body,bool left){
+		int TargetX= Link->X+8;
+		int TargetY = Link->Y;
+		int GrabTimer = 150;
+		bool Grabbed = false;
+		float TargetAngle;
+		//Grab stuff.
+		while(GrabTimer>0){
+			if(Ghost_Y<48)Ghost_Y=48;
+			if(left)
+				body->OriginalTile = DRAYGON_BODY_LEFT_TILE;
+			else
+				body->OriginalTile = DRAYGON_BODY_RIGHT_TILE;
+			body->X = Ghost_X-64;
+			body->Y = Ghost_Y-64;
+			if(!Grabbed){
+				if(Distance(body->X+40,body->Y+112,TargetX,TargetY)>8){
+					TargetAngle = Angle(body->X+40,body->Y+112,TargetX,TargetY);
+					Ghost_MoveAtAngle(TargetAngle,ghost->Step/100,3);
+				}
+				if(Distance(body->X+40,body->Y+112,Link->X+8,Link->Y)<=16)
+					Grabbed = true;
+			}
+			else if(Grabbed){
+				//Hold Link in the air.
+				if(GrabTimer>=5){
+					Link->X = body->X+64;
+					Link->Y = body->Y+112;
+					Link->Jump = 0;
+				}
+				else{
+					Grabbed = false;
+					break;
+				}
+				if(Ghost_Y>4)Ghost_Y--;
+			}
+			//Reduce timer.
+			GrabTimer--;
+			Draygon_Waitframe(this,ghost,body);
+		}
+	}
+}
