@@ -1,0 +1,39 @@
+//Section 54. Shallow Water
+//---COMMMENTING NEEDED--
+
+ffc script ShallowWater{
+	void run(bool Leaving,bool Disable_HiJump){
+		int i;
+		while(true){
+			if(!Leaving){
+				for (i = 0; i < 175; i++ ){
+					if(ComboFIT(i,CF_DASH,CT_SVWATER)){
+						if(Between(Link->X+8,ComboX(i),ComboX(i)+16)
+							&& Between(Link->Y+8,ComboY(i),ComboY(i)+16) && !SamusVars[IN_WATER]){
+							SamusVars[IN_WATER]=1;
+							Game->PlaySound(SFX_SPLASH);
+							if(Disable_HiJump)
+								SamusVars[DIS_HI_JUMP]=1;
+						}
+					}
+					else{
+						if(Between(Link->X+8,ComboX(i),ComboX(i)+16)
+							&& Between(Link->Y+8,ComboY(i),ComboY(i)+16) && SamusVars[IN_WATER]){
+							SamusVars[IN_WATER]=0;
+							Game->PlaySound(SFX_SPLASH);
+							if(SamusVars[DIS_HI_JUMP])
+								SamusVars[DIS_HI_JUMP]=0;
+						}
+					}
+				}
+			}
+			else{
+				if(SamusVars[IN_WATER])
+					SamusVars[IN_WATER]=0;
+				if(SamusVars[DIS_HI_JUMP])
+					SamusVars[DIS_HI_JUMP]=0;	
+			}
+			Waitframe();
+		}
+	}
+}
