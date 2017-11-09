@@ -1,0 +1,306 @@
+//Section 21. Automatic Door Script
+
+//D0- Which side of the room this door is on.
+//	  One- Left
+//	  Two- Right
+//    Three- Top
+//	  Four- Bottom
+//D1- Which Lweapon triggers this door.
+//D2- Type of door. Used with doors requiring multiple hits to activate.
+//	  Once hit this many times by the required Lweapon, it will open and stay open.
+//D3- Screen->D register to store hit door in.
+
+const int DOOR_OPEN_SFX = 65;//Zound of doot opening.
+const int DOOR_CLOSE_SFX = 64;//Sound of door closing.
+const int DOOR_TIMER = 240;//How long door stays open in frames.
+const int HORIZONTAL_DOOR_COMBO_OFFSET = 1;//How many combos between closed door combo and open for horizontal doors.
+const int VERTICAL_DOOR_COMBO_OFFSET = 4;//How many combos between closed door combo and open for vertical doors.
+const int IMPACT_SFX = 72;//Sound to make when hitting a multi-hit door.
+
+ffc script AutoDoor{
+	void run(int side, int triggerlw,int type, int perm){
+		bool open = false;//Determine if the door is open.
+		int timer;//Set timer for door being open.
+		int hitcount;//Track how many times it was hit for multi-hit doors.
+		bool triggered = false;//Determine if multi-hit door has been opened.
+		int loc;
+		loc =ComboAt(this->X,this->Y);
+		int SavedComboD = Screen->ComboD[loc];
+		//This door has already been opened.
+		if(Screen->D[perm]!=0)triggered = true;
+		//This door hasn't been opened yet.
+		bool lift = false;
+		while(!triggered){
+			//This door is closed.
+			while(!open){
+				//If Link collides with the ffc.
+				if(LinkCollision(this)){
+					//Check which side it is supposed to be on.
+					//Check Link's position relative to the ffc.
+					if(side == 1 && Link->X<this->X)
+						open = true;
+					else if(side == 2 && Link->X>this->X)
+						open = true;
+					else if(side == 3 && Link->Y<this->Y)
+						open = true;
+					else if(side == 4 && Link->Y>=this->Y){
+						 open = true;
+						 lift = true;
+					}
+					else
+						open = false;
+				}
+				//Track all Lweapons.
+				for (int i = 1; i <= Screen->NumLWeapons(); i++){	
+					lweapon w = Screen->LoadLWeapon(i);
+					//This is the right Lweapon and it hit the ffc.
+					//Also, combo has cycled back to original combo.
+					if(triggerlw!= LW_SBOMBBLAST){
+						if(triggerlw== LW_BEAM){
+							if(w->ID ==LW_BEAM && Collision(this,w) 
+								&& Screen->ComboD[loc]==SavedComboD){
+								//A normal door.
+								//Kill the lweapon so we don't hit every frame.
+								KillLWeapon(w);
+								open = true;
+							}
+							else if(w->ID==LW_BOMBBLAST && Screen->ComboD[loc]==SavedComboD){
+								if(side<=2){
+									if(Abs((this->X+(this->EffectWidth/2))-(SamusVars[DRAW_X]+8))<=16 
+										&& Abs((this->Y+(this->EffectHeight/2))-(SamusVars[DRAW_Y]+8))<=16)
+										open = true;
+								}
+								else if(side==3){
+									if(Abs((this->X+(this->EffectWidth/2))-(SamusVars[DRAW_X]+8))<=16 
+										&& Abs((this->Y+(this->EffectHeight/2))-(SamusVars[DRAW_Y]-8))<=16)
+										open = true;
+								}
+								else{
+									if(Abs((this->X+(this->EffectWidth/2))-(SamusVars[DRAW_X]+8))<=16 
+										&& Abs((this->Y+(this->EffectHeight/2))-(SamusVars[DRAW_Y]+8))<=16)
+										open = true;
+								}
+							}
+						}
+						else if(triggerlw==LW_ARROW){
+							if((w->ID ==triggerlw||w->ID==LW_MAGIC)
+								&& Collision(this,w) && Screen->ComboD[loc]==SavedComboD){
+								//A normal door.
+								//Increase hit count.
+								if(w->ID==triggerlw){
+									hitcount++;
+									//Kill the lweapon so we don't hit every frame.
+									w->DeadState = 0;
+									//Play a sound.
+									Game->PlaySound(IMPACT_SFX);
+								}
+								else if(w->ID==LW_MAGIC)
+									hitcount=type;
+							}
+							//You've hit it enough times to open it.
+							if(hitcount>=type)open = true;
+						}
+						else{
+							if(w->ID ==triggerlw && Collision(this,w)
+								&& Screen->ComboD[loc]==SavedComboD){
+								//A normal door.
+								if(type==0){
+									open = true;
+									//Kill the lweapon so we don't hit every frame.
+									KillLWeapon(w);
+								}
+								//A multi-hit door.
+								else{
+									//Increase hit count.
+									hitcount++;
+									//Kill the lweapon so we don't hit every frame.
+									w->DeadState = 0;
+									//Play a sound.
+									Game->PlaySound(IMPACT_SFX);
+								}
+								//You've hit it enough times to open it.
+								if(hitcount>=type)open = true;
+							}
+						}
+					}
+					else{
+						if(Abs((this->X+(this->EffectWidth/2))-SamusVars[POWER_BOMB_CENTER_X])<SamusVars[POWER_BOMB_RADIUS]
+						   && Abs((this->Y+(this->EffectHeight/2))-SamusVars[POWER_BOMB_CENTER_Y])<SamusVars[POWER_BOMB_RADIUS]
+						   && Screen->ComboD[loc]==SavedComboD && SamusVars[POWER_BOMB_RADIUS]!=0)
+							open = true;
+					}
+				}
+				if(side == 4 && Link->X>this->X-12&&Link->X<this->X+12+(this->TileWidth-1)*16){
+					if(Link->Y>this->Y-16&&Link->Y<this->Y-8){
+						Link->Y=this->Y-16;
+						while(Link->Y>this->Y-17&&Link->Y<this->Y-8
+								&&Link->X>this->X-12&&Link->X<this->X+12+(this->TileWidth-1)*16
+								&& !open){ 
+							//This snaps Link to the platform when he isn't hookshotting
+							  SamusVars[ON_GROUND_OVERRIDE]=1;
+							  Link->Jump=0;
+							//This allows Link to jump while on sideview platforms by recreating the effect of the Roc's feather item
+							if(!SamusVars[IS_MORPHED]){
+								if(PressJump())
+									Link->Y-=8;
+							}
+							else{
+								if(PressFire() && SamusVars[EQUIPPED_ITEM]!=I_POWER_BOMB && Link->Item[I_BOMB])
+									Link->Y-=8;
+								if(Link->Item[I_SPRING_BALL] && PressJump())
+									Link->Y-=8;
+							}
+							//Track all Lweapons.
+								for (int i = Screen->NumLWeapons();i>0; i--){
+									lweapon w = Screen->LoadLWeapon(i);
+									//This is the right Lweapon and it hit the ffc.
+									//Also, combo has cycled back to original combo.
+									if(triggerlw!= LW_SBOMBBLAST){
+										if(triggerlw== LW_BEAM){
+											if(w->ID ==LW_BEAM && Collision(this,w) && Screen->ComboD[loc]==SavedComboD){
+												//A normal door.
+												//Kill the lweapon so we don't hit every frame.
+												KillLWeapon(w);
+												open = true;
+											}
+											else if(w->ID==LW_BOMBBLAST && Screen->ComboD[loc]==SavedComboD){
+												if(side<=2){
+													if(Abs((this->X+(this->EffectWidth/2))-(SamusVars[DRAW_X]+8))<=16 
+														&& Abs((this->Y+(this->EffectHeight/2))-(SamusVars[DRAW_Y]+8))<=16)
+														open = true;
+												}
+												else if(side==3){
+													if(Abs((this->X+(this->EffectWidth/2))-(SamusVars[DRAW_X]+8))<=16 
+														&& Abs((this->Y+(this->EffectHeight/2))-(SamusVars[DRAW_Y]-8))<=16)
+														open = true;
+												}
+												else{
+													if(Abs((this->X+(this->EffectWidth/2))-(SamusVars[DRAW_X]+8))<=16 
+														&& Abs((this->Y+(this->EffectHeight/2))-(SamusVars[DRAW_Y]+8))<=16)
+														open = true;
+												}
+											}
+										}
+										else if(triggerlw==LW_ARROW){
+											if((w->ID ==triggerlw||w->ID==LW_MAGIC)
+												&& Collision(this,w) && Screen->ComboD[loc]==SavedComboD){
+												//A normal door.
+												//Increase hit count.
+												if(w->ID==triggerlw){
+													hitcount++;
+													//Kill the lweapon so we don't hit every frame.
+													w->DeadState = 0;
+													//Play a sound.
+													Game->PlaySound(IMPACT_SFX);
+												}
+												else if(w->ID==LW_MAGIC)
+													hitcount=type;
+											}
+											//You've hit it enough times to open it.
+											if(hitcount>=type)open = true;
+										}
+										else{
+											if(w->ID ==triggerlw && Collision(this,w)
+												&& Screen->ComboD[loc]==SavedComboD){
+												//A normal door.
+												if(type==0){
+													open = true;
+													//Kill the lweapon so we don't hit every frame.
+													KillLWeapon(w);
+												}
+												//A multi-hit door.
+												else{
+													//Increase hit count.
+													hitcount++;
+													//Kill the lweapon so we don't hit every frame.
+													w->DeadState = 0;
+													//Play a sound.
+													Game->PlaySound(IMPACT_SFX);
+												}
+												//You've hit it enough times to open it.
+												if(hitcount>=type)open = true;
+											}
+										}
+									}
+									else{
+										if(Abs((this->X+(this->EffectWidth/2))-SamusVars[POWER_BOMB_CENTER_X])<SamusVars[POWER_BOMB_RADIUS]
+										   && Abs((this->Y+(this->EffectHeight/2))-SamusVars[POWER_BOMB_CENTER_Y])<SamusVars[POWER_BOMB_RADIUS]
+										   && Screen->ComboD[loc]==SavedComboD && SamusVars[POWER_BOMB_RADIUS]!=0)
+											open = true;
+									}
+								}
+								Waitframe();
+							}
+							SamusVars[ON_GROUND_OVERRIDE]=0;
+						}
+					}
+					Waitframe();
+				}
+				//Open sound.
+				Game->PlaySound(DOOR_OPEN_SFX);
+				//Change the combos depending on the side of the room the door is on.
+				if(side == 1||side==2){
+					Screen->ComboD[loc]+=HORIZONTAL_DOOR_COMBO_OFFSET;
+					Screen->ComboD[loc+16]+=HORIZONTAL_DOOR_COMBO_OFFSET;
+					Screen->ComboD[loc+32]+=HORIZONTAL_DOOR_COMBO_OFFSET;
+				}
+				else if(side == 3||side==4){
+					Screen->ComboD[loc]+=VERTICAL_DOOR_COMBO_OFFSET;
+					Screen->ComboD[loc+1]+=VERTICAL_DOOR_COMBO_OFFSET;
+				}
+				//Set the timer if open.
+				if(open)timer = DOOR_TIMER;
+				//A normal door.
+				if(type ==0){
+					//This door is open.
+					while(open){
+						//Reduce the timer.
+						if(timer >0)timer--;
+						//If timer is less than zero.
+						if(timer<=0){
+							timer = 0;
+							//Close the door.
+							open = false;
+						}
+						if(lift && LinkCollision(this)){
+							Link->Y--;
+							Link->Jump = 0;
+						}
+						else if(lift && !LinkCollision(this))
+							lift = false;
+						Waitframe();
+					}
+					//Play close door sound.
+					Game->PlaySound(DOOR_CLOSE_SFX);
+					//Change the combos depending of what side the door is on.
+					if(side == 1||side==2){
+						Screen->ComboD[loc]+=HORIZONTAL_DOOR_COMBO_OFFSET;
+						Screen->ComboD[loc+16]+=HORIZONTAL_DOOR_COMBO_OFFSET;
+						Screen->ComboD[loc+32]+=HORIZONTAL_DOOR_COMBO_OFFSET;
+					}
+					else if(side == 3||side==4){
+						Screen->ComboD[loc]+=VERTICAL_DOOR_COMBO_OFFSET;
+						Screen->ComboD[loc+1]+=VERTICAL_DOOR_COMBO_OFFSET;
+					}
+				}
+				//A multi-hit door.
+				else{
+					//This door has been triggered.
+					triggered = true;
+					//Save to screen register.
+					Screen->D[perm]= 1;
+				} 
+				Waitframe();
+		}
+		//This door is permanently open, so make it that when you enter the room.
+		if(side == 1||side==2){
+			Screen->ComboD[loc]+=HORIZONTAL_DOOR_COMBO_OFFSET;
+			Screen->ComboD[loc+16]+=HORIZONTAL_DOOR_COMBO_OFFSET;
+			Screen->ComboD[loc+32]+=HORIZONTAL_DOOR_COMBO_OFFSET;
+		}
+		else if(side == 3||side==4){
+			Screen->ComboD[loc]+=VERTICAL_DOOR_COMBO_OFFSET;
+			Screen->ComboD[loc+1]+=VERTICAL_DOOR_COMBO_OFFSET;
+		}
+	}
+}
