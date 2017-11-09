@@ -1,0 +1,129 @@
+// Section 6. Platform script. Created by Moosh
+
+ffc script Moving_Platform{
+   //This detects if Link is performing an action that should prevent him from moving while on a platform
+   bool LinkBusy(){
+      return !(Link->Action<LA_ATTACKING
+				||Link->Action==LA_CHARGING
+				||Link->Action==LA_GOTHURTLAND
+				||SamusVars[LINK_ACTION]<LA_ATTACKING);
+   }
+   //This detects if Link is using the hookshot, an item that bugs out horribly if Link is moved while using it
+   void run(bool Kamer, int dip_height){
+		bool Grounded = false;
+		int PlatformCooldown;
+		int OrigY = this->Y;
+		bool Dropping = false;
+      while(true){ 
+         //This detects when Link gets on the platform
+        if(OnPlatform(this,false,this->Script) && PlatformCooldown<=0){
+			if (!Grounded){
+				Grounded = true;
+				SamusVars[ON_GROUND_OVERRIDE]=1;
+				Link->Y = this->Y-16;
+			}
+		    //This snaps Link to the platform when he isn't hookshotting
+				if(PlatformCooldown<=0){
+					if(Link->Jump<=0)
+						Link->Jump = 0;
+				}
+				if(!(Link->PressLeft
+						||Link->InputLeft
+						||Link->InputRight
+						||Link->PressRight))
+						Link->X = this->X+(((this->TileWidth-1)*16)/2);
+			  if(LinkBusy())NoAction();
+			  if(!SamusVars[IS_MORPHED]){
+				if(PressJump()){
+					Link->Y-=24;
+					Grounded = false;
+					Jump_Routine();
+					PlatformCooldown= 30;
+				}
+			  }
+			  else{
+				if(PressFire()){
+					if(SamusVars[EQUIPPED_ITEM]!=I_POWER_BOMB && Link->Item[I_BOMB]){
+						Link->Y-=24;
+						Grounded= false;
+						PlatformCooldown= 30;
+					}
+				}
+				if(Link->Item[I_SPRING_BALL] && PressJump()){
+					Link->Y-=24;
+					Grounded=false;
+					Jump_Routine();
+					PlatformCooldown= 30;
+				}
+			  }
+			  while(Grounded){
+				if(!SamusVars[IS_MORPHED]){
+					if(PressJump()){
+						Link->Y-=24;
+						Grounded = false;
+						Jump_Routine();
+						PlatformCooldown= 30;
+					}
+					else{
+						if(PlatformCooldown<=0)
+							Link->Y = this->Y-16;
+					}
+				}
+				else{
+					if(PressFire() && Link->Item[I_BOMB] && SamusVars[EQUIPPED_ITEM]!=I_POWER_BOMB){
+						Link->Y-=24;
+						Grounded = false;
+						PlatformCooldown= 30;
+					}
+					else if(Link->Item[I_SPRING_BALL] && PressJump()){
+						Link->Y-=24;
+						Grounded = false;
+						Jump_Routine();
+						PlatformCooldown= 30;
+					}
+					else{
+						if(PlatformCooldown<=0)
+							Link->Y = this->Y-16;
+					}
+				}
+				if (!OnPlatform(this, false,this->Script)){
+					Grounded = false;
+					SamusVars[ON_GROUND_OVERRIDE]=0;
+				}
+				if(!(Link->PressLeft||Link->InputLeft
+					||Link->InputRight||Link->PressRight))
+					Link->X = this->X+(((this->TileWidth-1)*16)/2);
+				if(PlatformCooldown>0)
+					PlatformCooldown--;
+				if(Kamer){
+					if(!Dropping){
+						if(this->Y<OrigY+dip_height)
+							Dropping =true;
+					}
+					else if(Dropping){
+						if(this->Y>=OrigY+dip_height)
+							Dropping =false;
+						else
+							this->Y+=0.5;
+					}
+				}
+				Waitframe();
+			}
+		}
+		else if (Grounded && !OnPlatform(this, false,this->Script)){
+			Grounded = false;
+			if (!OnPlatform(this, true,this->Script))
+				SamusVars[ON_GROUND_OVERRIDE]=0;
+		}
+		if(Kamer && !Grounded){
+			if(this->Y>OrigY)
+				this->Y-=0.5;
+		}
+		if(PlatformCooldown>0)
+			PlatformCooldown--;
+         Waitframe();
+      }
+	  Grounded = false;
+	  SamusVars[ON_GROUND_OVERRIDE]=0;
+   }
+}
