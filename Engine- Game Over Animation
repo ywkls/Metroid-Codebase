@@ -1,0 +1,67 @@
+//Section 39. Custom Game Over
+
+const int DEATH_WIPE_DUR = 240; //4 seconds
+const int MIDI_DEATH = 10; 
+const int SAMUS_DEATH_COMBO = 2785;
+const int SAMUS_DEATH_CSET = 7;
+
+void GameOver(){
+	if(Link->HP<=0){
+		Link->HP=1;//Keep Link alive.
+		SamusVars[SAMUS_HAS_DIED] = 1;
+	}
+	
+	if(SamusVars[SAMUS_HAS_DIED]){
+		
+		Game->Counter[HEALTH_COUNTER]= 0;//Make this counter zero. Done for HP regen compatibility.
+		Link->CollDetection = false;//Turn off collision detction so we can't be hurt right now.
+		Game->PlaySound(SFX_SPIRAL);//Play death sound.
+		//Keep you immobile while timer is active.
+		if(!SamusVars[WIPE_DONE]){
+			SamusWipe(240);
+			SamusVars[WIPE_DONE]=1;
+		}
+		else{
+			SamusVars[SAMUS_HAS_DIED] = 0;
+			SamusVars[WIPE_DONE]=0;
+			Link->HP=0;//Kill Link.
+			Link->CollDetection = true;//Turn collision detection back on.
+			Game->NumDeaths++;//Track how many times you've died.
+			Game->Counter[HEALTH_COUNTER] = 99;//Reset the counter so that you will not die on revival.
+			SamusVars[CURR_FILLED_TANKS]= SamusVars[NUM_TANKS];//To keep you from dying when you revive.
+			Link->MP = Link->MaxMP;
+			SamusVars[LINK_PREV_HP] = Link->MaxHP;
+			if(!SamusVars[KRAID_IS_DEAD])
+				ResetKraid();
+			SamusVars[GAME_OVER_TIME] = 1;
+			Link->HP = Link->MaxHP;
+			Link->PitWarp(15,01);
+		}
+	}
+}
+
+//Draw an inverted circle (fill whole screen except circle)
+void SamusDeath(int bitmapID, int layer, int x, int y, int radius, int scale, int fillcolor){
+    Screen->SetRenderTarget(bitmapID);     //Set the render target to the bitmap.
+    Screen->Rectangle(layer, 0, 0, 256, 176, fillcolor, 1, 0, 0, 0, true, 128); //Cover the screen
+    Screen->Circle(layer, x, y, radius, 0, scale, 0, 0, 0, true, 128); //Draw a transparent circle.
+	if(radius>32){
+		if(Link->Item[I_GRAVITY_SUIT])
+			Screen->DrawCombo(layer, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_GRAVITY_WALK_COMBO+26, 1, 2, SAMUS_GRAVITY_CSET, -1, -1, 0, 0, 0, 48, 0, true, 128);
+		else
+			Screen->DrawCombo(layer, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_WALK_COMBO+26, 1, 2, SAMUS_CSET, -1, -1, 0, 0, 0, 48, 0, true, 128);
+    }
+	else
+		Screen->DrawCombo(layer, SamusVars[DRAW_X], SamusVars[DRAW_Y]-16, SAMUS_DEATH_COMBO, 1, 2, SAMUS_DEATH_CSET, -1, -1, 0, 0, 0, 48, 0, true, 128);
+	
+	Screen->SetRenderTarget(RT_SCREEN); //Set the render target back to the screen.
+    Screen->DrawBitmap(layer, bitmapID, 0, 0, 256, 176, 0, 0, 256, 176, 0, true); //Draw the bitmap
+}
+
+void SamusWipe(int wipetime){
+	for(int i = wipetime; i > 0; i--){
+		SamusDeath(4, 7, CenterLinkX(), CenterLinkY(), Floor(300/wipetime)*i, 1, 15);
+		WaitNoAction();
+		Link->Jump = 0;
+	}
+}
