@@ -1,0 +1,140 @@
+//Handles HP.
+
+void health(){
+	int damage;//Change in health this frame.
+	//Your HP has changed.
+    if(Link->HP !=SamusVars[LINK_PREV_HP]){
+		//HP has decreased.
+		if(Link->HP<SamusVars[LINK_PREV_HP]){
+			//Calculate amount of decrease.
+			damage = SamusVars[LINK_PREV_HP] - Link->HP;
+			//If difference in counter and amount is less than zero, lower HP.
+			int tanks_used =  Ceiling(damage/ 100);
+			if((Game->Counter[HEALTH_COUNTER] - damage) < 0
+				&& SamusVars[CURR_FILLED_TANKS] > 1 
+				&& (SamusVars[CURR_FILLED_TANKS]-tanks_used)>=1){
+				Game->Counter[HEALTH_COUNTER] += 100*tanks_used;
+				 Game->Counter[HEALTH_COUNTER] -= damage;
+				 SamusVars[CURR_FILLED_TANKS]-=tanks_used;
+				 Link->MP -= 32*tanks_used;
+			}
+			else if((Game->Counter[HEALTH_COUNTER] - damage) < 0
+				&& SamusVars[CURR_FILLED_TANKS] > 1 
+				&& (SamusVars[CURR_FILLED_TANKS]-tanks_used)<1){
+				//Reserve tank code.
+				if(Game->Counter[RESERVE_COUNTER]>0){
+					SamusVars[CURR_FILLED_TANKS] = (SamusVars[NUM_FILLED_RES_TANKS]-1);
+					Link->MP+=(32*(SamusVars[NUM_FILLED_RES_TANKS]-1));
+					Game->Counter[RESERVE_COUNTER]-=((SamusVars[NUM_FILLED_RES_TANKS]-1) * 100);
+					SamusVars[NUM_FILLED_RES_TANKS]= 1;
+					if(Game->Counter[RESERVE_COUNTER]>0){
+						if((Game->Counter[HEALTH_COUNTER] + Game->Counter[RESERVE_COUNTER])>99 
+							&& SamusVars[CURR_FILLED_TANKS]<SamusVars[NUM_TANKS]){
+							Game->Counter[HEALTH_COUNTER]-=100;
+							Game->Counter[HEALTH_COUNTER]+=(Game->Counter[RESERVE_COUNTER]-1);
+							Game->Counter[RESERVE_COUNTER]=1;
+							SamusVars[CURR_FILLED_TANKS]++;
+							Link->MP+=32;
+						}
+						else if((Game->Counter[HEALTH_COUNTER] + Game->Counter[RESERVE_COUNTER])>99 
+							&& SamusVars[CURR_FILLED_TANKS]==SamusVars[NUM_TANKS])
+							Game->Counter[HEALTH_COUNTER]= 99;
+						else
+							Game->Counter[HEALTH_COUNTER]+= Game->Counter[RESERVE_COUNTER];
+					}
+					if((Game->Counter[HEALTH_COUNTER] + Game->Counter[RESERVE_COUNTER])>99 
+						&& SamusVars[CURR_FILLED_TANKS]<SamusVars[NUM_TANKS]){
+						Game->Counter[HEALTH_COUNTER]=0;
+						Game->Counter[RESERVE_COUNTER]=0;
+						SamusVars[CURR_FILLED_TANKS]++;
+						Link->MP+=32;
+					}
+					else if((Game->Counter[HEALTH_COUNTER] + Game->Counter[RESERVE_COUNTER])>99 
+						&& SamusVars[CURR_FILLED_TANKS]==SamusVars[NUM_TANKS])
+						Game->Counter[HEALTH_COUNTER]= 99;
+					else
+						Game->Counter[HEALTH_COUNTER]++;
+					Game->Counter[RESERVE_COUNTER]=0;
+				}
+				else
+					SamusVars[LINK_PREV_HP] = 0;
+			}
+			else if((Game->Counter[HEALTH_COUNTER] - damage)>0 
+					 && SamusVars[CURR_FILLED_TANKS]>=1)Game->Counter[HEALTH_COUNTER]-=damage;
+			else if((Game->Counter[HEALTH_COUNTER] - damage)<0 && SamusVars[CURR_FILLED_TANKS]==1){
+				if(Game->Counter[RESERVE_COUNTER]>0){
+					SamusVars[CURR_FILLED_TANKS] = (SamusVars[NUM_FILLED_RES_TANKS]-1);
+					if(SamusVars[CURR_FILLED_TANKS]!=1)
+						Link->MP+=(32*(SamusVars[NUM_FILLED_RES_TANKS]-1));
+					Game->Counter[RESERVE_COUNTER]-=((SamusVars[NUM_FILLED_RES_TANKS]-1) * 100);
+					SamusVars[NUM_FILLED_RES_TANKS]= 1;
+					if(Game->Counter[RESERVE_COUNTER]>0){
+						if((Game->Counter[HEALTH_COUNTER] + Game->Counter[RESERVE_COUNTER])>99 
+							&& SamusVars[CURR_FILLED_TANKS]<SamusVars[NUM_TANKS]){
+							Game->Counter[HEALTH_COUNTER]-=100;
+							Game->Counter[HEALTH_COUNTER]+=Game->Counter[RESERVE_COUNTER];
+							SamusVars[CURR_FILLED_TANKS]++;
+							Link->MP+=32;
+						}
+						else if((Game->Counter[HEALTH_COUNTER] + Game->Counter[RESERVE_COUNTER])>99 
+							&& SamusVars[CURR_FILLED_TANKS]==SamusVars[NUM_TANKS])
+							Game->Counter[HEALTH_COUNTER]= 99;
+						else
+							Game->Counter[HEALTH_COUNTER]+= Game->Counter[RESERVE_COUNTER];
+					}
+					if((Game->Counter[HEALTH_COUNTER] + Game->Counter[RESERVE_COUNTER])>99 
+						&& SamusVars[CURR_FILLED_TANKS]<SamusVars[NUM_TANKS]){
+						Game->Counter[HEALTH_COUNTER]=0;
+						Game->Counter[RESERVE_COUNTER]=0;
+						SamusVars[CURR_FILLED_TANKS]++;
+						Link->MP+=32;
+					}
+					else if((Game->Counter[HEALTH_COUNTER] + Game->Counter[RESERVE_COUNTER])>99 
+						&& SamusVars[CURR_FILLED_TANKS]==SamusVars[NUM_TANKS])
+						Game->Counter[HEALTH_COUNTER]= 99;
+					else
+						Game->Counter[HEALTH_COUNTER]++;
+					Game->Counter[RESERVE_COUNTER]=0;
+				}
+				else
+					SamusVars[LINK_PREV_HP] = 0;
+			}
+			Link->HP = SamusVars[LINK_PREV_HP];
+		}
+		//HP has increased.
+		else{
+			//Amount of increase.
+			damage = Link->HP-SamusVars[LINK_PREV_HP];
+			//If difference in counter and amount is more than 99, raise HP.
+			if((Game->Counter[HEALTH_COUNTER] + damage)>99){
+				Game->Counter[HEALTH_COUNTER]-=100;
+				Game->Counter[HEALTH_COUNTER]+=damage;
+				if(SamusVars[CURR_FILLED_TANKS]<SamusVars[NUM_TANKS]){
+					SamusVars[CURR_FILLED_TANKS]++;
+					Link->MP+=32;
+				}
+				else if(SamusVars[NUM_RES_TANKS]>0){
+					if(SamusVars[NUM_FILLED_RES_TANKS]<SamusVars[NUM_RES_TANKS]){
+						Game->Counter[RESERVE_COUNTER]++;
+						SamusVars[NUM_FILLED_RES_TANKS]++;
+					}
+				}
+			}
+			else
+				Game->Counter[HEALTH_COUNTER]+=damage;
+		}
+		//Set Link's HP every turn so he doesn't die immediately.
+		Link->HP = SamusVars[LINK_PREV_HP];
+    }
+	if(Game->Counter[HEALTH_COUNTER]<=50 && SamusVars[CURR_FILLED_TANKS]==1
+		&& !SamusVars[HEART_BEEP_OFF]){
+		if(SamusVars[INJURED_TIMER]<=0){
+			SamusVars[INJURED_TIMER]=180;
+			Game->PlaySound(SFX_ALERT);
+		}
+		else
+			SamusVars[INJURED_TIMER]--;	
+	}
+}
+
+const int SFX_ALERT = 82;//Sound to play when low on HP.
