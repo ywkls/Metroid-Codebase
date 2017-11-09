@@ -1,0 +1,99 @@
+// Section 2. Jump With L Script. Created by Moosh. Adjusted by Lejes.
+
+const int JUMP_HEIGHT_NORMAL = 4; //This is the jump height when you don't have the high jump item. It uses feather jump height instead of script jump height for compatibility purposes.
+const int JUMP_HEIGHT_HIGH = 6; //This is the jump height when you have the high jump item.
+const int I_NORMALJUMP = 91;//Item Id for normal jump.
+const int I_HIGHJUMP = 123; //This is the item used for the high jump boots. Just having the item will make you jump higher with the script. Uses Roc's Feather by default.
+const int I_SPACE_JUMP = 51;//Item id for Space Jump.
+const int SPACE_JUMP_LOWER_BOUND = 10; // How many frames Link has to fall before Space Jump can be used.
+const int SPACE_JUMP_UPPER_BOUND = 50; // How many frames Link can fall before Space Jump use is barred.
+const int I_SCREWATTACK = 35;//Item Id for Screw Attack.
+const int LW_SCREWATTACK = 31; //Script1
+const int SCREWATTACK_DAMAGE = 8;//How much damage Screw Attack does to enemies.
+const int I_GRAVITY_SUIT = 18;//Item Id for Gravity Suit.
+const int I_VARIA_SUIT = 55;//Item id for Varia Suit.
+const int SFX_SPACE_JUMP = 101;//Sound effect for Space Jump.
+
+//This is the jump function. Put this in the while loop of your global script.
+void VariableJump(){
+    int JumpHeight = JUMP_HEIGHT_NORMAL;
+	//Underwater areas.
+	//But not Shallow water.
+	if(Screen->Flags[SF_MISC]&SF_MISC_SCRIPT1 && !SamusVars[IN_WATER]){
+		//You don't have the gravity suit.
+		if(!Link->Item[I_GRAVITY_SUIT]){
+			//You don't have the High Jump boots.
+			if(!Link->Item[I_HIGHJUMP])JumpHeight = BOMB_HOP;
+			else{
+				if(!SamusVars[DIS_HI_JUMP])
+					JumpHeight= JUMP_HEIGHT_NORMAL;
+				else
+					JumpHeight = BOMB_HOP;
+			}
+		}
+		else if(Link->Item[I_HIGHJUMP] && Link->Item[I_GRAVITY_SUIT])
+			JumpHeight = JUMP_HEIGHT_HIGH;
+	}
+	//Shallow Water, but not under water.
+	else if(SamusVars[IN_WATER] && !ScreenFlagTest(SF_MISC,SF_MISC_SCRIPT1)){
+		if(!Link->Item[I_GRAVITY_SUIT]){
+			if(!Link->Item[I_HIGHJUMP])JumpHeight = BOMB_HOP;
+			else{
+				if(!SamusVars[DIS_HI_JUMP])
+					JumpHeight= JUMP_HEIGHT_NORMAL;
+				else
+					JumpHeight = BOMB_HOP;
+			}
+		}
+		else if(Link->Item[I_HIGHJUMP] && Link->Item[I_GRAVITY_SUIT])
+			JumpHeight = JUMP_HEIGHT_HIGH;
+	}
+	//Normal areas.
+	else{
+		if(Link->Item[I_HIGHJUMP])
+			JumpHeight = JUMP_HEIGHT_HIGH;
+	}
+	//You pressed jump and are on the ground.
+    if (PressJump() && OnGround() 
+		&& !SamusVars[IS_JUMPING] && Link->Action <=2){
+		//Set to know you're jumping.
+        SamusVars[IS_JUMPING] = 1;
+		//Deactivate ground Override.
+		SamusVars[ON_GROUND_OVERRIDE]= 0;
+		//Jump.
+        Link->Jump = (JumpHeight+2)*0.8;
+		//Play a sound.
+        Game->PlaySound(SFX_JUMP);
+    }
+	//You have the Space Jump.
+	//You've fallen for a bit.
+	//But not too long...
+    else if (PressJump() && Link->Item[I_SPACE_JUMP]
+			 &&SamusVars[SPACE_JUMP_FALLING]>=SPACE_JUMP_LOWER_BOUND
+			 &&SamusVars[SPACE_JUMP_FALLING]<SPACE_JUMP_UPPER_BOUND&&Link->Action<=2){
+        SamusVars[IS_JUMPING] = 1;
+        Link->Jump = (JumpHeight+2)*0.8;
+        Game->PlaySound(SFX_SPACE_JUMP);
+    }
+	//You're currently jumping.
+    if (SamusVars[IS_JUMPING]){
+		//You're not pressing the jump button.
+        if (!InputJump() && Link->Jump > 0)
+			//Reduce the jump a bit.
+            Link->Jump = Link->Jump - (Link->Jump * 0.5);
+		//Increase the jump timer.
+        SamusVars[TIMER_JUMP]++;
+    }
+	//You were jumping, but you're on the ground now.
+    if (SamusVars[IS_JUMPING] && OnGround()	
+		&& SamusVars[TIMER_JUMP] >= 10){
+		//Reset variables.
+        SamusVars[IS_JUMPING] = 0;
+        SamusVars[TIMER_JUMP] = 0;
+    }
+    // Space Jump stuff
+    if (Link->Y > SamusVars[DRAW_Y])
+		SamusVars[SPACE_JUMP_FALLING]++;
+    else
+        SamusVars[SPACE_JUMP_FALLING] = 0;
+}
