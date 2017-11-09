@@ -1,0 +1,42 @@
+//D0- Blank so other scripts can use it.
+//D1- Amount this item heals.
+
+item script Healing_Item{
+	void run(int dummy, int amount){
+		//If difference in counter and amount is more than 99, raise HP.
+		if((Game->Counter[HEALTH_COUNTER] + amount)>99 
+			&& SamusVars[CURR_FILLED_TANKS]<SamusVars[NUM_TANKS]){
+			Game->Counter[HEALTH_COUNTER]-=100;
+			Game->Counter[HEALTH_COUNTER]+=amount;
+			SamusVars[CURR_FILLED_TANKS]++;
+			Link->MP+=32;
+		}
+		else if(SamusVars[NUM_RES_TANKS]>0){
+			if(SamusVars[NUM_FILLED_RES_TANKS]<SamusVars[NUM_RES_TANKS]){
+				if((Game->Counter[RESERVE_COUNTER] + amount)>100 
+					&& (SamusVars[NUM_FILLED_RES_TANKS]+1)<SamusVars[NUM_RES_TANKS]){
+					Game->Counter[RESERVE_COUNTER]+=amount;
+					SamusVars[NUM_FILLED_RES_TANKS]++;
+				}
+				else{
+					if((Game->Counter[RESERVE_COUNTER] + amount)>100){
+						Game->Counter[RESERVE_COUNTER]= 100*SamusVars[NUM_RES_TANKS];
+						SamusVars[NUM_FILLED_RES_TANKS]= SamusVars[NUM_RES_TANKS];
+					}
+					else
+						Game->Counter[RESERVE_COUNTER]+=amount;
+				}
+			}
+			else{
+				Game->Counter[RESERVE_COUNTER]= 100*SamusVars[NUM_RES_TANKS];
+				SamusVars[NUM_FILLED_RES_TANKS]= SamusVars[NUM_RES_TANKS];
+			}
+			Game->Counter[HEALTH_COUNTER]= 99;
+		}
+		else if((Game->Counter[HEALTH_COUNTER] + amount)>99 
+				&& SamusVars[CURR_FILLED_TANKS]==SamusVars[NUM_TANKS])
+			Game->Counter[HEALTH_COUNTER]= 99;
+		else
+			Game->Counter[HEALTH_COUNTER]+=amount;
+	}
+}
