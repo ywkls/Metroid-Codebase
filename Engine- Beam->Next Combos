@@ -1,0 +1,23 @@
+//Section 47. Beam->Next Combos.
+//---COMMMENTING NEEDED--
+
+void Beam_Next(){
+	lweapon wpn;
+	int i;
+	for(i=Screen->NumLWeapons();i>0;i--){
+		wpn = Screen->LoadLWeapon(i);
+		if(wpn->ID ==LW_BEAM){
+			int ComboArray[9] = {ComboAt(wpn->X + 3, wpn->Y + 3),ComboAt(wpn->X + 8, wpn->Y + 3),
+						 ComboAt(wpn->X + 8, wpn->Y + 3),ComboAt(wpn->X + 13, wpn->Y + 3),
+						 ComboAt(wpn->X + 3, wpn->Y + 8),ComboAt(wpn->X + 13, wpn->Y + 8),
+						 ComboAt(wpn->X + 3,wpn->Y + 13),ComboAt(wpn->X + 8, wpn->Y + 13),
+						 ComboAt(wpn->X + 13, wpn->Y + 13)};
+			for(int j=0;j<SizeOfArray(ComboArray);j++){
+				if(ComboFIT(ComboArray[j],CF_BEAM_NX,CT_OVERHEAD)){
+					Screen->ComboD[ComboArray[j]]++;
+					wpn->DeadState = 0;
+				}
+			}
+		}
+	}
+}
