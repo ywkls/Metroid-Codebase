@@ -1,4 +1,4 @@
-fc script Sideview_Jumper{
+ffc script Sideview_Jumper{
 	void run(int enemyid){
 		npc ghost = Ghost_InitAutoGhost(this, enemyid);
 		Ghost_SetFlag(GHF_NORMAL);
