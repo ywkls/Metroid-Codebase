@@ -1,0 +1,16 @@
+//Section 30. Weapon Realignment
+
+//Moves Lweapons to be properly aligned with tall sprite.
+
+void Weapon_Realignment(){
+	for (int i = 1; i <= Screen->NumLWeapons(); i++){
+		lweapon w = Screen->LoadLWeapon(i);
+		if (!Between(w->ID,LW_SCRIPT1,LW_SCRIPT10) && w->ID !=LW_BOMB && w->ID !=LW_SBOMB 
+			&& w->ID !=LW_BOMBBLAST && w->ID !=LW_SBOMBBLAST 
+			&& (w->Misc[GEN_MISC_FLAGS]&LWF_Y_OFFSET)==0 
+			&& Link->Dir !=DIR_DOWN){
+			w->Y-=16;
+			w->Misc[GEN_MISC_FLAGS]|=LWF_Y_OFFSET;
+		}
+	}
+}
