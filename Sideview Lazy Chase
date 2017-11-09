@@ -1,0 +1,97 @@
+ffc script Sideview_LazyChase{
+	void run(int enemyid){
+		npc ghost = Ghost_InitAutoGhost(this, enemyid);
+		Ghost_SetFlag(GHF_STUN);
+		Ghost_SetFlag(GHF_CLOCK);
+		Ghost_SetFlag(GHF_NO_FALL);
+		int Accel = Ghost_GetAttribute(ghost, 0, 50)/1000;
+		int MaxV = Ghost_GetAttribute(ghost, 1, 250)/100;
+		int Pierce = Ghost_GetAttribute(ghost, 2, 0);
+		if(Pierce==1)
+			Ghost_SetFlag(GHF_IGNORE_ALL_TERRAIN);
+		int Type = Ghost_GetAttribute(ghost, 3, 0);
+		int DrainSpeed = Ghost_GetAttribute(ghost, 4, 8);
+		int DrainSound = Ghost_GetAttribute(ghost, 5, 0);
+		int DrainDamage = ghost->WeaponDamage;
+		int Combo = ghost->Attributes[10];
+		int VX;
+		int VY;
+		int MetroidCooldown;
+		int Width = Ghost_GetAttribute(ghost,6,1);
+		int Height = Ghost_GetAttribute(ghost,7,1);
+		int IceOnly = Ghost_GetAttribute(ghost,8,0);
+		Ghost_SetSize(this,ghost,Width,Height);
+		while(true){
+			VX = Clamp(VX+Sign(Link->X-Ghost_X)*Accel, -MaxV, MaxV);
+			VY = Clamp(VY+Sign(Link->Y-Ghost_Y)*Accel, -MaxV, MaxV);
+			Ghost_MoveXY(VX, VY, 0);
+			if(Pierce==0){
+				if((VX<0&&!Ghost_CanMove(DIR_LEFT, 1, 0))||(VX>0&&!Ghost_CanMove(DIR_RIGHT, 1, 0)))
+					VX = -VX;
+				if((VY<0&&!Ghost_CanMove(DIR_UP, 1, 0))||(VY>0&&!Ghost_CanMove(DIR_DOWN, 1, 0)))
+					VY = -VY;
+			}
+			if(MetroidCooldown>0){
+				MetroidCooldown--;
+				ghost->CollDetection = false;
+			}
+			else if(MetroidCooldown==0&&!ghost->CollDetection)
+				ghost->CollDetection = true;
+			else if(Type>0&&LinkCollision(ghost)&&MetroidCooldown==0){
+				ghost->CollDetection = false;
+				this->Flags[FFCF_OVERLAY] = true;
+				int DrainCounter;
+				int MoveCounter;
+				int XOff = Ghost_X-Link->X;
+				int YOff = Ghost_Y-Link->Y;
+				float Expand = 0;
+				while(MetroidCooldown==0){
+					DrainCounter++;
+					if(DrainCounter>DrainSpeed){
+						if(DrainSound>0)
+							Game->PlaySound(DrainSound);
+						DrainCounter -= DrainSpeed;
+						if(Link->CollDetection){
+							if(Type==1)
+								Link->HP = Max(0, Link->HP-DrainDamage);
+							else if(Type==2)
+								Link->MP = Max(0, Link->MP-DrainDamage);
+							else if(Type==3)
+								Game->Counter[CR_RUPEES] = Max(0, Game->Counter[CR_RUPEES]-DrainDamage);
+						}
+					}
+					MoveCounter++;
+					if(MoveCounter>360)
+						MoveCounter-=360;
+					if(Abs(XOff)>1)
+						XOff += VectorX(0.5, Angle(XOff, YOff, 0, 0));
+					if(Abs(YOff)>1)
+						YOff += VectorY(0.5, Angle(XOff, YOff, 0, 0));
+					if(Expand<8)
+						Expand += 0.2;
+					Ghost_X = Link->X+Expand*Cos(3*MoveCounter)+XOff;
+					Ghost_Y = Link->Y+Expand*Sin(4*MoveCounter)+YOff;
+					for(int i=1; i<=Screen->NumLWeapons(); i++){
+						lweapon l = Screen->LoadLWeapon(i);
+						if(!l->isValid())continue;
+						if((l->ID==LW_BOMBBLAST&&Distance(CenterX(ghost), CenterY(ghost), CenterX(l), CenterY(l))<24)||(l->ID==LW_SBOMBBLAST&&Distance(CenterX(ghost), CenterY(ghost), CenterX(l), CenterY(l))<40)){
+							VX = VectorX(MaxV, Angle(l->X, l->Y, Ghost_X, Ghost_Y));
+							VY = VectorY(MaxV, Angle(l->X, l->Y, Ghost_X, Ghost_Y));
+							MetroidCooldown = 60;
+						}
+						if(l->ID ==LW_BEAM && Collision(l,ghost))ghost->Stun = 180;
+					}
+					Ghost_Waitframe(this, ghost);
+				}
+				this->Flags[FFCF_OVERLAY] = false;
+			}
+			if(!IceOnly){
+				for(int i =1;i<=Screen->NumLWeapons();i++){
+					lweapon lw = Screen->LoadLWeapon(i);
+					if(lw->ID ==LW_BEAM && Collision(lw,ghost))ghost->Stun = 180;
+				}
+			}
+			Ghost_Waitframe(this, ghost);
+		}
+	}
+}
