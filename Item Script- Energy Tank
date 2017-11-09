@@ -1,0 +1,12 @@
+//Section 18. Energy Tank Script
+
+int HEALTH_COUNTER = CR_SCRIPT2;//Counter for energy tanks.
+
+//When you get this item, current number of tanks is increased.
+
+item script Energy_Tank{
+	void run(){
+		SamusVars[NUM_TANKS]++;
+		Game->Counter[SECRET_COUNTER] ++;
+	}
+}
