@@ -1,0 +1,147 @@
+ffc script Sideview_Shooter{
+	void run(int enemyid){
+		npc ghost = Ghost_InitAutoGhost(this, enemyid);
+		Ghost_SetFlag(GHF_NORMAL);
+		Ghost_SetFlag(GHF_4WAY);
+		int ShotType = Ghost_GetAttribute(ghost, 0, 0);
+		int ShotSpeed = Ghost_GetAttribute(ghost, 1, 150);
+		int ShotMisc1 = ghost->Attributes[2];
+		int ShotMisc2 = ghost->Attributes[3];
+		if(ShotMisc1==0&&ShotMisc2==0){
+			if(ShotType==2){
+				ShotMisc1 = 0;
+				ShotMisc2 = 5;
+			}
+			else if(ShotType==3){
+				ShotMisc1 = 30;
+				ShotMisc2 = 3;
+			}
+			else if(ShotType==4){
+				ShotMisc1 = 40;
+				ShotMisc2 = 16;
+			}
+			else if(ShotType==6){
+				ShotMisc1 = 38;
+				ShotMisc2 = 3;
+			}
+		}
+		int ShotSprite = Ghost_GetAttribute(ghost, 4, -1);
+		int ShotSound = Ghost_GetAttribute(ghost, 5, -1);
+		int Combo = ghost->Attributes[10];
+		int EWID = WeaponTypeToID(ghost->Weapon);
+		int Counter = -1;
+		int OldDir;
+		int Width = Ghost_GetAttribute(ghost,6,1);
+		int Height = Ghost_GetAttribute(ghost,7,1);
+		Ghost_SetSize(this,ghost,Width,Height);
+		while(true){
+			Ghost_Data = Combo;
+			Counter = Ghost_HaltingWalk4(Counter, ghost->Step, ghost->Rate, ghost->Homing, ghost->Hunger, ghost->Haltrate, 48);
+			if(Counter>0){
+				Ghost_Data = Combo+4;
+				if(Counter==16&&(Ghost_Dir==DIR_LEFT||Ghost_Dir==DIR_RIGHT)){
+					eweapon e;
+					Ghost_UnsetFlag(GHF_KNOCKBACK);
+					OldDir = Ghost_Dir;
+					if(ShotType==0){
+						int Flags;
+						if(EWID==EW_MAGIC||EWID==EW_ARROW||EWID==EW_BEAM||EWID==EW_BOMB||EWID==EW_SBOMB)
+							Flags = EWF_ROTATE;
+						e = FireNonAngularEWeapon(EWID, Ghost_X, Ghost_Y, Ghost_Dir, ShotSpeed, ghost->WeaponDamage, ShotSprite, ShotSound, Flags);
+						if(ShotMisc1>0){
+							SetEWeaponMovement(e, EWM_SINE_WAVE, ShotMisc1, ShotMisc2);
+						}
+					}
+					else if(ShotType==1){
+						int Flags;
+						if(EWID==EW_MAGIC||EWID==EW_ARROW||EWID==EW_BEAM||EWID==EW_BOMB||EWID==EW_SBOMB)
+							Flags = EWF_ROTATE;
+						Ghost_Dir = AngleDir4(Angle(Ghost_X, Ghost_Y, Link->X, Link->Y));
+						e = FireAimedEWeapon(EWID, Ghost_X, Ghost_Y, 0, ShotSpeed, ghost->WeaponDamage, ShotSprite, ShotSound, Flags);
+						if(ShotMisc1>0){
+							SetEWeaponMovement(e, EWM_SINE_WAVE, ShotMisc1, ShotMisc2);
+						}
+					}
+					else if(ShotType==2){
+						int Flags;
+						if(EWID==EW_MAGIC||EWID==EW_ARROW||EWID==EW_BEAM||EWID==EW_BOMB||EWID==EW_SBOMB)
+							Flags = EWF_ROTATE;
+						Ghost_Dir = AngleDir4(Angle(Ghost_X, Ghost_Y, Link->X, Link->Y));
+						int AngleLink = Angle(Ghost_X, Ghost_Y, Link->X, Link->Y);
+						for(int i=0; i<ShotMisc2; i++){
+							if(ShotMisc1==0)
+								e = FireAimedEWeapon(EWID, Ghost_X, Ghost_Y, 0, ShotSpeed, ghost->WeaponDamage, ShotSprite, ShotSound, Flags);
+							else
+								e = FireEWeapon(EWID, Ghost_X, Ghost_Y, DegtoRad(AngleLink), ShotSpeed, ghost->WeaponDamage, ShotSprite, ShotSound, Flags);
+							Ghost_Waitframes(this, ghost, 8);
+						}
+					}
+					else if(ShotType==3){
+						int Flags;
+						if(EWID==EW_MAGIC||EWID==EW_ARROW||EWID==EW_BEAM||EWID==EW_BOMB||EWID==EW_SBOMB)
+							Flags = EWF_ROTATE;
+						Ghost_Dir = AngleDir4(Angle(Ghost_X, Ghost_Y, Link->X, Link->Y));
+						int InitAng = -ShotMisc1*(ShotMisc2-1)/2;
+						for(int i=0; i<ShotMisc2; i++){
+							e = FireAimedEWeapon(EWID, Ghost_X, Ghost_Y, DegtoRad(InitAng+ShotMisc1*i), ShotSpeed, ghost->WeaponDamage, ShotSprite, ShotSound, Flags);
+						}
+					}
+					else if(ShotType==4){
+						int Flags;
+						if(EWID==EW_MAGIC||EWID==EW_ARROW||EWID==EW_BEAM||EWID==EW_BOMB||EWID==EW_SBOMB)
+							Flags = EWF_ROTATE;
+						for(int i=0; i<ShotMisc2; i++){
+							e = FireEWeapon(EWID, Ghost_X, Ghost_Y, DegtoRad(DirAngle(Ghost_Dir)+Rand(-ShotMisc1/2, ShotMisc1/2)), ShotSpeed, ghost->WeaponDamage, ShotSprite, ShotSound, Flags);
+							Ghost_Waitframes(this, ghost, 8);
+						}
+					}
+					else if(ShotType==5){
+						int Flags;
+						if(EWID==EW_MAGIC||EWID==EW_ARROW||EWID==EW_BEAM||EWID==EW_BOMB||EWID==EW_SBOMB)
+							Flags = EWF_ROTATE;
+						e = FireEWeapon(EWID, Ghost_X, Ghost_Y, DegtoRad(DirAngle(Ghost_Dir)), ShotSpeed, ghost->WeaponDamage, ShotSprite, ShotSound, Flags);
+						int FakeJump = -ShotMisc1/10;
+						if(ShotMisc1==0)
+							FakeJump = -Rand(16, 32)/10;
+						int LastJump = FakeJump;
+						int Y = e->Y;
+						while(e->isValid()){
+							FakeJump = Clamp(FakeJump+GH_GRAVITY, -GH_TERMINAL_VELOCITY, GH_TERMINAL_VELOCITY);
+							Y += FakeJump;
+							e->Y = Y;
+							if(FakeJump>0&&!CanWalk(e->X, e->Y, DIR_DOWN, 1, true)&&ShotMisc2!=2){
+								if(LastJump<-1&&ShotMisc2==1){
+									FakeJump = LastJump/2;
+									LastJump = FakeJump;
+								}
+								else{
+									e->DeadState = 0;
+								}
+							}
+							Ghost_Waitframe(this, ghost);
+						}
+					}
+					else if(ShotType==6){
+						if(ShotSound>0)
+							Game->PlaySound(ShotSound);
+						if(Screen->NumNPCs()<32){
+							for(int i=0; i<ShotMisc2; i++){
+								npc n = CreateNPCAt(ShotMisc1, Ghost_X, Ghost_Y);
+							}
+						}
+					}
+					if(EWID==EW_BRANG){
+						for(int i=0; i<180&&e->isValid(); i++){
+							Ghost_Waitframe(this, ghost);
+						}
+					}
+					Ghost_SetFlag(GHF_KNOCKBACK);
+				}
+				else if(Counter==1){
+					Ghost_Dir = OldDir;
+				}
+			}
+			Ghost_Waitframe(this, ghost);
+		}
+	}
+}
