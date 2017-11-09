@@ -1,0 +1,22 @@
+//Section 16. Weapon Script Constants
+
+const int BEAM_SPRITE        = 0;    //Tile for the un-charged beam to use
+const int CHARGE_BEAM_SPRITE = 1;    //Tile for charged beam to use
+const int BEAM_CSET        = 6;    //Cset for the beams to use
+const int BEAM_SPEED     = 200;    //Speed for beams to fly at goes here
+const int WAVE_BEAM_SPRITE = 2;//Sprite used by wave beam.
+const int PLASMA_BEAM_SPRITE = 3;//Sprite used by plasma beam.
+const int CHARGE_BEAM_COMBO = 2379;//Combo used by charge beam ffc.
+const int BEAM_CHARGING_SFX = 79;//Sound charge beam makes while charging.
+const int SUPER_MISSILE_SPRITE = 88;//Sprite for super missile.
+const int NORMAL_MISSILE_SPRITE = 10;//Sprite for normal missile.
+const int ICE_BEAM_SCRIPT = 7;//Script slot for ice beam.
+const int I_SPAZER_BEAM = 11;//Item id for Spazer Beam.
+const int ICE_BEAM_SFX =44;//Sound ice beam makes.
+const int ICE_BLOCK_COMBO = 1612;//Combo for ice beam platform.
+const int ICE_FAKE_COMBO  = 1456;//Walkable combo for fake ice effect.
+const int SPR_ICE_PROJECTILE = 83;//Sprite of ice beam lweapon.
+const int ICE_BEAM_SPEED = 100;//Speed of Ice beam.
+const int MAX_ICE_PLATFORM_TIME = 600;//Time ice platform exists
+const int ICE_BEAM_CSET = 2;//Cset for Ice beam.
+const int ICE_BLOCK_CSET = 2;//Cset for ice block.
