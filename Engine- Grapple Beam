@@ -1,0 +1,45 @@
+//Section 10. Grapple Beam Script Components. Created by Moosh, modified by me.
+
+//Converts a direction to an angle
+int DirAngle(int Dir){
+	if(Dir==DIR_UP)return -90;
+	else if(Dir==DIR_DOWN)return 90;
+	else if(Dir==DIR_LEFT)return 180;
+	else if(Dir==DIR_RIGHT)return 0;
+	else if(Dir==DIR_LEFTUP)return -135;
+	else if(Dir==DIR_RIGHTUP)return -45;
+	else if(Dir==DIR_LEFTDOWN)return 135;
+	else if(Dir==DIR_RIGHTDOWN)return 45;
+}
+
+//Used by ForcePos function.
+
+float ForcePosX;
+float ForcePosY;
+
+//Matches Link's position to coordinates.
+
+void ForcePos(){
+	if(ForcePosX>-1000)
+		Link->X = ForcePosX;
+	if(ForcePosY>-1000)
+		Link->Y = ForcePosY;
+}
+
+const int I_GRAPPLE = 52;//Item ID for grapple beam.
+const int CT_GRAPPLE = 144;//Combo type used as grapple point.
+const int TIL_GRAPPLEHOOK = 940;//First tile of grapple beam.
+const int CS_GRAPPLEHOOK = 1;//Cset of grapple beam.
+const int FREQ_GRAPPLESOUND = 4;//How often to play grapple sound.
+const int SFX_GRAPPLESOUND = 17;//What sound to play when using grapple.
+
+//Play a sound every so often.
+
+int TimedSFX(int timer, int sfx, int freq){
+	timer++;
+	if(timer>=freq){
+		Game->PlaySound(sfx);
+		timer = 0;
+	}
+	return timer;
+}
