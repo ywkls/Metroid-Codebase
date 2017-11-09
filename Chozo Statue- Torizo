@@ -1,0 +1,472 @@
+//Section 34. Chozo Statue
+
+const int CHOZO_LEFT_WALK_NORMAL = 3048;//Combo of normal left walking animation.
+const int CHOZO_RIGHT_WALK_NORMAL = 3049;//Combo of normal right walking animation.
+const int CHOZO_LEFT_JUMP_NORMAL = 3050;//Combo of normal left SamusVars[IS_JUMPING] animation.
+const int CHOZO_RIGHT_JUMP_NORMAL= 3051;//Combo of normal right SamusVars[IS_JUMPING] animation.
+const int CHOZO_LEFT_LEGS_WALK= 3052;//Combo of legs walking left
+const int CHOZO_RIGHT_LEGS_WALK = 3053;//Combo of legs walking right
+const int CHOZO_LEFT_LEGS_JUMP= 3054;//Combo of legs SamusVars[IS_JUMPING] left
+const int CHOZO_RIGHT_LEGS_JUMP = 3055;//Combo of legs SamusVars[IS_JUMPING] right
+const int CHOZO_RIGHT_DMG_WALK = 3057;//Combo of damaged walking right.
+const int CHOZO_RIGHT_DMG_JUMP = 3059;//Combo of damaged SamusVars[IS_JUMPING] right
+const int CHOZO_RIGHT_ATTACK_NORMAL = 3061;//Combo of normal attacking right.
+const int CHOZO_LEFT_DMG_WALK = 3056;//Combo of damaged walking left.
+const int CHOZO_LEFT_DMG_JUMP = 3058;//Combo of damaged SamusVars[IS_JUMPING] left.
+const int CHOZO_LEFT_ATTACK_NORMAL = 3060;//Combo of normal attacking left.
+const int CHOZO_RIGHT_LEGS_ATTACK = 3063;//Combo of legs while attacking right.
+const int CHOZO_LEFT_LEGS_ATTACK = 3062;//Combo of legs while attacking left.
+const int CHOZO_LEFT_DMG_ATTACK = 3064;//Combo of damaged attacking left.
+const int CHOZO_RIGHT_DMG_ATTACK = 3065;//Combo of damaged attacking right.
+const int CHOZO_BLOB_SPRITE =45;//Sprite of spewed blobs.
+const int CHOZO_WAVE_SPRITE = 96;//Sprite of waves.
+
+ffc script Chozo_Statue{
+	void run(int enemyID){
+		npc ghost = Ghost_InitAutoGhost(this, enemyID);
+		//Position enemy.
+		Ghost_X = 176;
+		Ghost_Y = 65;
+		//Blob eweapons.
+		eweapon blob;
+		eweapon wave;//Wave eweapon.
+		//Flame eweapons.
+		eweapon flame;
+		int Mode = 0;//Controls behavior.
+		int WalkTimer;//Timer for changing appearance while walking.
+		//Make the core invisible.
+		Ghost_Data = CHOZO_LEFT_WALK_NORMAL;
+		Ghost_CSet = 10;
+		//Position and resize ghost.
+		Ghost_AddCombo(CHOZO_LEFT_LEGS_WALK,-16,48,5,3);
+		//Set flags.
+		Ghost_SetFlag(GHF_IGNORE_ALL_TERRAIN);
+		Ghost_SetFlag(GHF_IGNORE_NO_ENEMY);
+		Ghost_SetFlag(GHF_NO_FALL);
+		Ghost_SetFlag(GHF_FAKE_Z);
+		//Resize core.
+		Ghost_SetSize(this,ghost,3,3);
+		int JumpChance;//Controls which mode it chooses.
+		int i;//Iterative variable.
+		bool MovingLeft = true;//Tells game if we're moving left.
+		int MaxHP = Ghost_HP;//Remember Max HP.
+		//Used by Jumping code.
+		int StartX;
+		int StartY;
+		float totalDist;
+		float currentDist;
+		int jump_speed;
+		int targetX;
+		int targetY;
+		//Used by code of thrown blobs.
+		int FakeJump;
+		int Y;
+		//Hover code from sideview enemies.
+		int Misc3 = ghost->Attributes[3];//Half Height of vertical movement.
+		bool Firing = false;//Determine if you're jumping of firing.
+		int Defenses[18];
+		Ghost_StoreDefenses(ghost, Defenses);
+		while(true){
+			//Walking left and right.
+			if(Mode ==0){
+				WalkTimer = (WalkTimer+1)%4;
+				//You're walking left.
+				if(MovingLeft && Ghost_X>48){
+					if(WalkTimer==0)Ghost_X-=4;
+				}
+				//Time to change behavior.
+				else if(MovingLeft && Ghost_X<=48){
+					//Do a random calculation.
+					JumpChance = Rand(0,100);
+					//Spout flames.
+					if(JumpChance>75){
+						Mode = 1;
+						Ghost_ClearCombos();
+						if(Ghost_HP<(MaxHP/2))Ghost_Data = CHOZO_LEFT_DMG_ATTACK;
+						else Ghost_Data = CHOZO_LEFT_ATTACK_NORMAL;
+						Ghost_SetSize(this,ghost,4,3);
+						Ghost_AddCombo(CHOZO_LEFT_LEGS_ATTACK,0,48,5,3);
+					}
+					//Jump.
+					else if(JumpChance<=75 && JumpChance>=51){
+						Mode = 2;
+						MovingLeft = false;
+						Ghost_ClearCombos();
+						if(Ghost_HP<(MaxHP/2))Ghost_Data = CHOZO_LEFT_DMG_JUMP;
+						else Ghost_Data = CHOZO_LEFT_JUMP_NORMAL;
+						Ghost_SetSize(this,ghost,3,3);
+						Ghost_AddCombo(CHOZO_LEFT_LEGS_JUMP,0,48,3,3);
+					}
+					//Fire wave.
+					else if(JumpChance<=50 && JumpChance>=26){
+						Mode = 3;
+						Ghost_ClearCombos();
+						if(Ghost_HP<(MaxHP/2))Ghost_Data = CHOZO_LEFT_DMG_ATTACK;
+						else Ghost_Data = CHOZO_LEFT_ATTACK_NORMAL;
+						Ghost_SetSize(this,ghost,4,3);
+						Ghost_AddCombo(CHOZO_LEFT_LEGS_ATTACK,0,48,5,3);
+					} 
+					//Stay in this mode.
+					else{
+						MovingLeft = false;
+						Ghost_ClearCombos();
+						if(Ghost_HP<(MaxHP/2))Ghost_Data = CHOZO_RIGHT_DMG_WALK;
+						else Ghost_Data = CHOZO_RIGHT_WALK_NORMAL;
+						Ghost_SetSize(this,ghost,3,3);
+						Ghost_AddCombo(CHOZO_RIGHT_LEGS_WALK,-16,48,5,3);
+					} 
+				}
+				//Time to go right now.
+				else if(!MovingLeft && Ghost_X<176){
+					if(WalkTimer==0)Ghost_X+=4;
+				}
+				//Change behavior.
+				else if(!MovingLeft && Ghost_X>=176){
+					JumpChance = Rand(0,100);
+					if(JumpChance>75){
+						Mode = 1;
+						Ghost_ClearCombos();
+						if(Ghost_HP<(MaxHP/2))Ghost_Data = CHOZO_RIGHT_DMG_ATTACK;
+						else Ghost_Data = CHOZO_RIGHT_ATTACK_NORMAL;
+						Ghost_SetSize(this,ghost,4,3);
+						Ghost_AddCombo(CHOZO_RIGHT_LEGS_ATTACK,0,48,5,3);
+					}
+					else if(JumpChance<=75 && JumpChance>=51){
+						Mode = 2;
+						MovingLeft = true;
+						Ghost_ClearCombos();
+						if(Ghost_HP<(MaxHP/2))Ghost_Data = CHOZO_LEFT_DMG_JUMP;
+						else Ghost_Data = CHOZO_LEFT_JUMP_NORMAL;
+						Ghost_SetSize(this,ghost,3,3);
+						Ghost_AddCombo(CHOZO_LEFT_LEGS_JUMP,0,48,3,3);
+					}
+					else if(JumpChance<=50 && JumpChance>=26){
+						Ghost_ClearCombos();
+						if(Ghost_HP<(MaxHP/2))Ghost_Data = CHOZO_RIGHT_DMG_ATTACK;
+						else Ghost_Data = CHOZO_RIGHT_ATTACK_NORMAL;
+						Ghost_SetSize(this,ghost,4,3);
+						Ghost_AddCombo(CHOZO_RIGHT_LEGS_ATTACK,0,48,5,3);
+						Mode = 3;
+					}
+					else{
+						MovingLeft = true;
+						Ghost_ClearCombos();
+						if(Ghost_HP<(MaxHP/2))Ghost_Data = CHOZO_LEFT_DMG_WALK;
+						else Ghost_Data = CHOZO_LEFT_WALK_NORMAL;
+						Ghost_SetSize(this,ghost,3,3);
+						Ghost_AddCombo(CHOZO_LEFT_LEGS_WALK,-16,48,5,3);
+					} 
+				}
+				if(Between(Link->X+8,Ghost_X-16,Ghost_X+64) && Between(Link->Y+8,Ghost_Y+48,Ghost_Y+96)){
+					wave = FireEWeapon(ghost->Weapon, Link->X, Link->Y, DegtoRad(0), 0, ghost->WeaponDamage, SPRITE_NULL, 0, EWF_UNBLOCKABLE);
+					SetEWeaponLifespan(wave,EWL_TIMER, 1);
+					SetEWeaponDeathEffect(wave,EWD_VANISH, 0);
+				}
+			}
+			//Create flames.
+			else if(Mode == 1){
+				if(Between(Link->X+8,Ghost_X,Ghost_X+80) && Between(Link->Y+8,Ghost_Y+48,Ghost_Y+96)){
+					wave = FireEWeapon(ghost->Weapon, Link->X, Link->Y, DegtoRad(0), 0, ghost->WeaponDamage, SPRITE_NULL, 0, EWF_UNBLOCKABLE);
+					SetEWeaponLifespan(wave,EWL_TIMER, 1);
+					SetEWeaponDeathEffect(wave,EWD_VANISH, 0);
+				}
+				//Create flames.
+				for(i=0;i<=5;i++){
+					//Move according to position.
+					if(Ghost_X<128)flame = FireEWeapon(ghost->Weapon, ghost->X+80, ghost->Y+(i*16), DegtoRad(0), 5, ghost->WeaponDamage, RIDLEY_FLAME_SPRITE, 40, 0);
+					else flame = FireEWeapon(ghost->Weapon, ghost->X, ghost->Y+(i*16), DegtoRad(270), 5, ghost->WeaponDamage, RIDLEY_FLAME_SPRITE, 40, 0);
+					SetEWeaponLifespan(flame,EWL_TIMER, 60);
+					SetEWeaponDeathEffect(flame,EWD_EXPLODE, 8);
+				}
+				//Change variable so other parts of the script know what's going on.
+				if(Ghost_X>128)MovingLeft = true;
+				else MovingLeft = false;
+				JumpChance = Rand(0,100);
+				if(JumpChance>66){
+					Mode = 0;
+					Ghost_ClearCombos();
+					if(MovingLeft){
+						if(Ghost_HP<(MaxHP/2))
+							Ghost_Data = CHOZO_LEFT_DMG_WALK;
+						else
+							Ghost_Data = CHOZO_LEFT_WALK_NORMAL;
+						Ghost_SetSize(this,ghost,3,3);
+						Ghost_AddCombo(CHOZO_LEFT_LEGS_WALK,-16,48,5,3);
+					}
+					else{
+						if(Ghost_HP<(MaxHP/2))
+							Ghost_Data = CHOZO_RIGHT_DMG_WALK;
+						else
+							Ghost_Data = CHOZO_RIGHT_WALK_NORMAL;
+						Ghost_SetSize(this,ghost,3,3);
+						Ghost_AddCombo(CHOZO_RIGHT_LEGS_WALK,-16,48,5,3);
+					}
+				}
+				else if(JumpChance<=66 && JumpChance>=33){
+					Mode = 2;
+					Ghost_ClearCombos();
+					if(MovingLeft){
+						if(Ghost_HP<(MaxHP/2))Ghost_Data = CHOZO_LEFT_DMG_JUMP;
+						else Ghost_Data = CHOZO_LEFT_JUMP_NORMAL;
+						Ghost_SetSize(this,ghost,3,3);
+						Ghost_AddCombo(CHOZO_LEFT_LEGS_JUMP,0,48,3,3);
+					}
+					else{
+						if(Ghost_HP<(MaxHP/2))Ghost_Data = CHOZO_RIGHT_DMG_JUMP;
+						else Ghost_Data = CHOZO_RIGHT_JUMP_NORMAL;
+						Ghost_SetSize(this,ghost,3,3);
+						Ghost_AddCombo(CHOZO_RIGHT_LEGS_JUMP,0,48,4,3);
+					}
+				} 
+				else{
+					Mode = 3;
+					Ghost_ClearCombos();
+					if(MovingLeft){
+						if(Ghost_HP<(MaxHP/2))Ghost_Data = CHOZO_LEFT_DMG_ATTACK;
+						else Ghost_Data = CHOZO_LEFT_ATTACK_NORMAL;
+						Ghost_SetSize(this,ghost,4,3);
+						Ghost_AddCombo(CHOZO_LEFT_LEGS_ATTACK,0,48,5,3);
+					}
+					else{
+						if(Ghost_HP<(MaxHP/2))Ghost_Data = CHOZO_RIGHT_DMG_ATTACK;
+						else Ghost_Data = CHOZO_RIGHT_ATTACK_NORMAL;
+						Ghost_SetSize(this,ghost,4,3);
+						Ghost_AddCombo(CHOZO_RIGHT_LEGS_ATTACK,0,48,5,3);
+					}
+				}
+			}
+			//Time to jump.
+			else if(Mode ==2){
+				//You're on the right side and not firing projectiles.
+				if(Ghost_X>128 && MovingLeft && !Firing){
+					//Move the enemy.
+					targetX=80;
+					targetY = Ghost_Y;
+					currentDist=Abs(Ghost_X-targetX);
+					StartX= Ghost_X;
+					StartY= Ghost_Y;
+					jump_speed = -2;
+					Ghost_SetAllDefenses(ghost,NPCDT_BLOCK);
+					//I use a while loop since I'm unfamiliar with the methodology of do loops.
+					while(currentDist > 1){
+						if(Between(Link->X+8,Ghost_X,Ghost_X+48) && Between(Link->Y+8,Ghost_Y+48,Ghost_Y+96)){
+							wave = FireEWeapon(ghost->Weapon, Link->X, Link->Y, DegtoRad(0), 0, ghost->WeaponDamage, SPRITE_NULL, 0, EWF_UNBLOCKABLE);
+							SetEWeaponLifespan(wave,EWL_TIMER, 1);
+							SetEWeaponDeathEffect(wave,EWD_VANISH, 0);
+						}
+						//Move enemy.
+						Ghost_X+=jump_speed;
+						//Constantly calculate these as we move.
+						totalDist=Distance(StartX, StartY, targetX, targetY);
+						currentDist=Abs(Ghost_X-targetX);
+						Ghost_Y=totalDist/2-Misc3*Sin(currentDist/totalDist*180);
+						Gen_Explode_Waitframe(this,ghost);
+					}
+					Ghost_SetDefenses(ghost, Defenses);
+					if(Ghost_Y!=StartY)
+						Ghost_Y= StartY;
+					//You're no longer moving left.
+					MovingLeft = false;
+					//Time to fire now.
+					Firing = true;
+				}
+				//You're on the left side and not firing.
+				else if(Ghost_X<=128 && !MovingLeft && !Firing){
+					//Move the enemy.
+					targetX=144;
+					targetY = Ghost_Y;
+					currentDist=Abs(Ghost_X-targetX);
+					StartX= Ghost_X;
+					StartY= Ghost_Y;
+					jump_speed = 2;
+					Ghost_SetAllDefenses(ghost,NPCDT_BLOCK);
+					while(currentDist > 1){
+						if(Between(Link->X+8,Ghost_X,Ghost_X+48) && Between(Link->Y+8,Ghost_Y+48,Ghost_Y+96)){
+							wave = FireEWeapon(ghost->Weapon, Link->X, Link->Y, DegtoRad(0), 0, ghost->WeaponDamage, SPRITE_NULL, 0, EWF_UNBLOCKABLE);
+							SetEWeaponLifespan(wave,EWL_TIMER, 1);
+							SetEWeaponDeathEffect(wave,EWD_VANISH, 0);
+						}	
+						Ghost_X+=jump_speed;
+						totalDist=Distance(StartX, StartY, targetX, targetY);
+						currentDist=Abs(Ghost_X-targetX);
+						Ghost_Y=totalDist/2-Misc3*Sin(currentDist/totalDist*180);
+						Gen_Explode_Waitframe(this,ghost);
+					}
+					Ghost_SetDefenses(ghost, Defenses);
+					if(Ghost_Y!=StartY)
+						Ghost_Y = StartY;
+					MovingLeft = true;
+					Firing = true;
+					Ghost_ClearCombos();
+					if(Ghost_X<128){
+						if(Ghost_HP<(MaxHP/2))
+							Ghost_Data = CHOZO_LEFT_DMG_ATTACK;
+						else
+							Ghost_Data = CHOZO_LEFT_ATTACK_NORMAL;
+						Ghost_SetSize(this,ghost,4,3);
+						Ghost_AddCombo(CHOZO_LEFT_LEGS_ATTACK,-16,48,5,3);
+					} 
+					else{
+						if(Ghost_HP<(MaxHP/2))
+							Ghost_Data = CHOZO_RIGHT_DMG_ATTACK;
+						else
+							Ghost_Data = CHOZO_RIGHT_ATTACK_NORMAL;
+						Ghost_SetSize(this,ghost,4,3);	
+						Ghost_AddCombo(CHOZO_RIGHT_LEGS_ATTACK,-16,48,5,3);
+					}
+				}
+				//Time to fire blobs.
+				if(Firing){
+					if(Between(Link->X+8,Ghost_X,Ghost_X+80) && Between(Link->Y+8,Ghost_Y+48,Ghost_Y+96)){
+						wave = FireEWeapon(ghost->Weapon, Link->X, Link->Y, DegtoRad(0), 0, ghost->WeaponDamage, SPRITE_NULL, 0, EWF_UNBLOCKABLE);
+						SetEWeaponLifespan(wave,EWL_TIMER, 1);
+						SetEWeaponDeathEffect(wave,EWD_VANISH, 0);
+					}
+					//Fire blobs.
+					for(i=0;i<=5;i++){
+						if(Ghost_X>128)blob = FireEWeapon(EW_SCRIPT10, ghost->X, ghost->Y, DegtoRad(Rand(135,225)),300, ghost->WeaponDamage, CHOZO_BLOB_SPRITE, 40, 0);
+						else blob = FireEWeapon(EW_SCRIPT10, ghost->X+80, ghost->Y, DegtoRad(Choose(Rand(0,45),Rand(315,359))), 300, ghost->WeaponDamage, CHOZO_BLOB_SPRITE, 40, 0);
+						SetEWeaponLifespan(blob,EWL_TIMER, 60);
+						SetEWeaponDeathEffect(blob,EWD_VANISH, 0);
+					}
+					//Change appearance and behavior based on location.
+					if(Ghost_X<128)
+						MovingLeft = true;
+					else
+						MovingLeft = false;
+					JumpChance = Rand(0,100);
+					Ghost_ClearCombos();
+					if(JumpChance>66){
+						if(MovingLeft){
+							if(Ghost_HP<(MaxHP/2))
+								Ghost_Data = CHOZO_LEFT_DMG_WALK;
+							else
+								Ghost_Data = CHOZO_LEFT_WALK_NORMAL;
+							Ghost_SetSize(this,ghost,3,3);
+							Ghost_AddCombo(CHOZO_LEFT_LEGS_WALK,-16,48,5,3);	
+						}
+						else{
+							if(Ghost_HP<(MaxHP/2))
+								Ghost_Data = CHOZO_RIGHT_DMG_WALK;
+							else
+								Ghost_Data = CHOZO_RIGHT_WALK_NORMAL;
+							Ghost_SetSize(this,ghost,3,3);
+							Ghost_AddCombo(CHOZO_RIGHT_LEGS_WALK,-16,48,5,3);
+						}
+						Mode = 0;
+					}
+					else if(JumpChance<=66 && JumpChance>=33){
+						if(MovingLeft){
+							if(Ghost_HP<(MaxHP/2))
+								Ghost_Data = CHOZO_LEFT_DMG_ATTACK;
+							else
+								Ghost_Data = CHOZO_LEFT_ATTACK_NORMAL;
+							Ghost_SetSize(this,ghost,4,3);
+							Ghost_AddCombo(CHOZO_LEFT_LEGS_ATTACK,-0,48,5,3);
+						}
+						else{
+							if(Ghost_HP<(MaxHP/2))
+								Ghost_Data = CHOZO_RIGHT_DMG_ATTACK;
+							else
+								Ghost_Data = CHOZO_RIGHT_ATTACK_NORMAL;
+							Ghost_SetSize(this,ghost,4,3);	
+							Ghost_AddCombo(CHOZO_RIGHT_LEGS_ATTACK,0,48,5,3);
+						}
+						Mode = 1;
+					} 
+					else{
+						if(MovingLeft){
+							if(Ghost_HP<(MaxHP/2))Ghost_Data = CHOZO_LEFT_DMG_ATTACK;
+							else Ghost_Data = CHOZO_LEFT_ATTACK_NORMAL;
+							Ghost_SetSize(this,ghost,4,3);
+							Ghost_AddCombo(CHOZO_LEFT_LEGS_ATTACK,0,48,5,3);
+						}
+						else{
+							if(Ghost_HP<(MaxHP/2))Ghost_Data = CHOZO_RIGHT_DMG_ATTACK;
+							else Ghost_Data = CHOZO_RIGHT_ATTACK_NORMAL;
+							Ghost_SetSize(this,ghost,4,3);
+							Ghost_AddCombo(CHOZO_RIGHT_LEGS_ATTACK,0,48,5,3);
+						}
+						Mode = 3;
+					} 
+					//No longer firing.
+					Firing = false;
+				}
+			}
+			//Time to create waves.
+			else if(Mode ==3){
+				if(Between(Link->X+8,Ghost_X,Ghost_X+80) && Between(Link->Y+8,Ghost_Y+48,Ghost_Y+96)){
+					wave = FireEWeapon(ghost->Weapon, Link->X, Link->Y, DegtoRad(0), 0, ghost->WeaponDamage, SPRITE_NULL, 0, EWF_UNBLOCKABLE);
+					SetEWeaponLifespan(wave,EWL_TIMER, 1);
+					SetEWeaponDeathEffect(wave,EWD_VANISH, 0);
+				}
+				//Change appearance and behavior based on location.
+				if(Ghost_X>128)
+					wave = FireBigEWeapon(ghost->Weapon, ghost->X, ghost->Y+32, DegtoRad(180), 300, ghost->WeaponDamage, CHOZO_WAVE_SPRITE, 40, 0,1,2);
+				else
+					wave = FireBigEWeapon(ghost->Weapon, ghost->X+80, ghost->Y+32, DegtoRad(0), 300, ghost->WeaponDamage, CHOZO_WAVE_SPRITE+1, 40, 0,1,2);
+				SetEWeaponLifespan(wave,EWL_TIMER, 120);
+				SetEWeaponDeathEffect(wave,EWD_VANISH, 0);
+				//Let script know where you are.
+				if(Ghost_X>128)MovingLeft = true;
+				else MovingLeft = false;
+				JumpChance = Rand(0,100);
+				Ghost_ClearCombos();
+				if(JumpChance>66){
+						if(MovingLeft){
+							if(Ghost_HP<(MaxHP/2))
+								Ghost_Data = CHOZO_LEFT_DMG_WALK;
+							else
+								Ghost_Data = CHOZO_LEFT_WALK_NORMAL;
+							Ghost_SetSize(this,ghost,3,3);
+							Ghost_AddCombo(CHOZO_LEFT_LEGS_WALK,-16,48,5,3);	
+						}
+						else{
+							if(Ghost_HP<(MaxHP/2))
+								Ghost_Data = CHOZO_RIGHT_DMG_WALK;
+							else
+								Ghost_Data = CHOZO_RIGHT_WALK_NORMAL;
+							Ghost_SetSize(this,ghost,3,3);	
+							Ghost_AddCombo(CHOZO_RIGHT_LEGS_WALK,-16,48,5,3);
+						}
+						Mode = 0;
+					}
+				else if(JumpChance<=66 && JumpChance>=33){
+					if(MovingLeft){
+						if(Ghost_HP<(MaxHP/2))
+							Ghost_Data = CHOZO_LEFT_DMG_ATTACK;
+						else
+							Ghost_Data = CHOZO_LEFT_ATTACK_NORMAL;
+						Ghost_SetSize(this,ghost,4,3);
+						Ghost_AddCombo(CHOZO_LEFT_LEGS_ATTACK,0,48,5,3);
+					}
+					else{
+						if(Ghost_HP<(MaxHP/2))
+							Ghost_Data = CHOZO_RIGHT_DMG_ATTACK;
+						else
+							Ghost_Data = CHOZO_RIGHT_ATTACK_NORMAL;
+						Ghost_SetSize(this,ghost,4,3);	
+						Ghost_AddCombo(CHOZO_RIGHT_LEGS_ATTACK,0,48,5,3);
+					}
+					Mode = 1;
+				} 
+				else{
+					if(MovingLeft){
+						if(Ghost_HP<(MaxHP/2))Ghost_Data = CHOZO_LEFT_DMG_JUMP;
+						else Ghost_Data = CHOZO_LEFT_JUMP_NORMAL;
+						Ghost_SetSize(this,ghost,3,3);
+						Ghost_AddCombo(CHOZO_LEFT_LEGS_JUMP,0,48,3,3);
+					}
+					else{
+						if(Ghost_HP<(MaxHP/2))Ghost_Data = CHOZO_RIGHT_DMG_JUMP;
+						else Ghost_Data = CHOZO_RIGHT_JUMP_NORMAL;
+						Ghost_SetSize(this,ghost,3,3);
+						Ghost_AddCombo(CHOZO_RIGHT_LEGS_JUMP,0,48,3,3);
+					}
+					Mode = 2;
+				} 
+			}
+			Gen_Explode_Waitframe(this,ghost);
+		}
+	}
+}
