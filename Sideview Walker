@@ -1,0 +1,84 @@
+ffc script Sideview_Walker{
+	void run(int enemyid){
+		npc ghost = Ghost_InitAutoGhost(this, enemyid);
+		Ghost_SetFlag(GHF_NORMAL);
+		Ghost_SetFlag(GHF_MOVE_OFFSCREEN);
+		int TurnEdge = ghost->Attributes[0];
+		int Dir = ghost->Attributes[1];
+		if(Dir==2)Dir = Choose(0, 1);
+		int Combo = ghost->Attributes[10];
+		if(Dir==0)Ghost_Data = Combo;
+		else Ghost_Data = Combo+1;
+		int FlashCounter;
+		int Width = Ghost_GetAttribute(ghost,2,1);
+		int Height = Ghost_GetAttribute(ghost,3,1);
+		Ghost_SetSize(this,ghost,Width,Height);
+		while(true){
+			if(Ghost_GotHit())FlashCounter = 32;
+			else if(FlashCounter>0)FlashCounter--;
+			if(Ghost_CanMove(DIR_DOWN, 1, 0)||FlashCounter>0){
+				if(Dir==0){
+					Ghost_Move(DIR_LEFT, ghost->Step/100, 0);
+					if(!Ghost_CanMove(DIR_LEFT, 1, 0)&&Ghost_CanMove(DIR_RIGHT, 1, 0)){
+						Ghost_Data = Combo+1;
+						Dir = 1;
+					}
+				}
+				else{
+					Ghost_Move(DIR_RIGHT, ghost->Step/100, 0);
+					if(!Ghost_CanMove(DIR_RIGHT, 1, 0)&&Ghost_CanMove(DIR_LEFT, 1, 0)){
+						Ghost_Data = Combo;
+						Dir = 0;
+					}
+				}
+			}
+			else{
+				if(Dir==0){
+					float Step = ghost->Step/100;
+					for(int i=0; i<Step; i++){
+						Ghost_Move(DIR_LEFT, Max(1, Step), 0);
+						Step--;
+						if(!Ghost_CanMove(DIR_LEFT, 1, 0)&&Ghost_CanMove(DIR_RIGHT, 1, 0)&&!Ghost_CanMove(DIR_DOWN, 1, 0)){
+							Ghost_Data = Combo+1;
+							Dir = 1;
+						}
+						else if(TurnEdge==1){
+							if(CanWalk(Ghost_X-16, Ghost_Y, DIR_DOWN, 1, true)&&Ghost_CanMove(DIR_RIGHT, 1, 0)){
+								Ghost_Data = Combo+1;
+								Dir = 1;
+							}
+						}
+						else if(Ghost_X<=0){
+							Ghost_Data = Combo+1;
+							Dir = 1;
+						}
+					}
+				}
+				else{
+					float Step = ghost->Step/100;
+					for(int i=0; i<Step; i++){
+						Ghost_Move(DIR_RIGHT, 1, 0);
+						Step--;
+						if(!Ghost_CanMove(DIR_RIGHT, 1, 0)&&Ghost_CanMove(DIR_LEFT, 1, 0)&&!Ghost_CanMove(DIR_DOWN, 1, 0)){
+							Ghost_Data = Combo;
+							Dir = 0;
+						}
+						else if(TurnEdge==1){
+							if(CanWalk(Ghost_X+16, Ghost_Y, DIR_DOWN, 1, true)&&Ghost_CanMove(DIR_LEFT, 1, 0)){
+								Ghost_Data = Combo;
+								Dir = 0;
+							}
+						}
+						else if(Ghost_X>=240){
+							Ghost_Data = Combo;
+							Dir = 0;
+						}
+					}
+				}
+			}
+			if(Dir==0)Ghost_Dir = DIR_LEFT;
+			else Ghost_Dir = DIR_RIGHT;
+			Ghost_Waitframe(this, ghost);
+		}
+	}
+}
