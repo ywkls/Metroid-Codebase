@@ -1,0 +1,68 @@
+void Jump_Routine(){
+	int JumpHeight = JUMP_HEIGHT_NORMAL;
+	//Underwater areas.
+	//But not Shallow water.
+	if(!SamusVars[IS_MORPHED]){
+		if(Screen->Flags[SF_MISC]&SF_MISC_SCRIPT1 && !SamusVars[IN_WATER]){
+			//You don't have the gravity suit.
+			if(!Link->Item[I_GRAVITY_SUIT]){
+				//You don't have the High Jump boots.
+				if(!Link->Item[I_HIGHJUMP])JumpHeight = BOMB_HOP;
+				else{
+					if(!SamusVars[DIS_HI_JUMP])
+						JumpHeight= JUMP_HEIGHT_NORMAL;
+					else
+						JumpHeight = BOMB_HOP;
+				}
+			}
+			else if(Link->Item[I_HIGHJUMP] && Link->Item[I_GRAVITY_SUIT])
+				JumpHeight = JUMP_HEIGHT_HIGH;
+		}
+		//Shallow Water, but not under water.
+		else if(SamusVars[IN_WATER] && !ScreenFlagTest(SF_MISC,SF_MISC_SCRIPT1)){
+			if(!Link->Item[I_GRAVITY_SUIT]){
+				if(!Link->Item[I_HIGHJUMP])JumpHeight = BOMB_HOP;
+				else{
+					if(!SamusVars[DIS_HI_JUMP])
+						JumpHeight= JUMP_HEIGHT_NORMAL;
+					else
+						JumpHeight = BOMB_HOP;
+				}
+			}
+			else if(Link->Item[I_HIGHJUMP] && Link->Item[I_GRAVITY_SUIT])
+				JumpHeight = JUMP_HEIGHT_HIGH;
+		}
+		//Normal areas.
+		else{
+			if(Link->Item[I_HIGHJUMP])
+				JumpHeight = JUMP_HEIGHT_HIGH;
+		}
+		//You pressed jump and are on the ground.
+		if (PressJump() && OnGround() 
+			&& !SamusVars[IS_JUMPING] && Link->Action <=2){
+			//Set to know you're jumping.
+			SamusVars[IS_JUMPING] = 1;
+			//Deactivate ground Override.
+			SamusVars[ON_GROUND_OVERRIDE]= 0;
+			//Jump.
+			Link->Jump = (JumpHeight+2)*0.8;
+			//Play a sound.
+			Game->PlaySound(SFX_JUMP);
+		}
+	}
+	else{
+		if(ScreenFlagTest(SF_MISC,SF_MISC_SCRIPT1) ||
+		  (SamusVars[IN_WATER] && !ScreenFlagTest(SF_MISC,SF_MISC_SCRIPT1))){
+			//Reduce jump height if you're in water and don't have the gravity suit.
+			if(!Link->Item[I_GRAVITY_SUIT])
+				JumpHeight = BOMB_HOP;
+			else JumpHeight= JUMP_HEIGHT_NORMAL;
+		}
+		//Set jump height to normal.
+		else
+			JumpHeight= JUMP_HEIGHT_NORMAL;
+		Link->Jump= (JumpHeight+2)*0.8;
+		Game->PlaySound(SFX_JUMP);
+		DampInput(SamusVars[JUMP_BUTTON]);
+	}
+}
