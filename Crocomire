@@ -1,0 +1,186 @@
+//Section 32. Crocomire Script
+
+const int CROCOMIRE_BODY = 207;//Npc Id for body.
+const int CROCOMIRE_ARM = 48;//Npc Id for arm.
+const int CROCOMIRE_NORMAL_CSET = 8;//Normal Crocomire Cset.
+const int CROCOMIRE_HURT_CSET = 6;//Crocomire Cset when hurt.
+const int CROCOMIRE_BODY_OPEN_TILE = 10660;//Tile of body when mouth is open.
+const int CROCOMIRE_ARM_UP_TILE = 9991;//Tile of arm when it is up.
+const int CROCOMIRE_BODY_TILE = 10669;//Tile of body while mouth is closed.
+
+ffc script Crocomire{
+	void run(int enemyID){
+		npc ghost = Ghost_InitAutoGhost(this, enemyID);
+		//Create body/
+		npc body = Screen->CreateNPC(CROCOMIRE_BODY);
+		//Create arm.
+		npc arm = Screen->CreateNPC(CROCOMIRE_ARM);
+		//Position core.
+		Ghost_X = 176;
+		Ghost_Y = 64;
+		Ghost_Data = GH_INVISIBLE_COMBO;
+		//Position and resize body.
+		body->X = Ghost_X-16;
+		body->Y = Ghost_Y-16;
+		body->Extend = 3;
+		body->TileHeight = 8;
+		body->TileWidth = 9;
+		body->HitHeight = 114;
+		body->HitWidth = 144;
+		body->HitYOffset = 3;
+		//Position and resize arm.
+		arm->X =body->X-32;
+		arm->Y = body->Y+60;
+		arm->Extend = 3;
+		arm->TileHeight = 3;
+		arm->TileWidth = 7;
+		arm->HitHeight = 48;
+		arm->HitWidth = 112;
+		//Set flags.
+		Ghost_SetFlag(GHF_IGNORE_ALL_TERRAIN);
+		Ghost_SetFlag(GHF_IGNORE_NO_ENEMY);
+		Ghost_SetFlag(GHF_NO_FALL);
+		Ghost_SetFlag(GHF_FAKE_Z);
+		Ghost_SetSize(this,ghost,4,3);
+		eweapon rock[6];//Some eweapons we can use.
+		bool Advancing = false;//Tells the enemy to advance.
+		bool Firing = false;//Tells the enemy to fire.
+		int AdvanceTimer;//How long between modes.
+		int Mode = 0;//Controls behavior.
+		int i;//Iterative variable, so we don't have to declare it a lot.
+		int ArmTile = arm->OriginalTile;//Remember arm's tile.
+		bool Hit = false;//Tells if enemy was hit.
+		int BackUpTimer;//Backs up hit enemy.
+		while(true){
+			//Position parts.
+			body->X = Ghost_X-16;
+			body->Y = Ghost_Y-16;
+			arm->X = body->X-32;
+			//Mouth is closed.
+			if(Mode ==0){
+				//Timer hasn't started yet.
+				if(!Advancing){
+					//Set timer.
+					AdvanceTimer = 240;
+					//Make sure timer isn't set again for a while.
+					Advancing = true;
+					//Change arm appearance.
+					arm->OriginalTile = ArmTile;
+					//Move arm.
+					arm->Y = body->Y+60;
+				}
+				//Change body appearance.
+				body->OriginalTile = CROCOMIRE_BODY_TILE;
+				//Raise defenses.
+				Ghost_SetAllDefenses(ghost,NPCDT_BLOCK);
+			}
+			//Mouth is open.
+			else if(Mode ==1){
+				//Haven't started timer yet.
+				if(!Advancing){
+					//Set timer.
+					AdvanceTimer = 180;
+					Advancing = true;
+					//Trigger projectile fire.
+					Firing = true;
+					//Change arm appearance.
+					arm->OriginalTile = CROCOMIRE_ARM_UP_TILE;
+					//Raise arm.
+					arm->Y = body->Y+48;
+				}
+				//Change body appearance.
+				body->OriginalTile = CROCOMIRE_BODY_OPEN_TILE;
+				//Lower defenses.
+				Ghost_SetAllDefenses(ghost,NPCDT_HALFDAMAGE);
+			}
+			//Timer has expired and mouth is closed.
+			if(AdvanceTimer<=0 && Mode ==0){
+				//Reset timer.
+				Advancing = false;
+				//Change behavior.
+				Mode = 1;
+				//Move to the left.
+				if(Ghost_X>=64 && Link->X<Ghost_X)
+					Ghost_X-=32;
+				else if(Link->X>Ghost_X && Ghost_X<208)
+					Ghost_X+=32;
+			}
+			//Timer has expired and mouth is open.
+			else if(AdvanceTimer<=0 && Mode ==1){
+				Advancing = false;
+				//Close mouth.
+				Mode = 0;
+			}
+			//Fire projectiles.
+			if(Firing){
+				//Create projectiles.
+				for(i = 0;i<=5;i++){
+					rock[i] = FireEWeapon(EW_SCRIPT10, body->X, body->Y+32, DegtoRad(Rand(135,225)), 300, ghost->WeaponDamage,KRAID_ROCK_SPRITE, 40, 0);
+					SetEWeaponLifespan(rock[i],EWL_TIMER, 60);
+					SetEWeaponDeathEffect(rock[i],EWD_VANISH, 0);
+				}
+				//End firing phase.
+				Firing = false;
+			}
+			//Track all lweapons.
+			for (i = 1; i <= Screen->NumLWeapons(); i++){
+				lweapon w = Screen->LoadLWeapon(i);
+				//If you hit the enemy.
+				if (Collision(ghost, w) && Mode ==1){
+					//Tell the game it has been hit.
+					Hit= true;
+					//Kil the lweapon.
+					w->DeadState = 0;
+				}
+			}
+			//The enemy has been hit.
+			if(Hit){
+				//Change arm and body appearance.
+				arm->OriginalTile = ArmTile;
+				body->OriginalTile = CROCOMIRE_BODY_TILE;
+				//Back up a bit.
+				while(BackUpTimer<48 && Ghost_X<208){
+					//Hold position.
+					body->X = Ghost_X-16;
+					body->Y = Ghost_Y-16;
+					arm->X = body->X-32;
+					arm->Y = body->Y+60;
+					Ghost_X++;
+					//Increase timer/
+					BackUpTimer++;
+					Croc_Waitframe(this,ghost,body,arm);
+				}
+				//Go back to other behavior.
+				Hit = false;
+				//Reset timer.
+				BackUpTimer = 0;
+			}
+			//Reduce mode timer.
+			AdvanceTimer--;
+			Croc_Waitframe(this,ghost,body,arm);
+		}
+	}
+	//Handles waitframe.
+	void Croc_Waitframe(ffc this, npc ghost, npc body, npc arm){
+		ghost->Jump = 0;//Keep enemy in midair.
+		//If hit, change Cset of all parts.
+		if(Ghost_GotHit()){
+			body->CSet = CROCOMIRE_HURT_CSET;
+			arm->CSet = CROCOMIRE_HURT_CSET;
+			Ghost_Waitframes(this,ghost,false,false,5);
+		}
+		//Otherwise, use normal Cset.
+		else{
+			body->CSet = CROCOMIRE_NORMAL_CSET;
+			arm->CSet = CROCOMIRE_NORMAL_CSET;
+		}
+		//The core has died. Kill the parts.
+		if(!Ghost_Waitframe(this,ghost, false, false)){
+			Ghost_DeathAnimation(this,ghost,2);
+			body->HP = 0;
+			arm->HP = 0;
+			this->Data = 0;
+			Quit();
+		}
+	}
+}
