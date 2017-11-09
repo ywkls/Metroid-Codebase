@@ -1,0 +1,92 @@
+ffc script Sideview_Leever{
+	void Respawn_Waitframe(ffc this, npc ghost, int Respawn){
+		if(!Ghost_Waitframe(this, ghost, true, false)){
+			if(Respawn==1){
+				npc n = Screen->CreateNPC(ghost->ID);
+				n->Misc[NPCM_ISCOPY] = 1;
+				if(ghost->Misc[NPCM_ISCOPY]==0)
+					Game->GuyCount[Game->GetCurScreen()]++;
+			}
+			this->Data = 0;
+			Quit();
+		}
+	}
+	void Respawn_Waitframes(ffc this, npc ghost, int Respawn, int frames){
+		for(int i=0; i<frames; i++){
+			Respawn_Waitframe(this, ghost, Respawn);
+		}
+	}
+	void run(int enemyid){
+		npc ghost = Ghost_InitAutoGhost(this, enemyid);
+		int Teleport = ghost->Attributes[0];
+		int SubmergeTime = Ghost_GetAttribute(ghost, 1, 90);
+		int EmergeTime = Ghost_GetAttribute(ghost, 2, 120);
+		int EmergeSpeed = Ghost_GetAttribute(ghost, 3, 8);
+		int Randomness = Ghost_GetAttribute(ghost, 4, 0);
+		int Respawn = Ghost_GetAttribute(ghost, 5, 0);
+		int Combo = ghost->Attributes[10];
+		Ghost_SetFlag(GHF_NORMAL);
+		Ghost_SetFlag(GHF_4WAY);
+		Ghost_Data = GH_INVISIBLE_COMBO;
+		ghost->CollDetection = false;
+		int Counter = -1;
+		for(int i=0; i<SubmergeTime||(Rand(0, Randomness*10)!=0&&i<SubmergeTime+Randomness*10); i++){
+			Respawn_Waitframe(this, ghost, Respawn);
+		}
+		int ValidCount = 0;
+		int ValidCombos[176];
+		for(int i=0; i<176; i++){
+			if(!ComboFI(i, CF_NOENEMY)&&!ComboFI(i, CF_NOGROUNDENEMY)
+				&&Screen->ComboS[i]==0000b &&Screen->ComboS[i+16]==1111b 
+				&&Distance(ComboX(i), ComboY(i), Link->X, Link->Y)>32){
+				ValidCombos[ValidCount] = i;
+				ValidCount++;
+			}
+		}
+		int TargetCombo = ValidCombos[Rand(0, Max(0, ValidCount-1))];
+		Ghost_X = ComboX(TargetCombo);
+		Ghost_Y = ComboY(TargetCombo);
+		int Width = Ghost_GetAttribute(ghost,6,1);
+		int Height = Ghost_GetAttribute(ghost,7,1);
+		Ghost_SetSize(this,ghost,Width,Height);
+		while(true){
+			Ghost_Data = Combo;
+			Respawn_Waitframes(this, ghost, Respawn, EmergeSpeed);
+			Ghost_Data = Combo+4;
+			Respawn_Waitframes(this, ghost, Respawn, EmergeSpeed);
+			Ghost_Data = Combo+8;
+			ghost->CollDetection = true;
+			for(int i=0; i<EmergeTime||Ghost_CanMove(DIR_DOWN, 1, 0)||Rand(0, Randomness)!=0||!(Round(Ghost_X)%16==0&&Round(Ghost_Y)%16==0); i++){
+				Counter = Ghost_ConstantWalk4(Counter, ghost->Step, ghost->Rate, ghost->Homing, ghost->Hunger);
+				Respawn_Waitframe(this, ghost, Respawn);
+			}
+			Ghost_X = Floor(Ghost_X/16)*16;
+			Ghost_Y = Floor(Ghost_Y/16)*16;
+			ghost->CollDetection = false;
+			Ghost_Data = Combo+4;
+			Respawn_Waitframes(this, ghost, Respawn, EmergeSpeed);
+			Ghost_Data = Combo;
+			Respawn_Waitframes(this, ghost, Respawn, EmergeSpeed);
+			Ghost_Data = GH_INVISIBLE_COMBO;
+			Counter = -1;
+			for(int i=0; i<SubmergeTime||(Rand(0, Randomness*10)!=0&&i<SubmergeTime+Randomness*10); i++){
+				Respawn_Waitframe(this, ghost, Respawn);
+			}
+			if(Teleport==1){
+				ValidCount = 0;
+				for(int i=0; i<176; i++){
+					if(!ComboFI(i, CF_NOENEMY)&&!ComboFI(i, CF_NOGROUNDENEMY)
+						&&Screen->ComboS[i]==0000b &&Screen->ComboS[i+16]==1111b
+						&&Distance(ComboX(i), ComboY(i), Link->X, Link->Y)>32){
+						ValidCombos[ValidCount] = i;
+						ValidCount++;
+					}
+				}
+				TargetCombo = ValidCombos[Rand(0, Max(0, ValidCount-1))];
+				Ghost_X = ComboX(TargetCombo);
+				Ghost_Y = ComboY(TargetCombo);
+			}
+			Respawn_Waitframe(this, ghost, Respawn);
+		}
+	}
+}
