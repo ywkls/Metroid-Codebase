@@ -1,0 +1,94 @@
+//Menu called by the save station ffc.
+int MetroidSaveStationMenu(int station_id, int refill) {
+	if ( DEBUG_MENUS ) {
+		DebuggingMetroidSaveStation();
+		DebugRefill(refill);
+	}
+	int lineBreak[]="@26";
+	int Select[]= "Would You Like To Save?@26";
+	int line1[]="@choice(1)Yes@26";
+	int line2[]="@choice(2)No@26";
+	int RefillSelect[]= "Refill Supplies?@26";
+	int initmenu[]="@domenu(1)@suspend()";
+	
+	if ( station_id ) {
+	
+		if(!refill)SetUpWindow(WINDOW_SLOT_1, WINDOW_STYLE_1, 32, 16, SIZE_MEDIUM);
+		else
+			SetUpWindow(WINDOW_SLOT_1, WINDOW_STYLE_1, 32, 16, SIZE_LARGE);
+		Tango_LoadString(WINDOW_SLOT_1, Select);
+		Tango_AppendString(WINDOW_SLOT_1, line1);
+		Tango_AppendString(WINDOW_SLOT_1, line2);
+		Tango_AppendString(WINDOW_SLOT_1, initmenu);
+		Tango_ActivateSlot(WINDOW_SLOT_1);
+	}
+	
+	else {  //Refill station, only. Arg d1 will default to 3 in this case, if it is un-set. 
+		SetUpWindow(WINDOW_SLOT_1, WINDOW_STYLE_1, 32, 16, SIZE_MEDIUM);
+		Tango_LoadString(WINDOW_SLOT_1, RefillSelect);
+		Tango_AppendString(WINDOW_SLOT_1, line1);
+		Tango_AppendString(WINDOW_SLOT_1, line2);
+		Tango_AppendString(WINDOW_SLOT_1, initmenu);
+		Tango_ActivateSlot(WINDOW_SLOT_1);
+	}
+
+	while(!Tango_MenuIsActive()){
+        
+		Waitframe();
+	}
+    
+	// Save the state again...
+	int slotState[278];
+	int menuState[960];
+	int cursorPos;
+	Tango_SaveSlotState(WINDOW_SLOT_1, slotState);
+	Tango_SaveMenuState(menuState);
+    
+	int done = 0;
+	int choice;
+	while(true){
+    
+		while( Tango_MenuIsActive() ) {
+			cursorPos=Tango_GetMenuCursorPosition();
+			Waitframe();
+		}
+        
+		choice = Tango_GetLastMenuChoice();
+		if ( choice == 1 && ! refill) { // Save the game
+			SaveGame(station_id);
+			Game->PlaySound(SFX_SAVE_SUCCESS);
+			int text[]="Game Saved";
+			Tango_ClearSlot(2);
+			ShowString(text, WINDOW_SLOT_2, WINDOW_STYLE_2, 48, 32);
+			done = -9999;
+		}
+			
+		else if ( choice == 1 && refill ) { //refill
+			RefillMenu(refill);
+			if(station_id!=0){
+				SaveGame(station_id);
+				Game->PlaySound(SFX_SAVE_SUCCESS);
+				int text[]="Game Saved";
+				Tango_ClearSlot(2);
+				ShowString(text, WINDOW_SLOT_2, WINDOW_STYLE_2, 48, 32);
+			}
+			done = -9999;
+		}
+		
+		else if ( choice == 2)//Cancel
+			done = -9999; 
+		
+		if ( done )
+			break;
+		//	return choice;
+		else {
+			Tango_RestoreSlotState(WINDOW_SLOT_1, slotState);
+			Tango_RestoreMenuState(menuState);
+			Tango_SetMenuCursorPosition(cursorPos);
+		}
+	}
+    
+	Tango_ClearSlot(WINDOW_SLOT_1);
+	if ( DEBUG_MENUS ) DebugMetroidSaveStationMenu(done);
+	return done;
+}
