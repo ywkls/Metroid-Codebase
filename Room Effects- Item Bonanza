@@ -1,0 +1,115 @@
+//Section 42. Item Bonanza
+//---COMMMENTING NEEDED--
+
+//D0- First item to drop.
+//D1- Second item to drop.
+//D2- Third item to drop.
+//D3- Fourth item to drop.
+//D4- Screen register to store this in.
+
+ffc script Item_Bonanza{
+	void run(int item_one,int item_two, int item_three, int item_four, int perm){
+		bool triggered = false;
+		int NumToDrop;
+		int i;
+		int LowAmount;
+		int TopAmount;
+		if(SamusVars[BOSS_WHO_DIED]>1){
+			LowAmount = 10;
+			TopAmount = 20;
+		}
+		else{
+			LowAmount = 5;
+			TopAmount = 10;
+		}
+		if(perm>0){
+			if(Screen->D[perm]!=0)triggered = true;
+		}
+		while(!triggered){
+			if(perm>0){
+				while(!Screen->State[ST_SECRET])
+					Waitframe();
+			}
+			else{
+				Waitframes(4);
+				while(Screen->NumNPCs()>0)
+					Waitframe();
+			}
+			if(perm>0)	
+				Screen->D[perm]=1;
+			triggered = true;
+			Waitframe();
+		}
+		if(perm>0){
+			if(Screen->D[perm]==1){
+				if(item_one!=0){
+					NumToDrop = Rand(LowAmount,TopAmount);
+					for(i=0;i<NumToDrop;i++){
+						item anItem = Screen->CreateItem(item_one);
+						anItem->X = Rand(32,196);
+						anItem->Y = Rand(32,100);
+					}
+				}
+				if(item_two!=0){
+					NumToDrop = Rand(LowAmount,TopAmount);
+					for(i=0;i<NumToDrop;i++){
+						item anItem = Screen->CreateItem(item_two);
+						anItem->X = Rand(32,196);
+						anItem->Y = Rand(32,100);
+					}
+				}	
+				if(item_three!=0){
+					NumToDrop = Rand(LowAmount,TopAmount);
+					for(i=0;i<NumToDrop;i++){
+						item anItem = Screen->CreateItem(item_three);
+						anItem->X = Rand(32,196);
+						anItem->Y = Rand(32,100);
+					}
+				}
+				if(item_four!=0){
+					NumToDrop = Rand(LowAmount,TopAmount);
+					for(i=0;i<NumToDrop;i++){
+						item anItem = Screen->CreateItem(item_four);
+						anItem->X = Rand(32,196);
+						anItem->Y = Rand(32,100);
+					}
+				}
+				Screen->D[perm]=2;
+			}
+		}
+		else{
+			if(item_one!=0){
+				NumToDrop = Rand(LowAmount,TopAmount);
+				for(i=0;i<NumToDrop;i++){
+					item anItem = Screen->CreateItem(item_one);
+					anItem->X = Rand(32,196);
+					anItem->Y = Rand(32,100);
+				}
+			}
+			if(item_two!=0){
+				NumToDrop = Rand(LowAmount,TopAmount);
+				for(i=0;i<NumToDrop;i++){
+					item anItem = Screen->CreateItem(item_two);
+					anItem->X = Rand(32,196);
+					anItem->Y = Rand(32,100);
+				}
+			}	
+			if(item_three!=0){
+				NumToDrop = Rand(LowAmount,TopAmount);
+				for(i=0;i<NumToDrop;i++){
+					item anItem = Screen->CreateItem(item_three);
+					anItem->X = Rand(32,196);
+					anItem->Y = Rand(32,100);
+				}
+			}
+			if(item_four!=0){
+				NumToDrop = Rand(LowAmount,TopAmount);
+				for(i=0;i<NumToDrop;i++){
+					item anItem = Screen->CreateItem(item_four);
+					anItem->X = Rand(32,196);
+					anItem->Y = Rand(32,100);
+				}
+			}
+		}
+	}
+}
