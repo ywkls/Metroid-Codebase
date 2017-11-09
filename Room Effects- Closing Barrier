@@ -1,0 +1,27 @@
+//Section 49. Closing Barrier
+//---COMMMENTING NEEDED--
+
+ffc script Closing_Barrier{
+	void run(int combo, int cset, int speed, int height, int sfx, int delay){
+		int BotY = (this->Y+16)+(height*16);
+		int CurrentY = this->Y;
+		int i;
+		if(speed==0)speed =1;
+		while(CurrentY<BotY){
+			Screen->FastCombo(6, this->X, CurrentY-16, combo, cset, 128);
+			if(((CurrentY-this->Y)%16)==0){
+				Screen->ComboD[ComboAt(this->X,CurrentY-16)]= combo;
+				Game->PlaySound(sfx);
+			}
+			CurrentY+=speed;
+			if(delay){
+				for(i=delay;i>0;i--){
+					Screen->FastCombo(6, this->X, CurrentY-16, combo, cset, 128);
+					Waitframe();
+				}
+			}
+			else
+				Waitframe();
+		}
+	}
+}
