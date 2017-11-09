@@ -1,0 +1,122 @@
+const int THWOMP_STATE_DEFAULT = 0;
+const int THWOMP_STATE_FALLING = 1;
+const int THWOMP_STATE_ON_GROUND = 2;
+const int THWOMP_STATE_RISING = 3;
+
+const int SFX_THWOMP_CRASH = 3; // Sound effect for Thwomp hitting ground.
+const int SFX_THWOMP_DROP = 38; //Sound effect to play, when Thwomp starts falling.
+
+ffc script SIDEVIEW_THWOMP{
+	VOID RUN(int enemyID){
+		npc ghost = Ghost_InitAutoGhost(this, enemyID);
+		
+		int SPD = ghost->Step; //Speed of Thwomp rising after fall.
+		int WPND = ghost->WeaponDamage; // Damage dealt by shards form Skree
+		int EWID = WeaponTypeToID(ghost->Weapon);
+		
+		int KineticDamage = Ghost_GetAttribute(ghost, 0, 0); //Set to 1 and Thwomp will deal variable
+		//damage depending on the speed in the moment of hitting Link, ranging from half a heart to the original damage at terminal velocity.
+		int NumShards = Ghost_GetAttribute(ghost, 1, 0); //Setting to any number above 0 will turn Thwomp 
+		//into Skree that breaks into given number of shards (Rock eweapons) upon hitting ground.
+		int SizeX = Ghost_GetAttribute(ghost, 2, 2); // Thwomp size, in tiles.
+		int SizeY = Ghost_GetAttribute(ghost, 3, 2); // X and Y, of course.
+		int ShardSpeed = Ghost_GetAttribute(ghost, 4, 175); //Speed of Skree`s shards.
+		int proximity = Ghost_GetAttribute(ghost, 5, 16); //Thwomp`s proximity trigger X-distance, in pixels.
+		int ShardSprite = Ghost_GetAttribute(ghost, 6, -1); //Sprite used for Skree's shards
+		int type = Ghost_GetAttribute(ghost,7,0);
+		int Combo = ghost->Attributes[10];
+		Ghost_SetFlag(GHF_NORMAL);
+		Ghost_SetFlag(GHF_NO_FALL);
+		Ghost_SetFlag(GHF_MOVE_OFFSCREEN);
+		
+		Ghost_Transform(this, ghost, Combo, ghost->CSet, SizeX, SizeY);
+		Ghost_X += SizeX*16/2-8;
+		Ghost_Y += SizeY*16/2-8;
+		int FakeY= Ghost_Y- (SizeY*16);
+		int State = THWOMP_STATE_DEFAULT;
+		int haltcounter = -1;
+		int OrigY = Ghost_Y;
+		int OrigDamage = ghost->Damage;
+		if(type==1){
+			ghost->CollDetection=false;
+			Ghost_Data = GH_INVISIBLE_COMBO;
+		}
+		while(true){
+			if(KineticDamage>0){
+				int velocity = Abs(Ghost_Jump);
+				ghost->Damage = Clamp(OrigDamage*(velocity/GH_TERMINAL_VELOCITY), 2, OrigDamage);
+			}
+			if (State==THWOMP_STATE_DEFAULT){
+				int distance = Abs((CenterLinkX() - CenterX(ghost)));
+				if (distance<=proximity){
+					if (Link->Y > Ghost_Y){
+						if(type==1){
+							if(FakeY<Ghost_Y){
+								Screen->FastCombo(3,Ghost_X,FakeY,Combo+1,ghost->CSet,128);
+								FakeY++;
+							}
+							else{
+								ghost->CollDetection =true;
+								Ghost_UnsetFlag(GHF_NO_FALL);
+								Game->PlaySound(SFX_THWOMP_DROP);
+								State = THWOMP_STATE_FALLING;
+								Ghost_Data = Combo+1;
+							}
+						}
+						else{
+							Ghost_UnsetFlag(GHF_NO_FALL);
+							Game->PlaySound(SFX_THWOMP_DROP);
+							State = THWOMP_STATE_FALLING;
+						}
+					}
+				}
+			}
+			if (State==THWOMP_STATE_FALLING){
+				Ghost_Data = Combo+1;
+				if (Ghost_OnSideviewPlatform(ghost,2)){
+					Game->PlaySound(SFX_THWOMP_CRASH);
+					Screen->Quake=30;
+					State = THWOMP_STATE_ON_GROUND;
+					ghost->Damage = OrigDamage;
+					haltcounter = 120;
+					Ghost_SetFlag(GHF_NO_FALL);
+					if (NumShards>0){
+						float angle = -(PI/(NumShards))/2;
+						float anglediff = (PI/(NumShards));
+						for (int i=1; i<=NumShards; i++){
+							eweapon shard = FireEWeapon(EWID, CenterX(ghost)-8, CenterY(ghost)-8, angle, ShardSpeed, ghost->WeaponDamage, ShardSprite, -1, 0);
+							angle = angle - anglediff;
+						}
+						ghost->ItemSet=0;
+						Game->GuyCount[Game->GetCurScreen()]++;
+						Ghost_HP = -1000;
+					}
+				}
+			}
+			if (State == THWOMP_STATE_ON_GROUND){
+				Ghost_Jump = 0;
+				Ghost_Data = Combo;
+				haltcounter--;
+				if (haltcounter==0){
+					State = THWOMP_STATE_RISING;
+				}
+			}
+			if(State == THWOMP_STATE_RISING){
+				Ghost_Jump = 0;
+				Ghost_Move(DIR_UP, SPD/100, 2);
+				if (Ghost_Y<= OrigY){
+					State = THWOMP_STATE_DEFAULT;
+					Ghost_Y = OrigY;
+					if(type==1){
+						FakeY= Ghost_Y- (SizeY*16);
+						ghost->CollDetection =false;
+						Ghost_Data = GH_INVISIBLE_COMBO;
+					}
+				}
+			}
+			//if(type==2)
+				//Platform_Routine(this);
+			Ghost_Waitframe(this, ghost);
+		}
+	}
+}
