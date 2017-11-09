@@ -1,0 +1,210 @@
+//Section 4. Morph Ball script.
+
+const int MORPH_FLAG = 99;//Flag for areas you can only enter while morphed.
+const int MORPH_UNWALKABLE = 1299;//Unwalkable combo.
+const int MORPH_WALKABLE = 1315;//Walkable combo. Should appear identical to above.
+const int I_SPRING_BALL = 24;//Item id for spring ball.
+const int MORPH_BALL_COMBO = 172;//Combo used to draw morph ball.
+const int MORPH_GRAV_COMBO = 615;//Combo for morph with Gravity suit.
+const int I_MORPH_BALL = 23;//Item Id for morph ball.
+const int I_MORPH_BOMB= 3;//Item id for bombs.
+const float BOMB_HOP = 1.5;//How high you jump when you lay a bomb.
+const int BOMB_COOLDOWN = 30;//How long before you can use a bomb again, in frames.
+const int MORPH_CSET = 6;//Cset of combo drawn for morph ball.
+const int MORPH_GRAV_CSET =11;//Cset of combo drawn with gravity suit.
+const int SFX_POWER_BOMB = 75;//Sound of exploding power bomb.
+const int POWER_BOMB_DAMAGE = 8;//How much damage power bomb does.
+
+void MorphBall(){
+	//Initialize variables.
+	float JumpHeight;
+	//If you have the morph ball.
+	if(Link->Item[I_MORPH_BALL]){
+		//If not morphed and on a platform.
+		if(Link->Dir == DIR_DOWN && Link->PressDown && OnGround()
+			&& SamusVars[SAMUS_ACTION]==SAMUS_ACTION_CROUCH)SamusVars[IS_MORPHED] = 1;
+	}
+	//If you're not morphed/
+	if(!SamusVars[IS_MORPHED]){
+		//Change all combos with morph flag to unwalkable.
+		for ( int i = 0; i < 175; i++ ){
+			if (ComboFIT(i,MORPH_FLAG,CT_OVERHEAD))Screen->ComboD[i] =MORPH_UNWALKABLE;
+		}
+	}
+	//You are morphed now.
+	else{
+		//Change combos with morph flag to walkable.
+		for ( int i = 0; i < 175; i++ ){
+			if (ComboFIT(i,MORPH_FLAG,CT_OVERHEAD))Screen->ComboD[i] =MORPH_WALKABLE;
+		}
+		//Check all lweapons.
+		for (int i = 1; i <= Screen->NumLWeapons(); i++){
+			lweapon w = Screen->LoadLWeapon(i);
+			//If you encoumter a bomb blast, jump.
+			//Checks for solidity to prevent SamusVars[IS_JUMPING] into the ceiling.
+			if (w->ID == LW_BOMBBLAST && LinkCollision(w) && !Screen->isSolid(Link->X+8,Link->Y-9)){
+				if(ScreenFlagTest(SF_MISC,SF_MISC_SCRIPT1)){
+					if(Link->Item[I_GRAVITY_SUIT])
+						JumpHeight= BOMB_HOP;
+				}
+				else if(SamusVars[IN_WATER] && !ScreenFlagTest(SF_MISC,SF_MISC_SCRIPT1)){
+					if(Link->Item[I_GRAVITY_SUIT])
+						JumpHeight= BOMB_HOP;
+				}
+				else
+					JumpHeight= BOMB_HOP;
+				if(JumpHeight!=0)
+					Link->Jump = Floor((JumpHeight+2)*0.75);
+				SamusVars[ON_GROUND_OVERRIDE]=0;
+			}
+		}
+		//If you have the bombs.
+		//Checks to see how many you've used in midair.
+		//Checks to see if enough time has passed since the last time you used a bomb.
+		if((PressFire()||InputFire())&& Link->Item[I_MORPH_BOMB] 
+			&& SamusVars[BOMBS_USED] <2 && SamusVars[BOMBS_WAIT] ==0
+			&& SamusVars[EQUIPPED_ITEM]!=I_POWER_BOMB && Link->Action!=LA_SCROLLING){
+			//Create bomb blast at your location.
+			lweapon w = CreateLWeaponAt(LW_BOMBBLAST,Link->X,Link->Y);
+			DampInput(SamusVars[FIRE_BUTTON]);
+			//Track how many bombs have been used.
+			SamusVars[BOMBS_USED]++;
+			//Keep you from using another bomb for a while.
+			SamusVars[BOMBS_WAIT] = BOMB_COOLDOWN;
+			//Set off secrets if you bomb nearby.
+			for(int i = 0;i<175;i++){
+				if(Abs(ComboX(i)-SamusVars[DRAW_X])<17
+					&& Abs(ComboY(i)-SamusVars[DRAW_Y])<17){
+					if(ComboFI(i,CF_BOMB)){
+						Screen->TriggerSecrets();
+						Screen->State[ST_SECRET]= true;
+					}
+					if(ComboFI(i,CF_SBOMB))
+						Screen->ComboD[i]= SBOMB_SECRET_COMBO;
+					if(ComboFI(i,CF_ARROW))
+						Screen->ComboD[i]= ARROW_SECRET_COMBO;
+					if(ComboFI(i,CF_WANDMAGIC))
+						Screen->ComboD[i]= MAGIC_SECRET_COMBO;
+					if(ComboFIT(i,CF_SPEED_BOOST,CT_OVERHEAD))
+						Screen->ComboD[i]= S_B_SECRET_COMBO;
+					if(ComboFIT(i,CF_DASH,CT_OVERHEAD))
+						Screen->ComboD[i]= S_A_SECRET_COMBO;
+					if(ComboFIT(i,CF_BEAM_NX,CT_OVERHEAD))
+						Screen->ComboD[i]++;
+				}
+			}
+		}
+		//If you press B but don't have any super bombs, ignore this input.
+		else if((PressFire()||InputFire()) && Game->Counter[CR_SBOMBS] ==0
+				&& SamusVars[EQUIPPED_ITEM]==I_POWER_BOMB)
+			DampInput(SamusVars[FIRE_BUTTON]);
+		//If you press B and enough time has passed since you last used a bomb.
+		else if((PressFire()||InputFire())&& SamusVars[BOMBS_WAIT] ==0
+				&& SamusVars[EQUIPPED_ITEM]==I_POWER_BOMB){
+			DampInput(SamusVars[FIRE_BUTTON]);
+			//Create super bomb blast.
+			lweapon w = CreateLWeaponAt(LW_SBOMBBLAST,Link->X,Link->Y);
+			//Keep you from using another bomb for a while.
+			SamusVars[BOMBS_WAIT] = BOMB_COOLDOWN;
+			Game->PlaySound(SFX_POWER_BOMB);
+			//Sets center of power bomb wave.
+			SamusVars[POWER_BOMB_CENTER_X] = SamusVars[DRAW_X]+8;
+			SamusVars[POWER_BOMB_CENTER_Y] = SamusVars[DRAW_Y]+8;
+			//Start power bomb wave.
+			if(SamusVars[POWER_BOMB_RADIUS]==0)
+				SamusVars[POWER_BOMB_RADIUS]=8;
+			//Reduce super bomb counter.
+			Game->Counter[CR_SBOMBS]--;
+		}
+		//You don't have bombs or power bombs, so ignore this input.
+		else if(PressFire()||InputFire())
+			DampInput(SamusVars[FIRE_BUTTON]);
+		//The wave hasn't been created yet.
+		if(SamusVars[POWER_BOMB_RADIUS]!=0){
+			//If the wave hasn't reached it's edge yet.
+			if(SamusVars[POWER_BOMB_RADIUS]<200){
+				Screen->Circle(4, SamusVars[POWER_BOMB_CENTER_X], SamusVars[POWER_BOMB_CENTER_Y], SamusVars[POWER_BOMB_RADIUS], ((SamusVars[POWER_BOMB_RADIUS]/10)%16), 1, 0, 0, 0, true, 64);
+				SamusVars[POWER_BOMB_RADIUS]+=4;
+			}
+			//This power bomb has gone off.
+			else{
+				SamusVars[POWER_BOMB_RADIUS]= 0;
+				for(int i = Screen->NumNPCs();i>0;i--){
+					npc n = Screen->LoadNPC(i);
+					if((n->Misc[GEN_MISC_FLAGS]&NPC_F_PB)!=0)
+						n->Misc[GEN_MISC_FLAGS]&=~NPC_F_PB;
+				}
+			}
+			//Mark and damage enemies in range.
+			for(int i = 1;i<=Screen->NumNPCs();i++){
+				npc n = Screen->LoadNPC(i);
+				if((n->Misc[GEN_MISC_FLAGS]&NPC_F_PB)==0  
+					&& Between(n->X+(n->HitWidth/2),SamusVars[POWER_BOMB_CENTER_X]-SamusVars[POWER_BOMB_RADIUS],SamusVars[POWER_BOMB_CENTER_X]+SamusVars[POWER_BOMB_RADIUS])
+					&& Between(n->Y+(n->HitHeight/2),SamusVars[POWER_BOMB_CENTER_Y]-SamusVars[POWER_BOMB_RADIUS],SamusVars[POWER_BOMB_CENTER_Y]+SamusVars[POWER_BOMB_RADIUS]) 
+					&& n->Defense[NPCD_SBOMB]==NPCDT_NONE){
+					lweapon w = CreateLWeaponAt(LW_SCRIPT3,n->X+(n->HitWidth/2),n->Y+(n->HitHeight/2));
+					w->Damage = POWER_BOMB_DAMAGE;
+					w->UseSprite(SPRITE_NULL);
+					n->Misc[GEN_MISC_FLAGS]|=NPC_F_PB;
+				}
+			}
+			//Set off secrets if in range of blast.
+			for(int i = 0;i<175;i++){
+				if(Abs(ComboX(i)-SamusVars[POWER_BOMB_CENTER_X])<SamusVars[POWER_BOMB_RADIUS]
+					&& Abs(ComboY(i)-SamusVars[POWER_BOMB_CENTER_Y])<SamusVars[POWER_BOMB_RADIUS]){
+					if(ComboFI(i,CF_SBOMB) && !Screen->State[ST_SECRET]){
+						Screen->State[ST_SECRET]= true;
+						Screen->TriggerSecrets();
+					}
+					if(ComboFI(i,CF_BOMB))
+						Screen->ComboD[i]= BOMB_SECRET_COMBO;
+					if(ComboFI(i,CF_ARROW))
+						Screen->ComboD[i]= ARROW_SECRET_COMBO;
+					if(ComboFI(i,CF_WANDMAGIC))
+						Screen->ComboD[i]= MAGIC_SECRET_COMBO;
+					if(ComboFIT(i,CF_SPEED_BOOST,CT_OVERHEAD))
+						Screen->ComboD[i]= S_B_SECRET_COMBO;
+					if(ComboFIT(i,CF_DASH,CT_OVERHEAD))
+						Screen->ComboD[i]= S_A_SECRET_COMBO;
+					if(ComboFIT(i,CF_BEAM_NX,CT_OVERHEAD))
+						Screen->ComboD[i]++;
+				}
+			}
+		}
+		//If you don't have the spring ball, ignore this input.
+		if(!Link->Item[I_SPRING_BALL] && (PressJump() || InputJump()))
+			DampInput(SamusVars[JUMP_BUTTON]);
+		//If you have it and are on a platform, jump if you press Ex1.
+		else if(Link->Item[I_SPRING_BALL] && PressJump() 
+				&& OnGround()){
+			if(ScreenFlagTest(SF_MISC,SF_MISC_SCRIPT1) ||
+			  (SamusVars[IN_WATER] && !ScreenFlagTest(SF_MISC,SF_MISC_SCRIPT1))){
+				//Reduce jump height if you're in water and don't have the gravity suit.
+				if(!Link->Item[I_GRAVITY_SUIT])
+					JumpHeight = BOMB_HOP;
+				else JumpHeight= JUMP_HEIGHT_NORMAL;
+			}
+			//Set jump height to normal.
+			else
+				JumpHeight= JUMP_HEIGHT_NORMAL;
+			Link->Jump= (JumpHeight+2)*0.8;
+			Game->PlaySound(SFX_JUMP);
+			DampInput(SamusVars[JUMP_BUTTON]);
+		}
+		//If you press up at any time, end morph ball mode.
+		if((Link->PressUp||Link->InputUp) && !Screen->isSolid(Link->X+4,Link->Y-8)&& !Screen->isSolid(Link->X+12,Link->Y-8)){
+			 SamusVars[IS_MORPHED] = 0;
+			 SamusVars[SAMUS_ACTION] = SAMUS_ACTION_NONE;
+		}
+		//Draw combo at your location.
+		if(!Link->Item[I_GRAVITY_SUIT])
+			Screen->FastCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y], MORPH_BALL_COMBO, MORPH_CSET, 128);
+		else
+			Screen->FastCombo(2, SamusVars[DRAW_X], SamusVars[DRAW_Y], MORPH_GRAV_COMBO, MORPH_GRAV_CSET, 128);
+		//Decrease time until you can use bomb again until it is zero.
+		if(SamusVars[BOMBS_WAIT]>0)SamusVars[BOMBS_WAIT]--;
+		else SamusVars[BOMBS_WAIT] = 0;
+		//If you're on a platform, make it where you can use bombs automatically.
+		if(OnGround())SamusVars[BOMBS_USED] = 0;
+	}
+}
