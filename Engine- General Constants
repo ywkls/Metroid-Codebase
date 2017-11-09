@@ -1,0 +1,36 @@
+//General Misc Indices
+
+const int GEN_MISC_FLAGS			= 0;//Index used to set various flags. Shared by all objects.
+const int GEN_MISC_TIMER_INDEX 		= 1;//Index to time last collision
+
+//Npc Misc Flags
+
+const int NPC_F_FREEZE      	   = 00000000010b;//A recently frozen enemy.
+const int NPC_F_PB			       = 00000000100b;//An enemy hit by a power bomb.
+
+//General Use Misc Flags
+
+const int GEN_F_ZERO_G      	   = 00000001000b;//An object that ignores gravity.
+const int GEN_F_COLLISION		   = 00000100000b;//An object that has collided with the player,
+
+//Lweapon Misc Flags
+
+const int LWF_Y_OFFSET	           = 00000100000b;//An lweapon whose Y position has been offset.
+
+//SFX constants
+
+const int SFX_SAMUS_LAND = 84;//Sound of Samus landing on the ground.
+
+//Sprite constants
+
+const int SPR_GEN_FIREBALL = 17;//Generic fireball sprite.
+
+// Combo Type Constants
+
+const int CT_SVWATER	            = 142;  	// CT_SCRIPT1, ComboType for Sideview Water
+
+//Combo Flag Constants
+
+const int CF_BEAM_NX               = 102;       // CF_SCRIPT5, ComboFlag for Sideview Ladder
+                                                // This ComboFlags can be reused since this script requires both the ComboType and Flag.
+                                                // If reusing, that script should check that it isn't the SV ComboType.
