@@ -1,0 +1,37 @@
+ffc script UniqueSound{
+    void run(int SFXtype, int SoundDelay, bool SFXRepeats, int frequency, int max, bool SFXLoops){
+        int perm;
+        int playcounter;
+        while(true){
+			//If this Sound doesn't play every time you enter the room and has already played.
+             if (Screen->D[perm] && !SFXRepeats)
+                 Quit();
+			 //If it does or hasn't played yet.
+             else{
+                 Screen->D[perm] = 1;
+				 //If this sound isn't played at once.
+                 if (SoundDelay != 0){
+                     Waitframes(SoundDelay);
+                     Game->PlaySound(SFXtype);
+					 //If this sound plays in a loop.
+                     if(SFXLoops){
+                         playcounter++;
+                         if(playcounter>=max)Quit();
+                         Waitframes(frequency);
+                     }
+                 }
+				 //If this sound is played at once.
+                 else{
+                     Waitframe();
+                     Game->PlaySound(SFXtype);
+					 //If this sound plays in a loop.
+                     if(SFXLoops){
+                         playcounter++;
+                         if(playcounter>=max)Quit();
+                         Waitframes(frequency);
+                     }
+                 }
+             }
+        }
+   }
+}
