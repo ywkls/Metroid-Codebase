@@ -1,0 +1,20 @@
+//Populte these functions with instructions to refill stocks.  
+
+void RefillMissiles() {
+	 if (Game->Counter[CR_ARROWS] < Game->MCounter[CR_ARROWS]) Game->Counter[CR_ARROWS] = Game->MCounter[CR_ARROWS];
+     if (Game->Counter[CR_RUPEES] < Game->MCounter[CR_RUPEES]) Game->Counter[CR_RUPEES] = Game->MCounter[CR_RUPEES];                 
+}
+
+void RefillHealth() {
+	if (Link->HP < Link->MaxHP) Link->HP = Link->MaxHP;
+	if(Link->MP<Link->MaxMP)Link->MP = Link->MaxMP;
+	Game->Counter[HEALTH_COUNTER] = 99;
+	SamusVars[NUM_FILLED_RES_TANKS] = SamusVars[NUM_RES_TANKS];
+	Game->Counter[RESERVE_COUNTER] = SamusVars[NUM_FILLED_RES_TANKS]*100;
+	SamusVars[CURR_FILLED_TANKS]= SamusVars[NUM_TANKS];
+	//Game->Counter[METROID_HP_COUNTER]= MetroidMaxHP;
+}
+
+void RefillBombs(){
+	if (Game->Counter[CR_SBOMBS] < Game->MCounter[CR_SBOMBS]) Game->Counter[CR_SBOMBS] = Game->MCounter[CR_SBOMBS];                
+}
