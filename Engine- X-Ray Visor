@@ -1,0 +1,12 @@
+//Section 14. X-Ray Visor Script Constants
+
+const int XRAY_FLAG= 100;//Flag for combos that have X-ray properties.
+const int XRAY_SECRET_COMBO = 164;//What Combo to change X-rayed combos to.
+const int ARROW_SECRET_COMBO = 2334;//What combo to change arrow sensitive combos to.
+const int BOMB_SECRET_COMBO = 2330;//What combo to change bomb sensitive combos to.
+const int MAGIC_SECRET_COMBO = 2335;//What combo to change magic sensitive combos to.
+const int SBOMB_SECRET_COMBO = 2338;//What combo to change super bomb sensitive combos to.
+const int BEAM_SECRET_COMBO = 2339;//What combo to change combos that can be destroyed by the beam.
+const int S_B_SECRET_COMBO = 502;//What combo to change combos that can be speed boosted.
+const int S_A_SECRET_COMBO = 174;//What combo to change combos that can be screw attacked.
+const int XRAY_INVIS_COMBO= 180;//What combo to change to for things with lens flags.
