@@ -1,0 +1,19 @@
+//Returns TRUE, if the enemy is currently on platform. Used in sideview areas.
+//Imprecision used to ignore certain amount of pixels on the edges, so Enemy can drop trough gaps that 
+//are as wide as enemy itself.
+bool Ghost_OnSideviewPlatform(npc ghost, int imprecision){
+	if (!IsSideview()) return ((ghost->Z)==0);
+	int ghx = ghost->X;
+	int ghy = ghost->Y;
+	int ghOffX = ghost->HitXOffset;
+	int ghOffY = ghost->HitYOffset;
+	int ghwidth = ghost->HitWidth;
+	int ghheight = ghost->HitHeight;
+	int TghX = ghx+ghOffX;
+	int TghY = ghy+ghOffY;
+	bool OnGround = false; 
+	if (Screen->isSolid((TghX+imprecision), (TghY+ghheight+1))) OnGround = true;
+	if (Screen->isSolid((CenterX(ghost)), (TghY+ghheight+1))) OnGround = true;
+	if (Screen->isSolid((TghX+ghwidth-imprecision), (TghY+ghheight+1))) OnGround = true;
+	return OnGround;
+} 
