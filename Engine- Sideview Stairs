@@ -1,0 +1,89 @@
+bool CanWalkOnEdge(int x, int y, int dir, int step, bool full_tile) {
+    int c=8;
+    int xx = x+15;
+    int yy = y+15;
+    if(full_tile) c=0;
+    if(dir==0) return !(Screen->isSolid(x,y+c-step)||Screen->isSolid(x+8,y+c-step)||Screen->isSolid(xx,y+c-step));
+    else if(dir==1) return !(Screen->isSolid(x,yy+step)||Screen->isSolid(x+8,yy+step)||Screen->isSolid(xx,yy+step));
+    else if(dir==2) return !(Screen->isSolid(x-step,y+c)||Screen->isSolid(x-step,y+c+7)||Screen->isSolid(x-step,yy));
+    else if(dir==3) return !(Screen->isSolid(xx+step,y+c)||Screen->isSolid(xx+step,y+c+7)||Screen->isSolid(xx+step,yy));
+    return false; //invalid direction
+}
+
+bool CanWalkOnEdgeBig(int x, int y, int dir, int step, bool full_tile, int width, int height) {
+    int c=width/2;
+    int xx = x+width-1;
+    int yy = y+height-1;
+    if(full_tile) c=0;
+    if(dir==0) return !(Screen->isSolid(x,y+c-step)||Screen->isSolid(x+8,y+c-step)||Screen->isSolid(xx,y+c-step));
+    else if(dir==1) return !(Screen->isSolid(x,yy+step)||Screen->isSolid(x+8,yy+step)||Screen->isSolid(xx,yy+step));
+    else if(dir==2) return !(Screen->isSolid(x-step,y+c)||Screen->isSolid(x-step,y+c+7)||Screen->isSolid(x-step,yy));
+    else if(dir==3) return !(Screen->isSolid(xx+step,y+c)||Screen->isSolid(xx+step,y+c+7)||Screen->isSolid(xx+step,yy));
+    return false; //invalid direction
+}
+
+bool OnGround(){
+	return(!CanWalkOnEdgeBig(Link->X, Link->Y, DIR_DOWN, 1, false,8,16)
+			||SamusVars[ON_GROUND_OVERRIDE]);
+}
+
+// Allows combos that are partially solid to act as Stairs. Might add in support for excluding certain combo types or something.
+void UpdateStairCombos(){
+	if(SamusVars[IS_SPEED_BOOSTING])SamusVars[SPEED_BOOST_SLOPE_TIMER]= SamusVars[SPEED_BOOST_TIMER];
+	if(SamusVars[PREV_LINK_DIR] != Link->Dir)
+		SamusVars[LINK_STAIR_PRESSED_COUNTER] = 1;
+	if(Link->Dir == DIR_LEFT){
+		if(Screen->isSolid(Link->X - 1, Link->Y + 8) && !Screen->isSolid(Link->X - 1, Link->Y)){
+			if(Link->InputLeft){
+				SamusVars[LINK_STAIR_PRESSED_COUNTER] += 1;
+				if(SamusVars[IS_SPEED_BOOSTING])SamusVars[SPEED_BOOST_SLOPE_TIMER]++;
+				if(Link->Item[I_SPEED_BOOST]){
+					if(Link->InputR)
+						SamusVars[SPEED_BOOST_SLOPE_TIMER]++;
+					else
+						SamusVars[SPEED_BOOST_SLOPE_TIMER]=0;
+				}		
+			}
+			else
+				SamusVars[LINK_STAIR_PRESSED_COUNTER] = 1;
+			if(SamusVars[LINK_STAIR_PRESSED_COUNTER] >= LINK_STAIRMAXFRAMES){
+				Link->X -= 1;
+				Link->Y -= 8;
+				SamusVars[LINK_STAIR_PRESSED_COUNTER] = 1;
+				if(SamusVars[SPEED_BOOST_SLOPE_TIMER]>0)
+					SamusVars[SPEED_BOOST_TIMER]+= SamusVars[SPEED_BOOST_SLOPE_TIMER];
+			}
+		}
+	}
+	if(Link->Dir == DIR_RIGHT){
+		if(Screen->isSolid(Link->X + 16, Link->Y + 8) && !Screen->isSolid(Link->X + 16, Link->Y)){
+			if(Link->InputRight){
+				SamusVars[LINK_STAIR_PRESSED_COUNTER] += 1;
+				if(SamusVars[IS_SPEED_BOOSTING])SamusVars[SPEED_BOOST_SLOPE_TIMER]++;
+				if(Link->Item[I_SPEED_BOOST]){
+					if(Link->InputR)
+						SamusVars[SPEED_BOOST_SLOPE_TIMER]++;
+					else
+						SamusVars[SPEED_BOOST_SLOPE_TIMER]=0;
+				}	
+			}
+			else
+				SamusVars[LINK_STAIR_PRESSED_COUNTER] = 1;
+			if(SamusVars[LINK_STAIR_PRESSED_COUNTER] >= LINK_STAIRMAXFRAMES){
+				Link->X += 1;
+				Link->Y -= 8;
+				SamusVars[LINK_STAIR_PRESSED_COUNTER] = 1;
+				if(SamusVars[SPEED_BOOST_SLOPE_TIMER]>0)
+					SamusVars[SPEED_BOOST_TIMER]+= SamusVars[SPEED_BOOST_SLOPE_TIMER];
+			}
+		}
+	}
+}
+ 
+// Pushes Link away from a combo if he gets stuck inside it. Couldn't think of a better name for this.
+void PushLinkOutOfSolidCombos(){
+	if((Screen->isSolid(Link->X, Link->Y) || Screen->isSolid(Link->X, Link->Y + 15)) && !Screen->isSolid(Link->X + 16, Link->Y) && !Screen->isSolid(Link->X + 16, Link->Y + 15))
+        Link->X += 1;
+    else if((Screen->isSolid(Link->X + 15, Link->Y) || Screen->isSolid(Link->X + 15, Link->Y + 15)) && !Screen->isSolid(Link->X - 1, Link->Y) && !Screen->isSolid(Link->X - 1, Link->Y + 15))
+        Link->X -= 1;
+}
