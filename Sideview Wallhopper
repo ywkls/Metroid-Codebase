@@ -1,0 +1,60 @@
+ffc script Sideview_WallHopper{
+		void run(int enemyid){
+		npc ghost = Ghost_InitAutoGhost(this, enemyid);
+		Ghost_SetFlag(GHF_STUN);
+		Ghost_SetFlag(GHF_CLOCK);
+		Ghost_SetFlag(GHF_NO_FALL);
+		//Ghost_SetFlag(GHF_MOVE_OFFSCREEN);
+		Ghost_SetFlag(GHF_4WAY);
+		int HV = ghost->Attributes[0];
+		int Delay = ghost->Attributes[1];
+		int Sensitivity = Ghost_GetAttribute(ghost, 2, 16);
+		int Combo = ghost->Attributes[10];
+		int Width = Ghost_GetAttribute(ghost,3,1);
+		int Height = Ghost_GetAttribute(ghost,4,1);
+		Ghost_SetSize(this,ghost,Width,Height);
+		if(HV==0){
+			if(!Ghost_CanMove(DIR_LEFT, 1, 0))
+				Ghost_Dir = DIR_RIGHT;
+			else if(!Ghost_CanMove(DIR_RIGHT, 1, 0))
+				Ghost_Dir = DIR_LEFT;
+			else
+				Ghost_Dir = Choose(DIR_LEFT, DIR_RIGHT);
+		}
+		else if(HV==1){
+			if(!Ghost_CanMove(DIR_UP, 1, 0))
+				Ghost_Dir = DIR_DOWN;
+			else if(!Ghost_CanMove(DIR_DOWN, 1, 0))
+				Ghost_Dir = DIR_UP;
+			else
+				Ghost_Dir = Choose(DIR_UP, DIR_DOWN);
+		}
+		while(true){
+			if(Delay<=-1){
+				while(Abs(Link->Y-Ghost_Y)>Sensitivity){
+					Ghost_Waitframe(this, ghost);
+				}
+			}
+			else{
+				for(int i=0; i<Delay; i++){
+					Ghost_Waitframe(this, ghost);
+				}
+			}
+			Ghost_Data = Combo+4;
+			while(Ghost_CanMove(Ghost_Dir, 1, 0)){
+				Ghost_Move(Ghost_Dir, ghost->Step/100, 0);
+				Ghost_Waitframe(this, ghost);
+			}
+			Ghost_Data = Combo;
+			Ghost_Dir = OppositeDir(Ghost_Dir);
+			if(Delay<=-1){
+				Ghost_Waitframes(this, ghost, 20);
+				if(Delay==-1){
+					while(Abs(Link->Y-Ghost_Y)<=Sensitivity){
+						Ghost_Waitframe(this, ghost);
+					}
+				}
+			}
+		}
+	}
+}
