@@ -1,0 +1,12 @@
+//Section 31. Samus Actions. For simplifying things and adding more animations.
+
+const int SAMUS_ACTION_NONE = 0;//Not doing anything special.
+const int SAMUS_ACTION_HANGING_UP= 1;//Hanging below vertical sideview grip.
+const int SAMUS_ACTION_HANGING_LEFT= 2;//Hanging to left sideview grip.
+const int SAMUS_ACTION_HANGING_RIGHT = 3;//Hanging to right sideview grip.
+const int SAMUS_ACTION_SHINE_SPARK_LEFT = 4;//Shine sparking left.
+const int SAMUS_ACTION_SHINE_SPARK_RIGHT = 5;//Shine sparking right.
+const int SAMUS_ACTION_SHINE_SPARK_UP = 6;//Shine sparking up.
+const int SAMUS_ACTION_CROUCH = 7;//Crouching.
+const int SAMUS_ACTION_SS_DIAG_LEFT = 8;//Diagonal left shine spark.
+const int SAMUS_ACTION_SS_DIAG_RIGHT = 9;//Diagonal right shine spark.
