@@ -1,0 +1,33 @@
+//Section 17. Variable Index Trigger.
+
+//D0- Weapon type that triggers this.
+//D1- Level of weapon.
+//    Binary- 1= level one
+//            2= level two
+//            4= level three
+//            8= level four
+//D2- Screen->D register to store secrets in.
+	
+ffc script Variable_Index_Trigger{
+	void run(int type, int level, int perm){
+		lweapon thing;
+		int i;
+		bool triggered = false;
+		if(Screen->D[perm]!=0)triggered = true;
+		while(!triggered){
+			for(i = 1;i<=Screen->NumLWeapons();i++){
+				thing = Screen->LoadLWeapon(i);
+				if(thing->ID ==type && Collision(this,thing))
+					if(level!=0 && ((thing->Misc[LW_ZH_I_FLAGS_2]&level)!=0))
+						triggered = true;
+					else if(level==0)
+						triggered = true;
+			}
+			Waitframe();
+		}
+		Screen->TriggerSecrets();
+		Screen->State[ST_SECRET]= true;
+		Screen->D[perm] = 1;
+		Game->PlaySound(SFX_SECRET);
+	}
+}
