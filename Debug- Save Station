@@ -1,0 +1,14 @@
+void DebugMetroidSaveStationMenu(int val) { 
+	int t[]="MetroidSaveStationMenu() returned: ";
+	TraceNL(); TraceS(t); Trace(val); TraceNL();
+}
+
+void DebugRefill(int val){
+	int t[]="Refill is set to: ";
+	TraceNL(); TraceS(t); Trace(val); TraceNL();
+}
+
+void DebuggingMetroidSaveStation(){ 
+	int t[]="Debugging int MetroidSaveStationMenu(int station_id, int refill)";
+	TraceNL(); TraceS(t); TraceNL();
+}
