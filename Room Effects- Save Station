@@ -1,0 +1,111 @@
+const int SCAN_COMBO = 2099;//Combo displayed for fake scan visor.
+const int SCAN_CSET = 2;//CSet of fake scan visor combo.
+const int SHIP_WARP_POINT = 1;//Warp point id of your ship.
+		
+//! The physical save station. 
+//! D0 : Each station needs a unique ID, ranging from 1 to 10. 
+//! The script is set up to allow up to a total of ten save stations using the menus. 
+
+ffc script MetroidSaveStation{
+	void run(int station_number, int refill){
+		bool pressed;
+		int choice;
+		if(station_number==SHIP_WARP_POINT
+			&& Screen->D[station_number]==0){
+			SetWarpPoint(station_number,this);
+			//Activate this station if it is inactive
+			if ( !WarpPointActive(station_number)){ 
+				WarpPointActive(station_number,true);
+				GetMapCoords(station_number);
+			}
+			Screen->D[station_number]=1;
+		}	
+		while ( true ) {
+			//If this station is active...
+				//Draw station ID.
+				//if ( WarpPointActive(station_number) && station_number ) {
+					//Draw the station ID, firstthe background
+					//Screen->DrawInteger(	MET_SAVE_STATION_DRAW_ID_FONT_LAYER,
+								//this->X + MET_SAVE_STATION_DRAW_ID_FONT_BACKGROUND_X_OFFSET,
+								//this->Y + MET_SAVE_STATION_DRAW_ID_FONT_BACKGROUND_Y_OFFSET,
+								//MET_SAVE_STATION_DRAW_ID_FONT,
+								//MET_SAVE_STATION_DRAW_ID_FONT_BACKGROUND_COLOUR, 0,
+								//MET_SAVE_STATION_DRAW_ID_FONT_WIDTH,
+								//MET_SAVE_STATION_DRAW_ID_FONT_HEIGHT,
+								//station_number, 0, OP_OPAQUE);
+					//Then, the foreground...
+					//Screen->DrawInteger(	MET_SAVE_STATION_DRAW_ID_FONT_LAYER,
+								//this->X + MET_SAVE_STATION_DRAW_ID_FONT_FOREGROUND_X_OFFSET,
+								//this->Y + MET_SAVE_STATION_DRAW_ID_FONT_FOREGROUND_Y_OFFSET,
+								//MET_SAVE_STATION_DRAW_ID_FONT,
+								//MET_SAVE_STATION_DRAW_ID_FONT_FOREGROUND_COLOUR, 0,
+								//MET_SAVE_STATION_DRAW_ID_FONT_WIDTH,
+								//MET_SAVE_STATION_DRAW_ID_FONT_HEIGHT,
+								//station_number, 0, OP_OPAQUE);
+				//}
+					
+				
+
+					
+				//|| ( !Tango_MenuIsActive() && SamusCanTeleport() )
+			while ( ( !pressed && !Tango_MenuIsActive() ) ) {
+				if ( DistX(this, 16) && DistY(this, 32)){
+					Screen->DrawCombo(7, 0, -53, SCAN_COMBO, 1, 1, SCAN_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+					if(SamusCanTeleport() ) {
+						if	( PressExamine() ) { 
+							pressed = true; 
+							DampInput(BUTTON_EX3);
+						}
+					}	
+				}
+				//If this station is active...
+				//Draw station ID.
+				//if ( WarpPointActive(station_number) && station_number  ) {
+					//Draw the station ID, firstthe background
+					//Screen->DrawInteger(	MET_SAVE_STATION_DRAW_ID_FONT_LAYER,
+								//this->X + MET_SAVE_STATION_DRAW_ID_FONT_BACKGROUND_X_OFFSET,
+								//this->Y + MET_SAVE_STATION_DRAW_ID_FONT_BACKGROUND_Y_OFFSET,
+								//MET_SAVE_STATION_DRAW_ID_FONT,
+								//MET_SAVE_STATION_DRAW_ID_FONT_BACKGROUND_COLOUR, 0,
+								//MET_SAVE_STATION_DRAW_ID_FONT_WIDTH,
+								//MET_SAVE_STATION_DRAW_ID_FONT_HEIGHT,
+								//station_number, 0, OP_OPAQUE);
+					//Then, the foreground...
+					//Screen->DrawInteger(	MET_SAVE_STATION_DRAW_ID_FONT_LAYER,
+								//this->X + MET_SAVE_STATION_DRAW_ID_FONT_FOREGROUND_X_OFFSET,
+								//this->Y + MET_SAVE_STATION_DRAW_ID_FONT_FOREGROUND_Y_OFFSET,
+								//MET_SAVE_STATION_DRAW_ID_FONT,
+								//MET_SAVE_STATION_DRAW_ID_FONT_FOREGROUND_COLOUR, 0,
+								//MET_SAVE_STATION_DRAW_ID_FONT_WIDTH,
+								//MET_SAVE_STATION_DRAW_ID_FONT_HEIGHT,
+								//station_number, 0, OP_OPAQUE);
+				//}
+				
+				Waitframe();
+			}
+				
+			if ( pressed ) {
+				pressed = false;
+				//Set coordinates for this station:
+				
+				if ( station_number ) SetWarpPoint(station_number,this);
+				
+				//Activate this station if it is inactive
+				if ( !WarpPointActive(station_number) && station_number ){ 
+					WarpPointActive(station_number,true);
+					GetMapCoords(station_number);
+				}	
+				//MetroidSaveStationMenu(int station_number);
+				
+				//Do menu
+				if ( !station_number && !refill ) choice = MetroidSaveStationMenu(station_number,3);
+				else choice = MetroidSaveStationMenu(station_number,refill);
+				if ( choice < 0 && choice > -9999) WarpSamus( (choice * -1), MET_WARP_EFFECT_DURATION,true );
+				//Do save, activate, or warp when menu returns
+					//!No, handled by the manu. 
+				
+			}
+			Waitframe(); //Main while loop. 
+		}
+	}
+}
