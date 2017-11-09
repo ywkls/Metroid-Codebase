@@ -1,0 +1,60 @@
+//Section 48. Lava Field.
+//---COMMMENTING NEEDED--
+
+void Lava_Field(){
+	//Room with lava that goes away when secrets are triggered.
+	if(ScreenFlagTest(SF_MISC,SF_MISC_SCRIPT4)
+		&& !ScreenFlagTest(SF_MISC,SF_MISC_SCRIPT3)){
+		if(!Screen->State[ST_SECRET]){
+			for (int i = 0; i < 175; i++ ){
+				if(Screen->ComboD[i]==GH_INVISIBLE_COMBO && ComboFI(i,CF_DASH)){
+					if(Between(Link->X+8,ComboX(i),ComboX(i)+16)&& Between(Link->Y+8,ComboY(i),ComboY(i)+16)){
+						if(SamusVars[LAVA_TIMER]<=HP_REGEN_TIME)
+							SamusVars[LAVA_TIMER]++;
+						else{	
+							Link->HP-=2;
+							Game->PlaySound(SFX_OUCH);
+							SamusVars[LAVA_TIMER] = 0;
+						}
+					}
+				}
+			}
+		}
+	}
+	//Room with lava that doesn't hurt if you have the gravity suit.
+	else if(ScreenFlagTest(SF_MISC,SF_MISC_SCRIPT3)
+		&& !ScreenFlagTest(SF_MISC,SF_MISC_SCRIPT4)){
+		for (int i = 0; i < 175; i++ ){
+			if(Screen->ComboD[i]==GH_INVISIBLE_COMBO && ComboFI(i,CF_DASH)){
+				if(!Link->Item[I_GRAVITY_SUIT]){
+					if(Between(Link->X+8,ComboX(i),ComboX(i)+16)&& Between(Link->Y+8,ComboY(i),ComboY(i)+16)){
+						if(SamusVars[LAVA_TIMER]<=HP_REGEN_TIME)
+							SamusVars[LAVA_TIMER]++;
+						else{	
+							Link->HP-=2;
+							Game->PlaySound(SFX_OUCH);
+							SamusVars[LAVA_TIMER] = 0;
+						}
+					}
+				}
+			}
+		}
+	}
+	//All other lava rooms.
+	else if(ScreenFlagTest(SF_MISC,SF_MISC_SCRIPT3)
+		&&  ScreenFlagTest(SF_MISC,SF_MISC_SCRIPT4)){
+		for (int i = 0; i < 175; i++ ){
+			if(Screen->ComboD[i]==GH_INVISIBLE_COMBO && ComboFI(i,CF_DASH)){
+				if(Between(Link->X+8,ComboX(i),ComboX(i)+16)&& Between(Link->Y+8,ComboY(i),ComboY(i)+16)){
+					if(SamusVars[LAVA_TIMER]<=HP_REGEN_TIME)
+						SamusVars[LAVA_TIMER]++;
+					else{	
+						Link->HP-=2;
+						Game->PlaySound(SFX_OUCH);
+						SamusVars[LAVA_TIMER] = 0;
+					}
+				}
+			}
+		}
+	}
+}
