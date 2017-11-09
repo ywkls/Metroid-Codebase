@@ -1,0 +1,119 @@
+//Script by Alucard648, edited by Moosh
+
+const int MEDUSA_STATE_WAITING = 0;
+const int MEDUSA_STATE_FLYING = 1;
+
+const int NPCM_ISCOPY = 14;
+
+ffc script Sideview_SineWave{
+	int LinkAlign(int HF){
+		int imprecision = 256-HF;
+		int miny = Link->Y - imprecision;
+		int maxy = Link->Y + imprecision;
+		return Rand(miny, maxy);
+	}
+	void run(int enemyID){
+		npc ghost = Ghost_InitAutoGhost(this, enemyID);
+		
+		int InitHP = ghost->HP;
+		int HF = ghost->Homing;//Controls the chance of spawning at Link`s Y-posotion.
+		int SPD = ghost->Step; //Medusa`s horizontal movement speed. Default is 150.
+		if(SPD==0)
+			SPD = 150;
+		
+		int Amplitude = Ghost_GetAttribute(ghost, 0, 24); //Y-scale of sine wave period. Set to negative for cosine wave motion.
+		int Period = Ghost_GetAttribute(ghost, 1, 96); //X-scale of sine wave period.
+		int initdirection = Ghost_GetAttribute(ghost, 2, 0); //Movement direction. 0 - random, 1 - left-to-right,
+		int direction = initdirection;
+		// 2 - Right-to-left, 3 - furthest away from Link.
+		int minrespawntime = Ghost_GetAttribute(ghost, 3, 30); //Minimum and maximum wait time between flight cycles.
+ 		int maxrespawntime = Ghost_GetAttribute(ghost, 4, minrespawntime);
+		int respawn = ghost->Attributes[5];
+		int Combo = ghost->Attributes[10];
+		
+		Ghost_SetFlag(GHF_STUN);
+		Ghost_SetFlag(GHF_CLOCK);
+		Ghost_SetFlag(GHF_IGNORE_ALL_TERRAIN);
+		Ghost_SetFlag(GHF_NO_FALL);
+		Ghost_SetFlag(GHF_IGNORE_NO_ENEMY);
+		Ghost_SetFlag(GHF_MOVE_OFFSCREEN);
+		int Width = Ghost_GetAttribute(ghost,6,1);
+		int Height = Ghost_GetAttribute(ghost,7,1);
+		Ghost_SetSize(this,ghost,Width,Height);
+		//which is needed for animation routine,
+		int MedusaState = MEDUSA_STATE_WAITING; //Current enemy AI state.
+		int AxisY = 0; //Axis of sine wave. 
+		int CurAngle = Rand(360);//Current angular position used for calculating sine wave position.
+		int anglestep = 360/Period; //Used for calculating 
+		int haltcounter = Rand(minrespawntime, maxrespawntime);//Randomize respawn time after flying off screen.
+		int LeftThreshold = -(Ghost_TileWidth*16);// Screen boundary thresholds.
+		int RightThreshold = 256; 
+		
+		//Determine flight direction and starting X-position.
+		if (initdirection == 0) direction = Rand(1,2);
+		else if (initdirection == 3){
+			if(Link->X > 128) direction = 1;
+			else direction = 2;
+		}
+		if (direction == 1) Ghost_X = LeftThreshold;
+		else Ghost_X = RightThreshold;
+		while(true){
+			if (MedusaState==MEDUSA_STATE_WAITING){
+				Ghost_HP = InitHP;
+				haltcounter--;
+				if (haltcounter == 0){
+					if (initdirection == 0) direction = Rand(1,2);
+					else if (initdirection == 3){
+						if(Link->X > 128) direction = 1;
+						else direction = 2;
+					}
+					if (direction == 1) Ghost_X = LeftThreshold;
+					else Ghost_X = RightThreshold;
+					CurAngle = Rand(360);
+					AxisY = LinkAlign(HF);
+					MedusaState=MEDUSA_STATE_FLYING;
+				}
+			}
+			
+			else if (MedusaState==MEDUSA_STATE_FLYING){
+				if (direction == 1){
+					Ghost_ForceDir(DIR_RIGHT);
+					Ghost_X += SPD/100;
+					if (Ghost_X >= RightThreshold){
+						Ghost_Vx=0;
+						Ghost_X = LeftThreshold;
+						haltcounter = Rand(minrespawntime, maxrespawntime);
+						MedusaState = MEDUSA_STATE_WAITING;
+					}
+				}
+				else if (direction == 2){
+					Ghost_ForceDir(DIR_LEFT);
+					Ghost_X -= SPD/100;
+					if (Ghost_X <= LeftThreshold){
+						Ghost_Vx=0;					
+						Ghost_X = RightThreshold;
+						haltcounter = Rand(minrespawntime, maxrespawntime);
+						MedusaState = MEDUSA_STATE_WAITING;
+					}
+				}
+				CurAngle += anglestep;
+				Ghost_Y = AxisY+ Amplitude*Sin(CurAngle);
+			}
+			//debugValue(1, direction);
+			if(Ghost_Dir==DIR_LEFT)
+				Ghost_Data = Combo;
+			else if(Ghost_Dir==DIR_RIGHT)
+				Ghost_Data = Combo+1;
+			if(!Ghost_Waitframe(this, ghost, true, false)){
+				if(respawn==1){
+					npc n = Screen->CreateNPC(ghost->ID);
+					n->Misc[NPCM_ISCOPY] = 1;
+					if(ghost->Misc[NPCM_ISCOPY]==0)
+						Game->GuyCount[Game->GetCurScreen()]++;
+				}
+				this->Data = 0;
+				Quit();
+			}
+		}
+	}
+}
