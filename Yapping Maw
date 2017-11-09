@@ -1,0 +1,248 @@
+//Section 56. Grabber
+//---COMMMENTING NEEDED--
+
+// Modified function from theRandomHeader.zh
+float AngDiffDeg(float angle1, float angle2){
+    // Get the difference between the two angles
+    float dif = angle2 - angle1;
+    
+    // Compensate for the difference being outside of normal bounds
+    if(dif >= 180)
+        dif -= 360;
+    else if(dif <= -180)
+        dif += 360;
+        
+    return dif;
+}
+
+const int SFX_CLAP = 15; //Sound that plays when the enemy claps its pincers together
+
+ffc script YappingMaw{
+    void run(int enemyid){
+        npc ghost = Ghost_InitAutoGhost(this, enemyid);
+        
+        Ghost_SetFlag(GHF_NO_FALL);
+        Ghost_SetFlag(GHF_IGNORE_ALL_TERRAIN);
+        Ghost_SetFlag(GHF_IGNORE_NO_ENEMY);
+        Ghost_SetFlag(GHF_STUN);
+        int detectionDist = Ghost_GetAttribute(ghost, 0, 48);
+        int moveTime = Ghost_GetAttribute(ghost, 1, 24);
+        int hitboxOffset = Ghost_GetAttribute(ghost, 2, 0);
+		int StartDir = Ghost_GetAttribute(ghost, 3, DIR_UP);
+        int combo = ghost->Attributes[10];
+        ghost->DrawYOffset = -1000; //We're doing all the drawing ourself
+        
+        Ghost_Y -= 8; //Shift the enemy up 8 pixels to make room for the "neck"
+        
+        int vars[16]; //Variable array to pass into the waitframe
+        //The first two variables are the enemy's starting position
+        vars[0] = Ghost_X;
+        vars[1] = Ghost_Y;
+        
+        //The next two are arrays that track the enemy's movement
+        int trackX[256];
+        int trackY[256];
+        vars[2] = trackX;
+        vars[3] = trackY;
+        
+        //Set all the traced positions to under the head
+        for(int i=0; i<256; i++){
+            trackX[i] = Ghost_X;
+            trackY[i] = Ghost_Y;
+        }
+        //vars[4] is how many frames have been tracked
+        
+        int clapCounter; //If you're happy and you know it, clap your hands
+        while(true){
+            clapCounter++;
+            //If Link is close enough to be targetted face him, otherwise face up
+            if(Distance(Ghost_X, Ghost_Y, Link->X, Link->Y+hitboxOffset)<detectionDist)
+                Ghost_Dir = AngleDir8(Angle(Ghost_X, Ghost_Y, Link->X, Link->Y+hitboxOffset));
+            else
+                Ghost_Dir = StartDir;
+            //Record an angle that matches the enemy's direction
+            int angle;
+            if(Ghost_Dir==DIR_UP)
+                angle = -90;
+            else if(Ghost_Dir==DIR_DOWN)
+                angle = 90;
+            else if(Ghost_Dir==DIR_LEFT)
+                angle = 180;
+            else if(Ghost_Dir==DIR_RIGHT)
+                angle = 0;
+            else if(Ghost_Dir==DIR_LEFTUP)
+                angle = -135;
+            else if(Ghost_Dir==DIR_RIGHTUP)
+                angle = -45;
+            else if(Ghost_Dir==DIR_LEFTDOWN)
+                angle = 135;
+            else if(Ghost_Dir==DIR_RIGHTDOWN)
+                angle = 45;
+            else
+                angle = -90;
+            if(clapCounter>=120){ //Play a clapping animation every 120 frames
+                Game->PlaySound(SFX_CLAP);
+                clapCounter = 0;
+                YM_Waitframes(this, ghost, vars, 4);
+                Ghost_Data = combo+8;
+                YM_Waitframes(this, ghost, vars, 4);
+                Ghost_Data = combo+16;
+                YM_Waitframes(this, ghost, vars, 4);
+                Ghost_Data = combo+8;
+                YM_Waitframes(this, ghost, vars, 4);
+                Ghost_Data = combo;
+                YM_Waitframes(this, ghost, vars, 4);
+            }
+            //If Link is close enough to be grabbed, targetting time
+            if(Distance(Ghost_X, Ghost_Y, Link->X, Link->Y+hitboxOffset)<detectionDist){
+                clapCounter = 0;
+                //Set the speed the enemy should turn each frame based on the difference between its angle and Link's
+                int turn = Clamp(Abs(AngDiffDeg(angle, Angle(Ghost_X, Ghost_Y, Link->X, Link->Y))/(ghost->Step/25)), (ghost->Step/200), (ghost->Step/100));
+                //If Link is on the enemy's left, turn counterclockwise
+                if(Link->X<Ghost_X)
+                    turn = -turn;
+                //Wait for a bit before charging
+                YM_Waitframes(this, ghost, vars, 32);
+                bool grabbed;
+                //Move until the max move duration is reached or Link is caught
+                for(int i=0; i<moveTime&&!grabbed; i++){
+                    Ghost_MoveAtAngle(angle, Max(1, ghost->Step/100), 0);
+                    YM_AddPosition(this, ghost, vars);
+                    //Detect a collision with Link and mark him as grabbed
+                    if(LinkCollision(ghost)&&Link->Action==LA_GOTHURTLAND){
+                        grabbed = true;
+                    }
+                    angle += turn;
+                    YM_Waitframe(this, ghost, vars);
+                }
+                ghost->CollDetection = false; //Turn off collision when retracting
+                while(vars[4]>0){ //While there's still room to retract, do so
+                    for(int i=0; i<Max(1, Floor(ghost->Step/100)); i++){
+                        YM_RemovePosition(this, ghost, vars);
+                        Ghost_X = trackX[0];
+                        Ghost_Y = trackY[0];
+                        if(grabbed){ //If Link is grabbed, move him to the enemy's position
+                            if(YM_CanPlaceLink(Ghost_X, Ghost_Y)||YM_CanPlaceLink(vars[0], vars[1])){ //But only if there's an empty space there, otherwise let go
+                                //You may want to make this one a global Link position force to prevent jittery behavior
+                                Link->X = Ghost_X;
+                                Link->Y = Ghost_Y;
+                                Link->Jump = 0;
+                            }
+                            else{
+                                grabbed = false;
+                            }
+                        }
+                    }
+                    YM_Waitframe(this, ghost, vars);
+                }
+                if(grabbed){ //If Link is still grabbed at the end, face up and hold him there for a bit longer
+                    Ghost_Data = combo;
+                    Ghost_Dir = StartDir;
+                    for(int i=0; i<32; i++){
+                        Link->X = Ghost_X;
+                        Link->Y = Ghost_Y;
+                        Link->Jump = 0;
+                        YM_Waitframe(this, ghost, vars);
+                    }
+                    YM_Waitframes(this, ghost, vars, 64);
+                }
+                ghost->CollDetection = true; //Wouldn't it be dumb if I forgot to turn this back on?
+                //Safety reset the tracking arrays in case of goofs
+                vars[4] = 0;
+                for(int i=0; i<256; i++){
+                    trackX[i] = Ghost_X;
+                    trackY[i] = Ghost_Y;
+                }
+            }
+            YM_Waitframe(this, ghost, vars);
+        }
+    }
+    bool YM_CanPlaceLink(int X, int Y){
+        for(int x=0; x<=15; x=Min(x+8, 15)){
+            for(int y=0; y<=15; y=Min(y+8, 15)){
+                if(Screen->isSolid(X+x, Y+y))
+                    return false;
+                if(y==15)
+                    break;
+            }
+            if(x==15)
+                break;
+        }
+        return true;
+    }
+    void YM_AddPosition(ffc this, npc ghost, int vars){
+        int trackX = vars[2];
+        int trackY = vars[3];
+        
+        int startPosX = trackX[0];
+        int startPosY = trackY[0];
+        
+        //Find the distance in pixels between the last position and the new one, store every position between the two
+        for(int i=Max(1, Floor(Distance(Ghost_X, Ghost_Y, startPosX, startPosY))); i>0; i--){
+            int x = Ghost_X + VectorX(i, Angle(Ghost_X, Ghost_Y, startPosX, startPosY));
+            int y = Ghost_Y + VectorY(i, Angle(Ghost_X, Ghost_Y, startPosX, startPosY));
+            YM_AddPositionPrecise(this, ghost, vars, x, y);
+        }
+    }
+    void YM_AddPositionPrecise(ffc this, npc ghost, int vars, int posX, int posY){
+        int trackX = vars[2];
+        int trackY = vars[3];
+        
+        //Add to the length of the tracking
+        vars[4]++;
+        //Cycle through the position tracking arrays shifting the positions up
+        for(int i=(SizeOfArray(trackX))-1; i>=1; i--){
+            trackX[i] = trackX[i-1];
+            trackY[i] = trackY[i-1];
+        }
+        
+        //Set the first position to the new one
+        trackX[0] = posX;
+        trackY[0] = posY;
+    }
+    void YM_RemovePosition(ffc this, npc ghost, int vars){
+        int trackX = vars[2];
+        int trackY = vars[3];
+        
+        //Subtract from the length of the tracking
+        vars[4]--;
+        //Cycle through the position tracking arrays shifting the positions down
+        for(int i=0; i<SizeOfArray(trackX)-1; i++){
+            trackX[i] = trackX[i+1];
+            trackY[i] = trackY[i+1];
+        }
+    }
+    void YM_Draw(ffc this, npc ghost, int vars){
+        int combo = ghost->Attributes[10];
+        
+        int trackX = vars[2];
+        int trackY = vars[3];
+        
+        //Determine the spacing between where each segment is drawn in the position array
+        int segmentSpacing = vars[4]/7;
+        //Draw the first neck segment under the head
+        Screen->FastCombo(2, vars[0], vars[1], combo+24, this->CSet, 128);
+        //Draw 6 more along the path to the head
+        for(int i=0; i<6; i++){
+            int t = Clamp(Round(segmentSpacing*(1+i)), 0, Max(0, vars[4]-1));
+            int x = trackX[t];
+            int y = trackY[t];
+            Screen->FastCombo(2, x, y, combo+24, this->CSet, 128);
+        }
+        Screen->DrawCombo(3, Ghost_X-16, Ghost_Y-16, Ghost_Data+Ghost_Dir, 3, 3, this->CSet, -1, -1, 0, 0, 0, -1, 0, true, 128);
+        //Draw another a little below the starting point of the head
+		if(ghost->Dir==DIR_UP)
+			Screen->FastCombo(2, vars[0], vars[1]+8, combo+24, this->CSet, 128);
+		else
+			Screen->FastCombo(2, vars[0], vars[1]-8, combo+24, this->CSet, 128);	
+    }
+    void YM_Waitframe(ffc this, npc ghost, int vars){
+        YM_Draw(this, ghost, vars);
+        Ghost_Waitframe(this, ghost);
+    }
+    void YM_Waitframes(ffc this, npc ghost, int vars, int frames){
+        for(int i=0; i<frames; i++){
+            YM_Waitframe(this, ghost, vars);
+        }
+    }
+}
