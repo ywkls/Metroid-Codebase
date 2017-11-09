@@ -1,0 +1,52 @@
+//Section 24. Combo Change Item Drop.
+
+//D0- Combo to watch.
+//D1- Item to create.
+//D2- Screen->D register to store this in. If 0-6, the next one is used to detect if you've collected the item.
+//    If 7, register 6 is used.
+
+ffc script Combo_Change_Item_Drop{
+	void run(int comboid, int item_num, int perm){
+		bool isBlock[176];//Array to store original values of combos.
+		for(int i =0;i<176;i++){
+			if(Screen->ComboD[i]==comboid){
+				isBlock[i]= true;
+				if(Between(perm,0,6))Screen->D[perm+1]= i;
+				else if(perm == 7)Screen->D[perm-1]= i;
+			}
+		}
+		bool ItemSpawned = false;
+		int ItemLoc;
+		if(Between(perm,0,6))ItemLoc = Screen->D[perm+1];
+		else if(perm == 7)ItemLoc = Screen->D[perm-1];
+		item thisitem;
+		item anyitem;
+		while(!Screen->State[ST_ITEM]){
+			for(int i =0;i<176;i++){
+				if(isBlock[i] && Screen->ComboD[i]!=comboid && Screen->D[perm]!=1){
+					thisitem = Screen->CreateItem(item_num);
+					thisitem->X = ComboX(i);
+					thisitem->Y = ComboY(i);
+					thisitem->Pickup |= IP_HOLDUP;
+					Screen->D[perm]=1;	
+				}
+			}
+			if(!Screen->State[ST_ITEM] && Screen->D[perm]==1){
+				for(int i =1;i<=Screen->NumItems();i++){
+					anyitem = Screen->LoadItem(i);
+					if(anyitem->ID == item_num)ItemSpawned = true;
+				}
+				if(!ItemSpawned){
+					thisitem = Screen->CreateItem(item_num);
+					thisitem->X = ComboX(ItemLoc);
+					thisitem->Y = ComboY(ItemLoc);
+					thisitem->Pickup |= IP_HOLDUP;
+					ItemSpawned = true;
+				}
+			}
+			if(Link->Item[item_num])
+				Screen->State[ST_ITEM]= true;
+			Waitframe();
+		}
+	}
+}
