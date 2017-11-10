@@ -1,0 +1,31 @@
+const int SKY_BACKGROUND_TILE = 3820;
+
+//16 x 3
+	
+ffc script Sky_Movement{
+	void run(){
+		float angle;
+		int XScale= 352;
+		int YScale= 256;
+		while(true){
+			Screen->Rectangle(1, 0, 0, 511,511, 0x01, -1, 0,0,0, true, 128);
+			Screen->SetRenderTarget(RT_BITMAP2);
+			Screen->Rectangle(7, 0, 0, 511,511, 0x00, -1, 0,0,0, true, 128);
+			Screen->DrawScreen(7,67,0x01,0,0,angle);
+			Screen->SetRenderTarget(RT_SCREEN);
+			Screen->DrawBitmap(6, RT_BITMAP2, 0,0,256,176, 
+								128-(XScale/2),-40, XScale, 256, 0, true);				
+			Screen->DrawLayer(6,67,0x03, 0, 0,0, 0, 128);
+			angle = (angle+2)%360;
+			if((angle>=25 && angle<135)||
+			    (angle>=225 && angle<315))
+				XScale+=4;
+			else if((angle>=135 && angle<225)||
+					(angle>=315 && angle<359)||
+					(angle>=0 && angle<45))
+				XScale-=4;	
+			XScale = Clamp(XScale,352,512);
+			Waitframe();
+		}	
+	}
+}
