@@ -1,0 +1,167 @@
+//Menu called by the save station ffc.
+int Button_Menu() {
+	int lineBreak[]="@26";
+	int Fire[]= "Fire@26";
+	int Jump[]= "Jump@26";
+	int Dash[]= "Dash@26";
+	int ItemSelect[]= "Item Select@26";
+	int Aim_Up[]= "Aim Up@26";
+	int Aim_Dn[]= "Aim Down@26";
+	int Examine[]= "Examine@26";
+	int Menu[]= "Menu";
+	int ButtonB[]= "B@26";
+	int ButtonA[]= "A@26";
+	int ButtonL[]= "L@26";
+	int ButtonR[]= "R@26";
+	int ButtonEx1[]= "Ex1@26";
+	int ButtonEx2[]= "Ex2@26";
+	int ButtonEx3[]= "Ex3@26";
+	int ButtonEx4[]= "Ex4@26";
+	int Keep[]= "Keep These Settings?";
+	int line1[]= "@choice(1)Yes?";
+	int line2[]= "@choice(2)No?";
+	int initmenu[]="@domenu(1)@suspend()";
+	
+	//Default settings.
+	
+	//B = Fire.
+	//A = Jump
+	//Ex2 = Dash
+	//Ex1 = Switch items.
+	//L = Diagonal up.
+	//R = Diagonal Dn.
+	//Ex3 = Examine Objects
+	
+	SetUpWindow(WINDOW_SLOT_1, WINDOW_STYLE_1, 16, 16, SIZE_TALL);
+	SetUpWindow(WINDOW_SLOT_2, WINDOW_STYLE_2, 128, 16, SIZE_TALL);
+	SetUpWindow(WINDOW_SLOT_3, WINDOW_STYLE_3,16,128, SIZE_WIDE);
+	Tango_LoadString(WINDOW_SLOT_1, Fire);
+	Tango_AppendString(WINDOW_SLOT_1, Jump);
+	Tango_AppendString(WINDOW_SLOT_1,Dash);
+	Tango_AppendString(WINDOW_SLOT_1, ItemSelect);
+	Tango_AppendString(WINDOW_SLOT_1, Aim_Up);
+	Tango_AppendString(WINDOW_SLOT_1, Aim_Dn);
+	Tango_AppendString(WINDOW_SLOT_1, Examine);
+	Tango_AppendString(WINDOW_SLOT_1, Menu);
+	if(SamusVars[CONTROL_SET]== SET_DEFAULT){
+		Tango_LoadString(WINDOW_SLOT_2, ButtonB);
+		Tango_AppendString(WINDOW_SLOT_2, ButtonA);
+		Tango_AppendString(WINDOW_SLOT_2,ButtonEx2);
+		Tango_AppendString(WINDOW_SLOT_2, ButtonEx1);
+		Tango_AppendString(WINDOW_SLOT_2, ButtonL);
+		Tango_AppendString(WINDOW_SLOT_2, ButtonR);
+	}
+	else if(SamusVars[CONTROL_SET]== SET_DEFAULT_RT){
+		Tango_LoadString(WINDOW_SLOT_2, ButtonB);
+		Tango_AppendString(WINDOW_SLOT_2, ButtonA);
+		Tango_AppendString(WINDOW_SLOT_2,ButtonEx2);
+		Tango_AppendString(WINDOW_SLOT_2, ButtonEx1);
+		Tango_AppendString(WINDOW_SLOT_2, ButtonR);
+		Tango_AppendString(WINDOW_SLOT_2, ButtonL);
+	}
+	else if(SamusVars[CONTROL_SET]== SET_SWTICHED1){
+		Tango_LoadString(WINDOW_SLOT_2, ButtonEx2);
+		Tango_AppendString(WINDOW_SLOT_2, ButtonEx1);
+		Tango_AppendString(WINDOW_SLOT_2,ButtonB);
+		Tango_AppendString(WINDOW_SLOT_2, ButtonA);
+		Tango_AppendString(WINDOW_SLOT_2, ButtonL);
+		Tango_AppendString(WINDOW_SLOT_2, ButtonR);
+	}
+	else if(SamusVars[CONTROL_SET]== SET_SWTICHED2){
+		Tango_LoadString(WINDOW_SLOT_2, ButtonEx2);
+		Tango_AppendString(WINDOW_SLOT_2, ButtonEx1);
+		Tango_AppendString(WINDOW_SLOT_2,ButtonL);
+		Tango_AppendString(WINDOW_SLOT_2, ButtonR);
+		Tango_AppendString(WINDOW_SLOT_2, ButtonB);
+		Tango_AppendString(WINDOW_SLOT_2, ButtonA);
+	}
+	else if(SamusVars[CONTROL_SET]== SET_REVERSED1){
+		Tango_LoadString(WINDOW_SLOT_2, ButtonA);
+		Tango_AppendString(WINDOW_SLOT_2, ButtonB);
+		Tango_AppendString(WINDOW_SLOT_2,ButtonEx1);
+		Tango_AppendString(WINDOW_SLOT_2, ButtonEx2);
+		Tango_AppendString(WINDOW_SLOT_2, ButtonR);
+		Tango_AppendString(WINDOW_SLOT_2, ButtonL);
+	}
+	else if(SamusVars[CONTROL_SET]== SET_REVERSED2){
+		Tango_LoadString(WINDOW_SLOT_2, ButtonEx1);
+		Tango_AppendString(WINDOW_SLOT_2, ButtonEx2);
+		Tango_AppendString(WINDOW_SLOT_2,ButtonA);
+		Tango_AppendString(WINDOW_SLOT_2, ButtonB);
+		Tango_AppendString(WINDOW_SLOT_2, ButtonR);
+		Tango_AppendString(WINDOW_SLOT_2, ButtonL);
+	}
+	else if(SamusVars[CONTROL_SET]== SET_SW_REVERSED1){
+		Tango_LoadString(WINDOW_SLOT_2, ButtonB);
+		Tango_AppendString(WINDOW_SLOT_2, ButtonA);
+		Tango_AppendString(WINDOW_SLOT_2,ButtonR);
+		Tango_AppendString(WINDOW_SLOT_2, ButtonL);
+		Tango_AppendString(WINDOW_SLOT_2, ButtonEx1);
+		Tango_AppendString(WINDOW_SLOT_2, ButtonEx2);
+	}
+	else if(SamusVars[CONTROL_SET]== SET_SW_REVERSED2){
+		Tango_LoadString(WINDOW_SLOT_2, ButtonR);
+		Tango_AppendString(WINDOW_SLOT_2, ButtonL);
+		Tango_AppendString(WINDOW_SLOT_2,ButtonB);
+		Tango_AppendString(WINDOW_SLOT_2, ButtonA);
+		Tango_AppendString(WINDOW_SLOT_2, ButtonEx1);
+		Tango_AppendString(WINDOW_SLOT_2, ButtonEx2);
+	}
+	Tango_AppendString(WINDOW_SLOT_2, ButtonEx3);
+	Tango_AppendString(WINDOW_SLOT_2, ButtonEx4);
+	Tango_LoadString(WINDOW_SLOT_3, Keep);
+	Tango_AppendString(WINDOW_SLOT_3, line1);
+	Tango_AppendString(WINDOW_SLOT_3, line2);
+	Tango_AppendString(WINDOW_SLOT_3, initmenu);
+	Tango_ActivateSlot(WINDOW_SLOT_1);
+	Tango_ActivateSlot(WINDOW_SLOT_2);
+	Tango_ActivateSlot(WINDOW_SLOT_3);
+	
+	while(!Tango_MenuIsActive()){
+        
+		Waitframe();
+	}
+    
+	// Save the state again...
+	int slotState[278];
+	int menuState[960];
+	int cursorPos;
+	Tango_SaveSlotState(WINDOW_SLOT_3, slotState);
+	Tango_SaveMenuState(menuState);
+    
+	int done = 0;
+	int choice;
+	while(true){
+    
+		while( Tango_MenuIsActive() ) {
+			if	( Link->PressEx4 ) { 
+				Link->PressEx4= false; 
+				Link->InputEx4 = false; 	
+			}
+			cursorPos=Tango_GetMenuCursorPosition();
+			Waitframe();
+		}
+        
+		choice = Tango_GetLastMenuChoice();
+		if ( choice == 1)
+			done = -999;
+		
+		else if ( choice == 2){//Cancel
+			SamusVars[CONTROL_SET]=SET_DEFAULT;
+			done =1;
+		}
+		if ( done )
+			break;
+		//	return choice;
+		else {
+			Tango_RestoreSlotState(WINDOW_SLOT_1, slotState);
+			Tango_RestoreMenuState(menuState);
+			Tango_SetMenuCursorPosition(cursorPos);
+		}
+	}
+	Tango_ClearSlot(WINDOW_SLOT_1);
+    Tango_ClearSlot(WINDOW_SLOT_2);
+	Tango_ClearSlot(WINDOW_SLOT_3);
+	//if ( DEBUG_MENUS ) DebugMetroidSaveStationMenu(done);
+	return done;
+}
