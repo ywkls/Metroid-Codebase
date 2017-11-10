@@ -1,0 +1,56 @@
+//Set up map drawing.
+
+//D0- What area this is.
+//D1- X coordinates to draw the map on the subscreen.
+//D2- Y coordinates to draw the map on the subscreen.
+//D3- X coordinates to draw the player icon.
+//D4- Y coordinates to draw the player icon.
+//D5- X coordinates to draw the scaled down minimap from.
+//D6- Y coordinates to draw the scaled down minimap from.
+
+ffc script SetMapDraw{
+	void run(int Map, int X, int Y,int SamusX,int SamusY,int SourceX,int SourceY){
+		SamusVars[CURRENT_AREA]= Map;
+		SamusVars[MAP_DRAW_X] = X;	
+		SamusVars[MAP_DRAW_Y] = Y;
+		SamusVars[MAP_SAMUS_X]=SamusX;
+		SamusVars[MAP_SAMUS_Y]=SamusY;
+		SamusVars[MAP_SOURCE_X]=SourceX;
+		SamusVars[MAP_SOURCE_Y]=SourceY;
+	}
+}
+
+void MapAdjust(){
+	if(Link->Action==LA_SCROLLING && !GetDMapFlag(Game->GetCurDMap(),DMF_SCRIPT1)){
+		if(SamusVars[MAP_SCROLL_DIR]==-1){
+			if(Link->Y>160){
+				SamusVars[MAP_DRAW_Y]+=12;
+				SamusVars[MINIMAP_DRAW_Y]-=8;
+				SamusVars[MAP_SOURCE_Y]-=8;
+				SamusVars[MAP_SCROLL_DIR]=DIR_UP;
+			}
+			else if(Link->Y<0){
+				SamusVars[MAP_DRAW_Y]-=12;
+				SamusVars[MINIMAP_DRAW_Y]+=8;
+				SamusVars[MAP_SOURCE_Y]+=8;
+				SamusVars[MAP_SCROLL_DIR]=DIR_DOWN;
+			}
+			else if(Link->X>240){
+				SamusVars[MAP_DRAW_X]+=12;
+				SamusVars[MINIMAP_DRAW_X]-=8;
+				SamusVars[MAP_SOURCE_X]-=8;
+				SamusVars[MAP_SCROLL_DIR]=DIR_LEFT;
+			}
+			else{
+				SamusVars[MAP_DRAW_X]-=12;
+				SamusVars[MINIMAP_DRAW_X]+=8;
+				SamusVars[MAP_SOURCE_X]+=8;
+				SamusVars[MAP_SCROLL_DIR]=DIR_RIGHT;
+			}
+		}
+	}
+	else{
+		if(SamusVars[MAP_SCROLL_DIR]!=-1)
+			SamusVars[MAP_SCROLL_DIR]=-1;
+	}
+}
