@@ -1,0 +1,10 @@
+//Section 62. Area Name Setup
+
+ffc script AreaNameSet{
+	void run(int AreaNum){
+		GetMessage(AreaNum,AreaName);
+		Quit();
+	}
+}
+
+int AreaName[256];
