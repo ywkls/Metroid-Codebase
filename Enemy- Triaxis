@@ -1,0 +1,58 @@
+ffc script Triaxis{
+	void run(int enemyID){
+		npc ghost = Ghost_InitAutoGhost(this, enemyID);
+		this->Flags[FFCF_OVERLAY]= true;
+		int combo = ghost->Attributes[10];
+		int sprite = ghost->Attributes[0];
+		int sfx = ghost->Attributes[1];
+		Ghost_SetFlag(GHF_NO_FALL);
+		Ghost_SetSize(this,ghost,2,3);
+		Ghost_AddCombo(combo+1,-48,0,3,8);
+		Ghost_AddCombo(combo+2,32,0,3,8);
+		Ghost_AddCombo(combo+3,0,48,2,5);
+		eweapon leg;
+		bool MovingLeft = ChooseBool();
+		float step = ghost->Step/100;
+		float speed = step;
+		Ghost_X = 50;
+		Ghost_Y = 32;
+		int LegChoice = Choose(0,1,2);
+		int StompTimer= Rand(45,150);
+		int MaxHP = Ghost_HP;
+		while(true){
+			if(MovingLeft && !Screen->isSolid(Ghost_X-8,Ghost_Y)){
+				Ghost_X-=speed;
+				Ghost_ForceDir(DIR_LEFT);
+			}
+			else if(MovingLeft && Screen->isSolid(Ghost_X-8,Ghost_Y))
+				MovingLeft = false;
+			else if(!MovingLeft && !Screen->isSolid(Ghost_X+40,Ghost_Y)){
+				Ghost_X+=speed;
+				Ghost_ForceDir(DIR_RIGHT);
+			}
+			else if(!MovingLeft && Screen->isSolid(Ghost_X+40,Ghost_Y))
+				MovingLeft = true;
+			if(StompTimer<=0){
+				for(int i = 180; i<=360;i+=45){
+					if(LegChoice==0)
+						leg = FireEWeapon(ghost->Weapon,Ghost_X-48, Ghost_Y+128, 
+											DegtoRad(i), 150,ghost->WeaponDamage, sprite, sfx, 0);
+					else if(LegChoice==1)
+						leg= FireEWeapon(ghost->Weapon,Ghost_X+8, Ghost_Y+128, 
+										DegtoRad(i), 150,ghost->WeaponDamage, sprite, sfx, 0);
+					else if(LegChoice==2)
+						leg = FireEWeapon(ghost->Weapon,Ghost_X+48, Ghost_Y+128, 
+										DegtoRad(i), 150,ghost->WeaponDamage, sprite, sfx, 0);					
+					Gen_Explode_Waitframes(this,ghost,10);
+				}
+				StompTimer= Rand(45,150);
+				LegChoice = Choose(0,1,2);
+			}
+			if(Ghost_HP<=(MaxHP/2))
+				step =ghost->Step/50;
+			speed = step;
+			StompTimer--;
+			Gen_Explode_Waitframe(this,ghost);
+		}
+	}
+}
