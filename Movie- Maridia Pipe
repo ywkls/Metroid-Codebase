@@ -1,0 +1,41 @@
+ffc script MaridiaPipe{
+	void run(int direction){
+		int Ypos;
+		int Timer;
+		if(direction>0){
+			while(Timer<1584){
+				Screen->DrawScreen(7, 64, 99, 0, Ypos,0);
+				Screen->DrawScreen(7, 64, 100, 0, Ypos+176,0);
+				Screen->DrawScreen(7, 64, 100, 0, Ypos+352,0);
+				Screen->DrawScreen(7, 64, 101, 0, Ypos+528,0);
+				Screen->DrawScreen(7, 64, 102, 0, Ypos+704,0);
+				Screen->DrawScreen(7, 64, 103, 0, Ypos+880,0);
+				Screen->DrawScreen(7, 64, 104, 0, Ypos+1056,0);
+				Screen->DrawScreen(7, 64, 100, 0, Ypos+1232,0);
+				Screen->DrawScreen(7, 64, 100, 0, Ypos+1408,0);
+				Screen->DrawScreen(7, 64, 105, 0, Ypos+1584,0);
+				Ypos-=direction;
+				Timer+=direction;
+				Waitframe();
+			}
+		}
+		else{
+			while(Timer>-1584){
+				Screen->DrawScreen(7, 64, 99, 0, Ypos-1584,0);
+				Screen->DrawScreen(7, 64, 100, 0, Ypos-1408,0);
+				Screen->DrawScreen(7, 64, 100, 0, Ypos-1232,0);
+				Screen->DrawScreen(7, 64, 101, 0, Ypos-1056,0);
+				Screen->DrawScreen(7, 64, 102, 0, Ypos-880,0);
+				Screen->DrawScreen(7, 64, 103, 0, Ypos-704,0);
+				Screen->DrawScreen(7, 64, 104, 0, Ypos-528,0);
+				Screen->DrawScreen(7, 64, 100, 0, Ypos-352,0);
+				Screen->DrawScreen(7, 64, 100, 0, Ypos-176,0);
+				Screen->DrawScreen(7, 64, 105, 0, Ypos,0);
+				Ypos-=direction;
+				Timer+=direction;
+				Waitframe();
+			}
+		}
+		this->Data = CM_AUTOWARPD;
+	}
+}
