@@ -1,0 +1,16 @@
+//Section 71. Diagonal aiming.
+
+void Aiming(){
+	if(Input_Aim_Up()){
+		if(Link->Dir==DIR_LEFT)
+			Link->Dir=DIR_LEFTUP;
+		else if(Link->Dir==DIR_RIGHT)
+			Link->Dir=DIR_RIGHTUP;
+	}
+	else if(Input_Aim_Dn()){
+		if(Link->Dir==DIR_LEFT)
+			Link->Dir=DIR_LEFTDOWN;
+		else if(Link->Dir==DIR_RIGHT)
+			Link->Dir=DIR_RIGHTDOWN;
+	}
+}
