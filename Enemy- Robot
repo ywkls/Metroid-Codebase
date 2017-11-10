@@ -1,0 +1,32 @@
+//Section 90. Robot
+
+ffc script Robot{
+	void run(int enemyID){
+		npc ghost = Ghost_InitAutoGhost(this, enemyID);
+		Ghost_SetFlag(GHF_NO_FALL);
+		Ghost_SetFlag(GHF_REDUCED_KNOCKBACK);
+		int Combo = ghost->Attributes[10];
+		Ghost_SetSize(this,ghost,2,4);
+		Ghost_SetHitOffsets(ghost,7,0,0,0);
+		bool MovingLeft = ChooseBool();
+		while(true){
+			if(MovingLeft && Ghost_CanMove(DIR_LEFT,1,0)
+				&& !Ghost_CanMove(DIR_DOWN,1,0))
+				Ghost_Move(DIR_LEFT,1,1);
+			else if(MovingLeft && (!Ghost_CanMove(DIR_LEFT,1,0)
+					|| Ghost_CanMove(DIR_DOWN,1,0)))
+				MovingLeft = false;
+			else if(!MovingLeft && Ghost_CanMove(DIR_RIGHT,1,0)
+				&& !Ghost_CanMove(DIR_DOWN,1,0))
+				Ghost_Move(DIR_RIGHT,1,0);
+			else if(!MovingLeft && (!Ghost_CanMove(DIR_RIGHT,1,0)
+				|| Ghost_CanMove(DIR_DOWN,1,0)))
+				MovingLeft = true;
+			if(MovingLeft)
+				Ghost_Data = Combo;
+			else
+				Ghost_Data = Combo+1;
+			Ghost_Waitframe(this,ghost,true,true);
+		}
+	}
+}
