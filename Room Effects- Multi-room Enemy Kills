@@ -1,0 +1,19 @@
+//Section 117. Multi Enemy Kill Count
+
+ffc script Multi_Room_State{
+	void run(){
+		bool triggered = false;
+		if(Screen->State[ST_SECRET])
+			triggered = true;
+		Waitframes(4);
+		while(!triggered){
+			if(Screen->State[ST_ENEMYNORETURN]
+				&& Game->GetScreenState(Game->GetCurMap(),Game->GetCurScreen()+1,ST_ENEMYNORETURN)
+				&& Game->GetScreenState(Game->GetCurMap(),Game->GetCurScreen()+2,ST_ENEMYNORETURN))
+				triggered = true;
+			Waitframe();
+		}
+		Screen->TriggerSecrets();
+		Screen->State[ST_SECRET]= true;
+	}
+}
