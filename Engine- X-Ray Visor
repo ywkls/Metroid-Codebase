@@ -10,3 +10,147 @@ const int BEAM_SECRET_COMBO = 2339;//What combo to change combos that can be des
 const int S_B_SECRET_COMBO = 502;//What combo to change combos that can be speed boosted.
 const int S_A_SECRET_COMBO = 174;//What combo to change combos that can be screw attacked.
 const int XRAY_INVIS_COMBO= 180;//What combo to change to for things with lens flags.
+
+//X-Ray Visor Script
+
+const int X_RAY_SCRIPT = 25;//Script of X-ray visor.
+const int X_RAY_RADIUS = 32;//Radius of X-ray visor.
+const int SFX_X_RAY = 61;//Sound X-ray visor makes.
+
+void RunX_Ray(){
+	if(!SamusVars[X_RAY_VISOR_ON]){
+		SamusVars[X_RAY_VISOR_ON] = 1;
+		int Args[8] = {SFX_X_RAY, X_RAY_RADIUS};
+		if(CountFFCsRunning(X_RAY_SCRIPT)==0)
+			NewFFCScript(X_RAY_SCRIPT, Args);
+	}
+	else if(SamusVars[X_RAY_VISOR_ON]){
+		SamusVars[X_RAY_VISOR_ON] = 0;
+		int Args[8] = {SFX_X_RAY, X_RAY_RADIUS};
+		NewFFCScript(X_RAY_SCRIPT, Args);
+	}
+}
+
+const int CF_LENSECRET = 14;//Lens secret combo flag.
+
+//D0- Sound it makes.
+//D1- Radius of effect.
+
+ffc script X_RayVisor{
+	void run(int lensSFX, int radius){
+		this->Data = GH_INVISIBLE_COMBO;//Change combo to invisible.
+		//Position ffc.
+		int Last_Dir = Link->Dir;
+		if(Last_Dir == DIR_LEFT)this->X =1;
+		else if(Last_Dir == DIR_RIGHT)this->X = 239;
+		this->Y = Link->Y;
+		int sfxTimer;//Timer for sound effects.
+		int ScreenCombos[176];//Array to store original values of combos.
+		bool Combochanged[176];//Array to store whether combo has been changed.
+		//Save combo values. Set changed array to false.
+		for(int i = 0; i < 176; i++){
+			ScreenCombos[i] = Screen->ComboD[i];
+			Combochanged[i]= false;
+		}
+		this->TileWidth = 1;
+		this->TileHeight = 1;
+		float angle;
+		while(SamusVars[X_RAY_VISOR_ON] && !SamusVars[IS_MORPHED]
+				&& SamusVars[EQUIPPED_ITEM]==I_X_RAY){
+			//Move ffc to match input.
+			if(Link->InputUp && this->Y >1){
+				Link->InputUp = false;
+				this->Y--;
+			}
+			else if(Link->InputDown && this->Y <170){
+				Link->InputDown = false;
+				this->Y++;
+			}
+			else if(Link->InputRight && this->X<255){
+				Link->InputRight = false;
+				this->X++;
+			}
+			else if(Link->InputLeft && this->X>1){
+				Link->InputLeft = false;
+				this->X--;
+			}
+			//Keep Link in place.
+			else{
+				Link->InputUp = false;
+				Link->InputDown = false;
+				Link->InputRight = false;
+				Link->InputLeft = false;
+			}
+			//Draw visor field. Match Link's direction to ffc location.
+			angle = Angle(Link->X+8,Link->Y-8, this->X+8,this->Y+8);
+			FakeArc(3,Link->X+8,Link->Y-8, 256,angle-10,angle+10,12,1,0,0,0,true,true, 64);
+			if(this->X<Link->X)
+				Link->Dir = DIR_LEFT;
+			else
+				Link->Dir = DIR_RIGHT;
+			//Create sound every sixty seconds.
+			if ( sfxTimer == 0 ) Game->PlaySound(lensSFX);
+			sfxTimer = (sfxTimer+1)% 60;
+			//If ffc is within 32 pixels of flag, change combo.
+			for(int i = 0; i < 176; i++){
+				if(Arc_Intersect(Link->X+8,Link->Y-8,ComboX(i)+8,ComboY(i)+8,angle-10,angle+10,256) 
+					&& !Combochanged[i]){
+					if(ComboFI(i,XRAY_FLAG)){
+						Screen->ComboD[i]= XRAY_SECRET_COMBO;
+						Combochanged[i]= true;
+					}
+					else if(ComboFI(i,CF_ARROW)){
+						Screen->ComboD[i]= ARROW_SECRET_COMBO;
+						Combochanged[i]= true;
+					}
+					else if(ComboFI(i,CF_BOMB)){
+						Screen->ComboD[i]= BOMB_SECRET_COMBO;
+						Combochanged[i]= true;
+					}
+					else if(ComboFI(i,CF_SBOMB)){
+						Screen->ComboD[i]= SBOMB_SECRET_COMBO;
+						Combochanged[i]= true;
+					}
+					else if(ComboFI(i,CF_WANDMAGIC)){
+						Screen->ComboD[i]= MAGIC_SECRET_COMBO;
+						Combochanged[i]= true;
+					}
+					else if(ComboFI(i,CF_SWORD1BEAM)){
+						Screen->ComboD[i]= BEAM_SECRET_COMBO;
+						Combochanged[i]= true;
+					}
+					else if(ComboFIT(i,CF_SPEED_BOOST,CT_OVERHEAD)){
+						Screen->ComboD[i]= S_B_SECRET_COMBO;
+						Combochanged[i]= true;
+					}
+					else if(ComboFIT(i,CF_DASH,CT_OVERHEAD)){
+						Screen->ComboD[i]= S_A_SECRET_COMBO;
+						Combochanged[i]= true;
+					}
+					else if(ComboFI(i,CF_LENSECRET)){
+						Screen->ComboD[i]= XRAY_INVIS_COMBO;
+						Combochanged[i]= true;
+					}
+				}
+				//Change them back when it is too far away.	
+				else if(!Arc_Intersect(Link->X+8,Link->Y-8,ComboX(i)+8,ComboY(i)+8,angle-10,angle+10,256)
+						&& Combochanged[i]){
+					Screen->ComboD[i] = ScreenCombos[i];
+					Combochanged[i]= false;
+				}
+			}
+			
+			Waitframe();
+		}
+		//Once the visor is off, change combos to normal.
+		for(int i = 0; i < 176; i++)Screen->ComboD[i] = ScreenCombos[i];
+		this->Data = 0;
+		Quit();
+	}
+}
+
+bool Arc_Intersect(int x,int y, int pt_X, int pt_Y, int startangle, int endangle, int radius){
+	int curr_angle = Angle(x,y,pt_X,pt_Y);
+	int dist = Distance(x,y,pt_X,pt_Y);
+	return (curr_angle >= startangle && curr_angle <= endangle && dist<=radius);
+} 
