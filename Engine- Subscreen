@@ -1,0 +1,311 @@
+//Handles scripted subscreen.
+
+void Subscreen(){
+	if(!SamusVars[SUBSCREEN_OPEN]){
+		if(Link->Action!=LA_SCROLLING && Link->PressEx4){
+			SamusVars[SUBSCREEN_OPEN]=1;
+			Link->PressEx4 = false;
+			Link->InputEx4 = false;
+		}
+	}
+	else if(SamusVars[SUBSCREEN_OPEN])
+		Subscreen_Loop();
+}
+
+const int SUBSCREEN_TILE = 13780;//Tile of subscreen.
+const int TILE_RESERVE = 13799;//Tile of filled reserve tank.
+
+//Draw subscreen and tiles.
+
+void DrawSubscreen(){
+    int Reserve[]= "Reserve Tank";
+	Screen->DrawTile(7,0,0,SUBSCREEN_TILE,16,11,0,-1,-1,0,0,0,0,true,128);
+	if(SamusVars[NUM_FILLED_RES_TANKS]!=0){
+		for(int i = 0;i<SamusVars[NUM_FILLED_RES_TANKS];i++)
+			Screen->DrawTile(7, RESERVE_X+(i*8), RESERVE_Y, TILE_RESERVE, 1,1,0,-1,-1,0,0,0,0,true, 128 );
+		Screen->DrawString( 7, RESERVE_X+8, RESERVE_Y-8,  FONT_SUBSCREEN3 ,0x01,-1,TF_NORMAL, Reserve, 128 );
+	}
+	if(SamusVars[NUM_RES_TANKS]!=0)
+		Screen->DrawInteger(7, RESERVE_X+24, RESERVE_Y, FONT_Z1,0x01, -1,-1, -1, Game->Counter[RESERVE_COUNTER], 0,128);
+}
+
+void DrawBeamNames(){
+	int Charge[]="Charge";
+	int Ice[]="Ice";
+	int Wave[]="Wave";
+	int Spazer[]="Spazer";
+	int Plasma[]="Plasma";
+	int Power[] = "Power";
+	if(Link->Item[I_BEAM2]){
+		if(SamusVars[BEAMS_EQUIPPED]&EQ_CHARGE)
+			Screen->DrawString( 7, BEAM_BOX_X+8, BEAM_BOX_Y-8,  FONT_SUBSCREEN3 ,0x0F,-1,TF_NORMAL, Charge, 128 );
+		else
+			Screen->DrawString( 7, BEAM_BOX_X+8, BEAM_BOX_Y-8,  FONT_SUBSCREEN3 ,0x01,-1,TF_NORMAL, Charge, 128 );
+	}
+	else if(Link->Item[I_BEAM3]
+			&& !Link->Item[I_BEAM2]){
+		if(SamusVars[BEAMS_EQUIPPED]&EQ_WAVE)
+			Screen->DrawString( 7, BEAM_BOX_X+8, BEAM_BOX_Y+8,  FONT_SUBSCREEN3 ,0x0f,-1,TF_NORMAL, Wave, 128 );
+		else
+			Screen->DrawString( 7, BEAM_BOX_X+8, BEAM_BOX_Y+8,  FONT_SUBSCREEN3 ,0x01,-1,TF_NORMAL, Wave, 128 );		
+	}
+	else if(Link->Item[I_ICE_BEAM]
+			&& !Link->Item[I_BEAM2]
+			&& !Link->Item[I_BEAM3]){
+		if(SamusVars[BEAMS_EQUIPPED]&EQ_ICE)
+			Screen->DrawString( 7, BEAM_BOX_X+8, BEAM_BOX_Y,  FONT_SUBSCREEN3 ,0x0f,-1,TF_NORMAL, Ice, 128 );
+		else
+			Screen->DrawString( 7, BEAM_BOX_X+8, BEAM_BOX_Y,  FONT_SUBSCREEN3 ,0x01,-1,TF_NORMAL, Ice, 128 );
+	}
+	else if(Link->Item[I_SPAZER_BEAM]
+			&& !Link->Item[I_BEAM2]
+			&& !Link->Item[I_BEAM3]
+			&& !Link->Item[I_ICE_BEAM]){
+		if(SamusVars[BEAMS_EQUIPPED]&EQ_SPAZER)
+			Screen->DrawString( 7, BEAM_BOX_X+8, BEAM_BOX_Y+16,  FONT_SUBSCREEN3 ,0x0f,-1,TF_NORMAL, Spazer, 128 );
+		else
+			Screen->DrawString( 7, BEAM_BOX_X+8, BEAM_BOX_Y+16,  FONT_SUBSCREEN3 ,0x01,-1,TF_NORMAL, Spazer, 128 );
+	}
+	else if(Link->Item[I_BEAM4]
+			&& !Link->Item[I_BEAM2]
+			&& !Link->Item[I_BEAM3]
+			&& !Link->Item[I_ICE_BEAM]
+			&& !Link->Item[I_SPAZER_BEAM]){
+		if(SamusVars[BEAMS_EQUIPPED]&EQ_PLASMA)
+			Screen->DrawString( 7, BEAM_BOX_X+8, BEAM_BOX_Y+24,  FONT_SUBSCREEN3 ,0x0f,-1,TF_NORMAL, Plasma, 128 );
+		else
+			Screen->DrawString( 7, BEAM_BOX_X+8, BEAM_BOX_Y+24,  FONT_SUBSCREEN3 ,0x01,-1,TF_NORMAL, Plasma, 128 );
+	}
+	else if(!Link->Item[I_BEAM4]
+			&& !Link->Item[I_BEAM2]
+			&& !Link->Item[I_BEAM3]
+			&& !Link->Item[I_ICE_BEAM]
+			&& !Link->Item[I_SPAZER_BEAM]){
+		SamusVars[BEAMS_EQUIPPED]|=EQ_POWER;
+		Screen->DrawString( 7, BEAM_BOX_X+8, BEAM_BOX_Y-8,  FONT_SUBSCREEN3 ,0x0f,-1,TF_NORMAL, Power, 128 );
+	
+	}
+	if(Link->Item[I_BEAM3]){
+		if(SamusVars[BEAMS_EQUIPPED]&EQ_WAVE)
+			Screen->DrawString( 7, BEAM_BOX_X+8, BEAM_BOX_Y+8,  FONT_SUBSCREEN3 ,0x0f,-1,TF_NORMAL, Wave, 128 );
+		else
+			Screen->DrawString( 7, BEAM_BOX_X+8, BEAM_BOX_Y+8,  FONT_SUBSCREEN3 ,0x01,-1,TF_NORMAL, Wave, 128 );		
+	}
+	if(Link->Item[I_ICE_BEAM]){
+		if(SamusVars[BEAMS_EQUIPPED]&EQ_ICE)
+			Screen->DrawString( 7, BEAM_BOX_X+8, BEAM_BOX_Y,  FONT_SUBSCREEN3 ,0x0f,-1,TF_NORMAL, Ice, 128 );
+		else
+			Screen->DrawString( 7, BEAM_BOX_X+8, BEAM_BOX_Y,  FONT_SUBSCREEN3 ,0x01,-1,TF_NORMAL, Ice, 128 );
+	}
+	if(Link->Item[I_SPAZER_BEAM]){
+		if(SamusVars[BEAMS_EQUIPPED]&EQ_SPAZER)
+			Screen->DrawString( 7, BEAM_BOX_X+8, BEAM_BOX_Y+16,  FONT_SUBSCREEN3 ,0x0f,-1,TF_NORMAL, Spazer, 128 );
+		else
+			Screen->DrawString( 7, BEAM_BOX_X+8, BEAM_BOX_Y+16,  FONT_SUBSCREEN3 ,0x01,-1,TF_NORMAL, Spazer, 128 );
+	}
+	if(Link->Item[I_BEAM4]){
+		if(SamusVars[BEAMS_EQUIPPED]&EQ_PLASMA)
+			Screen->DrawString( 7, BEAM_BOX_X+8, BEAM_BOX_Y+24,  FONT_SUBSCREEN3 ,0x0f,-1,TF_NORMAL, Plasma, 128 );
+		else
+			Screen->DrawString( 7, BEAM_BOX_X+8, BEAM_BOX_Y+24,  FONT_SUBSCREEN3 ,0x01,-1,TF_NORMAL, Plasma, 128 );
+	}
+}
+
+void DrawHyper(){
+	int Hyper[]= "Hyper";
+	Screen->DrawString(7, BEAM_BOX_X+8, BEAM_BOX_Y+8,  FONT_SUBSCREEN3 ,0x0f,-1,TF_NORMAL, Hyper, 128 );
+}
+
+void DrawSuitNames(){
+	int Varia[]= "Varia Suit";
+	int Gravity[]= "Gravity Suit";
+	int Power[]= "Power Suit";
+	if(Link->Item[I_VARIA_SUIT])
+		Screen->DrawString( 7, RT_MENU_X+8, SUIT_BOX_Y,  FONT_SUBSCREEN3 ,0x0f,-1,TF_NORMAL, Varia, 128 );
+	else
+		Screen->DrawString( 7, RT_MENU_X+8, SUIT_BOX_Y,  FONT_SUBSCREEN3 ,0x0f,-1,TF_NORMAL, Power, 128 );
+	if(Link->Item[I_GRAVITY_SUIT])
+		Screen->DrawString( 7, RT_MENU_X+8, SUIT_BOX_Y+8,  FONT_SUBSCREEN3 ,0x0f,-1,TF_NORMAL, Gravity, 128 );
+}
+
+void DrawMiscNames(){
+	int Morph[]= "Morph Ball";
+	int Bomb[]= "Bombs";
+	int Spring[]= "Spring Ball";
+	int Screw_Attack[]= "Screw Attack";
+	if(Link->Item[I_MORPH_BALL])
+		Screen->DrawString( 7, RT_MENU_X+8, MISC_BOX_Y,  FONT_SUBSCREEN3 ,0x0f,-1,TF_NORMAL, Morph, 128 );
+	if(Link->Item[I_BOMB])
+		Screen->DrawString( 7, RT_MENU_X+8, MISC_BOX_Y+8,  FONT_SUBSCREEN3 ,0x0f,-1,TF_NORMAL, Bomb, 128 );
+	if(Link->Item[I_SPRING_BALL])
+		Screen->DrawString( 7, RT_MENU_X+8, MISC_BOX_Y+16,  FONT_SUBSCREEN3 ,0x0f,-1,TF_NORMAL, Spring, 128 );	
+	if(Link->Item[I_SCREWATTACK])
+		Screen->DrawString( 7, RT_MENU_X+8, MISC_BOX_Y+24,  FONT_SUBSCREEN3 ,0x0f,-1,TF_NORMAL, Screw_Attack, 128 );
+}
+
+void DrawBootNames(){
+	int HiJump[]= "Hi-Jump ";
+	int Speed[]= "Speed Boost";
+	int Space[]= "Space Jump";
+	if(Link->Item[I_HIGHJUMP])
+		Screen->DrawString( 7, RT_MENU_X+8, BOOT_BOX_Y,  FONT_SUBSCREEN3 ,0x0f,-1,TF_NORMAL, HiJump, 128 );	
+	if(Link->Item[I_SPACE_JUMP])
+		Screen->DrawString( 7, RT_MENU_X+8, BOOT_BOX_Y+8,  FONT_SUBSCREEN3 ,0x0f,-1,TF_NORMAL, Space, 128 );	
+	if(Link->Item[I_SPEED_BOOST])
+		Screen->DrawString( 7, RT_MENU_X+8, BOOT_BOX_Y+16,  FONT_SUBSCREEN3 ,0x0f,-1,TF_NORMAL, Speed, 128 );	
+}
+
+//Custom Mouse-Subscreen Interface
+
+void MouseInput(){
+	if((SamusVars[BEAMS_EQUIPPED]&EQ_HYPER)==0){
+		if(Between(Link->InputMouseX,BEAM_BOX_X,BEAM_BOX_X+40)
+			&& Between(Link->InputMouseY,BEAM_BOX_Y-16,BEAM_BOX_Y-8)	
+			&& InputLeftClick() && Link->Item[I_BEAM2]){
+			if((SamusVars[BEAMS_EQUIPPED]&EQ_CHARGE)==0)
+				SamusVars[BEAMS_EQUIPPED]|=EQ_CHARGE;
+			else if((SamusVars[BEAMS_EQUIPPED]&EQ_CHARGE)!=0)
+				SamusVars[BEAMS_EQUIPPED]&= ~EQ_CHARGE;
+			Game->PlaySound(SFX_MOUSE);
+		}
+		if(Between(Link->InputMouseX,BEAM_BOX_X,BEAM_BOX_X+40)
+			&& Between(Link->InputMouseY,BEAM_BOX_Y-7,BEAM_BOX_Y)	
+			&& InputLeftClick() && Link->Item[I_ICE_BEAM]){
+			if((SamusVars[BEAMS_EQUIPPED]&EQ_ICE)==0)
+				SamusVars[BEAMS_EQUIPPED]|=EQ_ICE;
+			else if((SamusVars[BEAMS_EQUIPPED]&EQ_ICE)!=0)
+				SamusVars[BEAMS_EQUIPPED]&= ~EQ_ICE;
+			Game->PlaySound(SFX_MOUSE);	
+		}
+		if(Between(Link->InputMouseX,BEAM_BOX_X,BEAM_BOX_X+40)
+			&& Between(Link->InputMouseY,BEAM_BOX_Y+1,BEAM_BOX_Y+8)	
+			&& InputLeftClick() && Link->Item[I_BEAM3]){
+			if((SamusVars[BEAMS_EQUIPPED]&EQ_WAVE)==0)
+				SamusVars[BEAMS_EQUIPPED]|=EQ_WAVE;
+			else if((SamusVars[BEAMS_EQUIPPED]&EQ_WAVE)!=0)
+				SamusVars[BEAMS_EQUIPPED]&= ~EQ_WAVE;
+			Game->PlaySound(SFX_MOUSE);
+		}
+		if(Between(Link->InputMouseX,BEAM_BOX_X,BEAM_BOX_X+40)
+			&& Between(Link->InputMouseY,BEAM_BOX_Y+9,BEAM_BOX_Y+16)	
+			&& InputLeftClick() && Link->Item[I_SPAZER_BEAM]){
+			if((SamusVars[BEAMS_EQUIPPED]&EQ_SPAZER)==0){
+				SamusVars[BEAMS_EQUIPPED]|=EQ_SPAZER;
+				if(SamusVars[BEAMS_EQUIPPED]&EQ_PLASMA)
+					SamusVars[BEAMS_EQUIPPED]&= ~EQ_PLASMA;
+			}
+			else if((SamusVars[BEAMS_EQUIPPED]&EQ_SPAZER)!=0)
+				SamusVars[BEAMS_EQUIPPED]&= ~EQ_SPAZER;
+			Game->PlaySound(SFX_MOUSE);
+		}
+		if(Between(Link->InputMouseX,BEAM_BOX_X,BEAM_BOX_X+40)
+			&& Between(Link->InputMouseY,BEAM_BOX_Y+17,BEAM_BOX_Y+24)	
+			&& InputLeftClick() && Link->Item[I_BEAM4]){
+			if((SamusVars[BEAMS_EQUIPPED]&EQ_PLASMA)==0){
+				SamusVars[BEAMS_EQUIPPED]|=EQ_PLASMA;
+				if(SamusVars[BEAMS_EQUIPPED]&EQ_SPAZER)
+					SamusVars[BEAMS_EQUIPPED]&=~EQ_SPAZER;
+			}
+			else if((SamusVars[BEAMS_EQUIPPED]&EQ_PLASMA)!=0)
+				SamusVars[BEAMS_EQUIPPED]&= ~EQ_PLASMA;
+			Game->PlaySound(SFX_MOUSE);
+		}
+	}
+}
+
+const int BEAM_BOX_Y = 88;//Y coords of Beam box.
+const int BEAM_BOX_X = 32;//X coords of Beam box.
+const int RT_MENU_X = 167;//X coords of Right menu.
+const int SUIT_BOX_Y = 24;//Y coords of Suit box.
+const int MISC_BOX_Y = 56;//Y coords of Miscellaneous box.
+const int BOOT_BOX_Y = 106;//Y coords of Boots box.
+const int MOUSE_COMBO = 176;//Combo for mouse reticle.
+const int MOUSE_CSET = 8;//Cset of mouse.
+const int SFX_MOUSE = 21;//Sound made when clicking the mouse.
+
+void Subscreen_Loop(){
+	SamusVars[IS_INVISIBLE]=1;
+	int ComboID = Screen->ComboD[ComboAt(0,0)];
+	Screen->ComboD[ComboAt(0,0)]= SCREEN_FREEZE_COMBO_2;
+	bool OldMouseB;
+	SuspendGhostZHScripts();
+	int MapX = SamusVars[MAP_DRAW_X];
+	int MapY = SamusVars[MAP_DRAW_Y];
+	int MapSamusX = SamusVars[MAP_SAMUS_X];
+	int MapSamusY = SamusVars[MAP_SAMUS_Y];
+	while ( true ) {
+		Waitdraw();
+		DrawIcons();
+		DrawMiniMap();
+		if(SamusVars[CURR_SUBSCREEN]==SUBSCREEN_SAMUS){
+			DrawSubscreen();
+			if((SamusVars[BEAMS_EQUIPPED]&EQ_HYPER)==0)
+				DrawBeamNames();
+			else
+				DrawHyper();
+			DrawSuitNames();
+			DrawMiscNames();
+			DrawBootNames();
+			Screen->FastCombo(7,Link->InputMouseX, Link->InputMouseY,MOUSE_COMBO, MOUSE_CSET, 128);
+			if(!OldMouseB)MouseInput();
+			Link->Jump = 0;
+			//If this station is active...
+			if(Link->PressEx4){
+				Link->PressEx4= false;
+				Link->InputEx4= false;
+				SamusVars[SUBSCREEN_OPEN]=0;
+				break;
+			}
+			if(Link->PressL)
+				SamusVars[CURR_SUBSCREEN]=SUBSCREEN_MAP;
+			OldMouseB= InputLeftClick();
+		}
+		else if(SamusVars[CURR_SUBSCREEN]==SUBSCREEN_MAP){
+			DrawMap();
+			//If this station is active...
+			if(Link->PressEx4){
+				Link->PressEx4= false;
+				Link->InputEx4= false;
+				SamusVars[SUBSCREEN_OPEN]=0;
+				break;
+			}
+			if(Link->PressLeft){
+				Link->PressLeft = false;
+				SamusVars[MAP_DRAW_X]-=8;
+				SamusVars[MAP_SAMUS_X]-=8;
+				Game->PlaySound(SFX_MAP);
+			}
+			else if(Link->PressRight){
+				Link->PressRight = false;
+				SamusVars[MAP_DRAW_X]+=8;
+				SamusVars[MAP_SAMUS_X]+=8;
+				Game->PlaySound(SFX_MAP);
+			}
+			else if(Link->PressUp){
+				Link->PressUp= false;
+				SamusVars[MAP_DRAW_Y]-=8;
+				SamusVars[MAP_SAMUS_Y]-=8;
+				Game->PlaySound(SFX_MAP);
+			}
+			else if(Link->PressDown){
+				Link->PressDown= false;
+				SamusVars[MAP_DRAW_Y]+=8;
+				SamusVars[MAP_SAMUS_Y]+=8;
+				Game->PlaySound(SFX_MAP);
+			}
+			if(Link->PressR)
+				SamusVars[CURR_SUBSCREEN]=SUBSCREEN_SAMUS;
+		}
+		Waitframe();
+	}
+	SamusVars[MAP_DRAW_X]= MapX;
+	SamusVars[MAP_DRAW_Y]= MapY;
+	SamusVars[MAP_SAMUS_X]= MapSamusX;
+	SamusVars[MAP_SAMUS_Y]= MapSamusY;
+	ResumeGhostZHScripts();
+	Screen->ComboD[ComboAt(0,0)]= ComboID;
+	SamusVars[IS_INVISIBLE]=0;
+}
+
+const int RESERVE_X = 16;//X position of reserve tank tile.
+const int RESERVE_Y = 42;//Y position of reserve tank tile.
