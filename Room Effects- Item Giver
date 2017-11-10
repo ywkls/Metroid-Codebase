@@ -1,0 +1,21 @@
+//Section 47. Item Giver
+
+// Place this FFC on the screen where the trade sequence is happening.  Give the dummy item with String Control Codes, if Link has the previous Trade Item.
+// D0 is the ID of the next item in the trade sequence.
+
+ffc script ItemGiver{
+   void run(int item_to_give){
+      while(true){
+		//You're only getting one item.
+	   if(!Link->Item[item_to_give]){
+			item TradeSeqItem;
+			//Create the item and place it at Link's location.
+			TradeSeqItem = Screen->CreateItem(item_to_give);
+			TradeSeqItem->X = Link->X;
+			TradeSeqItem->Y = Link->Y;
+			TradeSeqItem->Pickup |= IP_HOLDUP;
+		}
+         Waitframe(); 
+      }
+   } 
+}
