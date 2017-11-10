@@ -1,0 +1,169 @@
+//Section 106. Ninja Pirate
+
+const int SPR_PIRATE_CLAW = 69;
+
+ffc script Ninja_Pirate{
+	void run(int enemyid){
+		npc ghost = Ghost_InitAutoGhost(this, enemyid);
+		Ghost_SetFlag(GHF_NO_FALL);
+		int Combo = ghost->Attributes[10];
+		Ghost_SetSize(this,ghost,2,4);
+		eweapon claw;
+		bool MovingLeft = ChooseBool();
+		int Mode;
+		int JumpTimer = Rand(180,300);
+		float angle;
+		int i;
+		int TargetX;
+		int TargetY;
+		int sfx = ghost->Attributes[0];
+		int Move_Dir;
+		int JumpHeight;
+		while(true){
+			if(Mode == 0){
+				if(JumpTimer>0){
+					if(MovingLeft && Ghost_CanMove(DIR_LEFT,16,0)){
+						Ghost_Move(DIR_LEFT,ghost->Step/100, 0);
+						Ghost_ForceDir(DIR_LEFT);
+						Ghost_Data = Combo;
+					}
+					else if(MovingLeft && !Ghost_CanMove(DIR_LEFT,16,0))
+						MovingLeft = false;
+					else if(!MovingLeft && Ghost_CanMove(DIR_RIGHT,16,0)){
+						Ghost_Move(DIR_RIGHT,ghost->Step/100, 0);
+						Ghost_ForceDir(DIR_RIGHT);
+						Ghost_Data = Combo+1;
+					}
+					else if(!MovingLeft && !Ghost_CanMove(DIR_RIGHT,16,0))
+						MovingLeft = true;						
+				}
+				else{
+					Mode = Choose(1,2);
+					if(Mode==1){
+						if(!Ghost_CanMove(DIR_LEFT, 1, 0)){
+							Ghost_Dir = DIR_RIGHT;
+							Ghost_Data = Combo+1;
+						}
+						else if(!Ghost_CanMove(DIR_RIGHT, 1, 0)){
+							Ghost_Dir = DIR_LEFT;
+							Ghost_Data = Combo;
+						}
+					}
+					else{
+						if(!Ghost_CanMove(DIR_LEFT, 1, 0)){
+							Ghost_Dir = DIR_RIGHT;
+							Ghost_Data = Combo+1;
+							
+						}
+						else if(!Ghost_CanMove(DIR_RIGHT, 1, 0)){
+							Ghost_Dir = DIR_LEFT;
+							Ghost_Data = Combo;
+						}
+						TargetX = Link->X+8;
+						TargetY = Ghost_Y;
+					}
+				}
+			}
+			else if(Mode ==1){
+				if(Ghost_Dir==DIR_RIGHT){
+					for(i=0;i<=4;i++){
+						angle = Angle(Ghost_X+32,Ghost_Y+32,Link->X+8,Link->Y);
+						claw = FireEWeapon(ghost->Weapon, Ghost_X+32, Ghost_Y+32, DegtoRad(angle), 
+								200, ghost->WeaponDamage, SPR_PIRATE_CLAW, sfx, 0);
+						Ghost_Waitframes(this,ghost,true,true,5);
+					}
+					Mode = Choose(0,2);
+					if(Mode ==0){
+						MovingLeft = ChooseBool();
+						if(MovingLeft)
+							Ghost_Data = Combo;
+						else
+							Ghost_Data = Combo+1;
+						JumpTimer = Rand(180,300);	
+					}
+					else{
+						TargetX = Link->X+8;
+						TargetY = Ghost_Y;
+					}
+				}
+				else if(Ghost_Dir==DIR_LEFT){
+					for(i=0;i<=4;i++){
+						angle = Angle(Ghost_X-32,Ghost_Y+32,Link->X+8,Link->Y);
+						claw = FireEWeapon(ghost->Weapon, Ghost_X-32, Ghost_Y+32, DegtoRad(angle), 
+								200, ghost->WeaponDamage, SPR_PIRATE_CLAW, sfx, 0);
+						Ghost_Waitframes(this,ghost,true,true,5);
+					}
+					Mode = Choose(0,2);
+					if(Mode ==0){
+						MovingLeft = ChooseBool();
+						if(MovingLeft)
+							Ghost_Data = Combo;
+						else
+							Ghost_Data = Combo+1;
+						JumpTimer = Rand(180,300);	
+					}
+					else{
+						TargetX = Link->X+8;
+						TargetY = Ghost_Y;
+					}
+				}
+			}
+			else if(Mode==2){
+				if(TargetX>Ghost_X)
+					Move_Dir = DIR_RIGHT;
+				else if(TargetX<Ghost_X)
+					Move_Dir = DIR_LEFT;
+				JumpHeight = 0;
+				while(JumpHeight<48){
+					Ghost_Move(DIR_UP, ghost->Step/50, 0);
+					if(Move_Dir==DIR_LEFT)
+						Ghost_ForceDir(DIR_LEFT);
+					else
+						Ghost_ForceDir(DIR_RIGHT);
+					JumpHeight++;
+					Ghost_Waitframe(this, ghost,true,true);
+				}
+				if(Move_Dir==DIR_LEFT)
+					Ghost_Data = Combo+2;
+				else
+					Ghost_Data = Combo+3;
+				while(Ghost_CanMove(DIR_DOWN,1,0)){
+					Ghost_UnsetFlag(GHF_NO_FALL);
+					if(Move_Dir==DIR_LEFT){
+						Ghost_ForceDir(DIR_LEFT);
+						if(Ghost_CanMove(DIR_LEFT,5,0))
+							Ghost_X-=5;
+					}
+					else{
+						Ghost_ForceDir(DIR_RIGHT);
+						if(Ghost_CanMove(DIR_RIGHT,5,0))
+							Ghost_X+=5;
+					}
+					Ghost_Waitframe(this, ghost,true,true);
+				}
+				Ghost_SetFlag(GHF_NO_FALL);
+				Mode = Choose(0,1);
+				if(Mode ==0){
+					MovingLeft = ChooseBool();
+					if(MovingLeft)
+						Ghost_Data = Combo;
+					else
+						Ghost_Data = Combo+1;
+					JumpTimer = Rand(180,300);	
+				}
+				else if(Mode==1){
+					if(!Ghost_CanMove(DIR_LEFT, 1, 0)){
+						Ghost_Dir = DIR_RIGHT;
+						Ghost_Data = Combo+1;
+					}
+					else if(!Ghost_CanMove(DIR_RIGHT, 1, 0)){
+						Ghost_Dir = DIR_LEFT;
+						Ghost_Data = Combo;
+					}
+				}
+			}
+			if(JumpTimer>0)JumpTimer--;
+			Ghost_Waitframe(this,ghost,true,true);
+		}
+	}
+}
