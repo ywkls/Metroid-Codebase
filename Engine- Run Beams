@@ -1,0 +1,460 @@
+//Runs all possible beams.
+
+void RunBeams(){
+	int Sprite = BEAM_SPRITE;//Reset weapon sprite.
+	int Damage = 1;//Damage done by weapon.
+	int Sfx = SFX_BEAM;//Basic shot sound.
+	int Combo_X;
+	int Combo_Y;
+	//Charge beam.
+	if(SamusVars[BEAMS_EQUIPPED]&EQ_CHARGE
+		&& (SamusVars[BEAMS_EQUIPPED]&EQ_PLASMA)==0
+		&& (SamusVars[BEAMS_EQUIPPED]&EQ_WAVE)==0){
+		Sprite = CHARGE_BEAM_SPRITE;
+		Damage+=2;
+		//Charge alone.
+		if((SamusVars[BEAMS_EQUIPPED]&EQ_ICE)==0)
+			Sfx= SFX_STORED_CHARGE-1;
+		//Charge and ice.
+		else if(SamusVars[BEAMS_EQUIPPED]&EQ_ICE)
+			Sfx = SFX_PLASMA_BEAM-3;
+	}
+	//Wave but not plasma.
+	else if(SamusVars[BEAMS_EQUIPPED]&EQ_WAVE
+		&& (SamusVars[BEAMS_EQUIPPED]&EQ_PLASMA)==0){
+		Sprite = WAVE_BEAM_SPRITE;
+		Damage+=4;
+		//Wave alone.
+		if((SamusVars[BEAMS_EQUIPPED]&EQ_ICE)==0)
+			Sfx= SFX_WAVE_BEAM;
+		//Wave and ice.
+		else if(SamusVars[BEAMS_EQUIPPED]&EQ_ICE)
+			Sfx = SFX_PLASMA_BEAM-3;
+	}
+	//Spazer but not wave
+	else if((SamusVars[BEAMS_EQUIPPED]&EQ_WAVE)==0
+		&& SamusVars[BEAMS_EQUIPPED]&EQ_SPAZER){
+		//Spazer alone.
+		if((SamusVars[BEAMS_EQUIPPED]&EQ_ICE)==0)
+			Sfx= SFX_SPAZER_BEAM;
+		//Spazer and ice.
+		else if(SamusVars[BEAMS_EQUIPPED]&EQ_ICE)
+			Sfx = SFX_PLASMA_BEAM-3;	
+	}
+	//Plasma beam.
+	else if(SamusVars[BEAMS_EQUIPPED]&EQ_PLASMA
+				&& (SamusVars[BEAMS_EQUIPPED]&EQ_ICE)==0){
+		Sprite = PLASMA_BEAM_SPRITE;
+		Damage+=8;
+		//Plasma only
+		if((SamusVars[BEAMS_EQUIPPED]&EQ_ICE)==0)
+			Sfx= SFX_PLASMA_BEAM;
+		//Plasma and ice
+		else if(SamusVars[BEAMS_EQUIPPED]&EQ_ICE)
+			Sfx = SFX_PLASMA_BEAM-3;
+	}
+	//Ice alone.
+	else if(SamusVars[BEAMS_EQUIPPED]&EQ_ICE
+			&& (SamusVars[BEAMS_EQUIPPED]&EQ_PLASMA)==0){
+		Sprite = SPR_ICE_PROJECTILE;
+		Sfx= SFX_PLASMA_BEAM-3;
+	}
+	//You can fire again.
+	//Charge beam active.
+	if(Link->Dir!=DIR_DOWN && SamusVars[SAMUS_ACTION]!=SAMUS_ACTION_CROUCH){
+		if(Link->Dir==DIR_LEFTUP||Link->Dir==DIR_LEFTDOWN)
+			Combo_X = SamusVars[DRAW_X]-16;
+		else if(Link->Dir==DIR_RIGHTUP||Link->Dir==DIR_RIGHTDOWN)
+			Combo_X = SamusVars[DRAW_X]+16;
+		else
+			Combo_X = SamusVars[DRAW_X]+FixedInFrontX(Link->Dir,16);
+		if(Link->Dir==DIR_RIGHTDOWN||Link->Dir==DIR_LEFTDOWN)
+			Combo_Y = (SamusVars[DRAW_Y]+8)+FixedInFrontY(Link->Dir,16);
+		else if(Link->Dir==DIR_RIGHTUP||Link->Dir==DIR_LEFTUP)
+			Combo_Y = SamusVars[DRAW_Y]-24;
+		else
+			Combo_Y = (SamusVars[DRAW_Y]-8)+FixedInFrontY(Link->Dir,16);
+	}
+	else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_CROUCH && Link->Dir==DIR_DOWN){
+		Combo_X = SamusVars[DRAW_X]+FixedInFrontX(Link->Dir,16);
+		Combo_Y = (SamusVars[DRAW_Y]-24)+FixedInFrontY(Link->Dir,16);
+	}
+	else if(Link->Dir!=DIR_DOWN && SamusVars[SAMUS_ACTION]==SAMUS_ACTION_CROUCH){
+		if(Link->Dir==DIR_LEFTUP||Link->Dir==DIR_LEFTDOWN)
+			Combo_X = SamusVars[DRAW_X]-16;
+		else if(Link->Dir==DIR_RIGHTUP||Link->Dir==DIR_RIGHTDOWN)
+			Combo_X = SamusVars[DRAW_X]+16;
+		else
+			Combo_X = SamusVars[DRAW_X]+FixedInFrontX(Link->Dir,16);
+		if(Link->Dir==DIR_RIGHTDOWN||Link->Dir==DIR_LEFTDOWN)
+			Combo_Y = (SamusVars[DRAW_Y]+8)+FixedInFrontY(Link->Dir,16);
+		else if(Link->Dir==DIR_RIGHTUP||Link->Dir==DIR_LEFTUP)
+			Combo_Y = SamusVars[DRAW_Y]-24;
+		else
+			Combo_Y = (SamusVars[DRAW_Y]-8)+FixedInFrontY(Link->Dir,16);
+	}
+	else{
+		Combo_X = SamusVars[DRAW_X]+FixedInFrontX(Link->Dir,16);
+		Combo_Y = (SamusVars[DRAW_Y]-24)+FixedInFrontY(Link->Dir,16);
+	}
+	bool Charged = false;//Track whether beam is charged.
+	lweapon beam;
+	lweapon beam2;
+	lweapon beam3;
+	int ChargeSound;
+	if(SamusVars[BEAM_CHARGING_TIME]>=90)Charged = true;
+	//Build charge time.
+	if(Link->Action!=LA_SCROLLING){
+		if((SamusVars[BEAMS_EQUIPPED]&EQ_CHARGE)!=0){
+			if(InputFire()){
+				if(SamusVars[BEAM_CHARGING_TIME]<90)SamusVars[BEAM_CHARGING_TIME]++;
+				else
+					Charged = true;
+				SamusVars[CHARGE_SFX_TIMER] = (SamusVars[CHARGE_SFX_TIMER]+1)%8;//Play sound periodically.
+				if(SamusVars[CHARGE_SFX_TIMER] ==0){
+					if(!Charged)
+						Game->PlaySound(BEAM_CHARGING_SFX);
+					else
+						Game->PlaySound(SFX_STORED_CHARGE);
+				}
+				Screen->FastCombo(6,Combo_X,Combo_Y,CHARGE_BEAM_COMBO,6,128);
+			}
+			else{
+				if(SamusVars[BEAM_FIRING_TIMER]<=0){
+					if(PressFire())
+						SamusVars[FIRE_BEAM]=1;
+					else if(!PressFire() && SamusVars[BEAM_CHARGING_TIME])
+						SamusVars[FIRE_BEAM]=1;
+				}
+			}
+		}
+		else{
+			if(SamusVars[BEAM_FIRING_TIMER]<=0){
+				if(PressFire())
+					SamusVars[FIRE_BEAM]=1;
+				else if(!PressFire() && SamusVars[BEAM_CHARGING_TIME])
+					SamusVars[FIRE_BEAM]=1;
+			}
+		}
+	}
+	else if(Link->Action==LA_SCROLLING)
+		SamusVars[FIRE_BEAM]=0;
+	//Adjust damage if charged.
+	if(Charged)Damage*=2;
+	if(SamusVars[FIRE_BEAM] 
+		&& Link->Action!=LA_SCROLLING){
+		Charged= false;
+		SamusVars[BEAM_FIRING_TIMER]=20;
+		Game->PlaySound(Sfx);
+		SamusVars[LINK_ACTION] = LA_ATTACKING;
+		if(SamusVars[BEAMS_EQUIPPED]&EQ_WAVE
+			&& (SamusVars[BEAMS_EQUIPPED]&EQ_SPAZER)==0){
+			if(Link->Dir!=DIR_DOWN && SamusVars[SAMUS_ACTION]!=SAMUS_ACTION_CROUCH){
+				beam = FireScriptedLWeapon(LW_BEAM, Link->X+FixedInFrontX(Link->Dir,2), (Link->Y-8)+FixedInFrontY(Link->Dir,2), 
+												Sprite, BEAM_SPEED, Damage,LWF_ZERO_G);
+				beam2 = FireScriptedLWeapon(LW_BEAM, Link->X+FixedInFrontX(Link->Dir,2), (Link->Y-8)+FixedInFrontY(Link->Dir,2), 
+												Sprite, BEAM_SPEED, Damage,LWF_ZERO_G);
+			}
+			else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_CROUCH && Link->Dir==DIR_DOWN){
+				beam = FireScriptedLWeapon(LW_BEAM, Link->X+FixedInFrontX(Link->Dir,2), (Link->Y-8)+FixedInFrontY(Link->Dir,2), 
+												Sprite, BEAM_SPEED, Damage,LWF_ZERO_G);
+				beam2 = FireScriptedLWeapon(LW_BEAM, Link->X+FixedInFrontX(Link->Dir,2), (Link->Y-8)+FixedInFrontY(Link->Dir,2), 
+												Sprite, BEAM_SPEED, Damage,LWF_ZERO_G);
+			}
+			else if(Link->Dir!=DIR_DOWN && SamusVars[SAMUS_ACTION]==SAMUS_ACTION_CROUCH){
+				beam = FireScriptedLWeapon(LW_BEAM, Link->X+FixedInFrontX(Link->Dir,2), Link->Y+FixedInFrontY(Link->Dir,2), 
+												Sprite, BEAM_SPEED, Damage,LWF_ZERO_G);
+				beam2 = FireScriptedLWeapon(LW_BEAM, Link->X+FixedInFrontX(Link->Dir,2), Link->Y+FixedInFrontY(Link->Dir,2), 
+												Sprite, BEAM_SPEED, Damage,LWF_ZERO_G);
+			}
+			else{
+				beam = FireScriptedLWeapon(LW_BEAM, Link->X+FixedInFrontX(Link->Dir,2), (Link->Y-8)+FixedInFrontY(Link->Dir,2), 
+												Sprite, BEAM_SPEED, Damage,LWF_ZERO_G);
+				beam2 = FireScriptedLWeapon(LW_BEAM, Link->X+FixedInFrontX(Link->Dir,2), (Link->Y-8)+FixedInFrontY(Link->Dir,2), 
+												Sprite, BEAM_SPEED, Damage,LWF_ZERO_G);
+			}
+			if(beam->Dir==DIR_UP || beam->Dir==DIR_DOWN)
+					SetLWeaponMovement(beam, LWM_SINE_WAVE, 6, 4);
+			else if(beam->Dir==DIR_LEFT || beam->Dir==DIR_RIGHT)
+				SetLWeaponMovement(beam, LWM_SINE_WAVE, 4, 6);
+			else
+				SetLWeaponMovement(beam, LWM_SINE_WAVE, -5, 5);
+			beam->Angle = __DirtoRad(beam->Dir);
+			if(beam2->Dir==DIR_UP || beam2->Dir==DIR_DOWN)
+				SetLWeaponMovement(beam2, LWM_SINE_WAVE, 6, -4);
+			else if(beam2->Dir==DIR_LEFT || beam2->Dir==DIR_RIGHT)
+				SetLWeaponMovement(beam2, LWM_SINE_WAVE, -4, 6);
+			else
+				SetLWeaponMovement(beam2, LWM_SINE_WAVE, 5, -5);
+			beam2->Angle = __DirtoRad(beam2->Dir);
+			if(SamusVars[BEAMS_EQUIPPED]&EQ_PLASMA){
+				beam->Misc[LW_ZH_I_FLAGS_2]|= LWF_LEVEL_4;
+				beam2->Misc[LW_ZH_I_FLAGS_2]|=LWF_LEVEL_4;
+				beam->Misc[LW_ZH_I_FLAGS]|= LWF_PIERCES_ENEMIES;
+				beam2->Misc[LW_ZH_I_FLAGS]|= LWF_PIERCES_ENEMIES;
+			}
+			else{
+				beam->Misc[LW_ZH_I_FLAGS_2]|=LWF_LEVEL_3;
+				beam2->Misc[LW_ZH_I_FLAGS_2]|=LWF_LEVEL_3;
+			}
+			SetLWeaponLifespan(beam,LWL_EDGE,0);
+			SetLWeaponLifespan(beam2,LWL_EDGE,0);
+			SetLWeaponDeathEffect(beam,LWD_VANISH,0);
+			SetLWeaponDeathEffect(beam2,LWD_VANISH,0);
+		}
+		else if((SamusVars[BEAMS_EQUIPPED]&EQ_WAVE)==0
+			&& SamusVars[BEAMS_EQUIPPED]&EQ_SPAZER){
+			if(Link->Dir!=DIR_DOWN && SamusVars[SAMUS_ACTION]!=SAMUS_ACTION_CROUCH){
+				beam = FireScriptedLWeapon(LW_BEAM, Link->X+FixedInFrontX(Link->Dir,2), (Link->Y-8)+FixedInFrontY(Link->Dir,2), 
+												Sprite, BEAM_SPEED, Damage,LWF_ZERO_G);
+				beam2 = FireScriptedLWeapon(LW_BEAM, Link->X+FixedInFrontX(Link->Dir,2), (Link->Y-8)+FixedInFrontY(Link->Dir,2), 
+												Sprite, BEAM_SPEED, Damage,LWF_ZERO_G);
+				beam3 = FireScriptedLWeapon(LW_BEAM, Link->X+FixedInFrontX(Link->Dir,2), (Link->Y-8)+FixedInFrontY(Link->Dir,2), 
+												Sprite, BEAM_SPEED, Damage,LWF_ZERO_G);
+				if(Link->Dir!=DIR_UP){
+					beam->Y+=8;
+					beam3->Y+=24;
+				}
+				else{
+					beam->X-=8;
+					beam3->X+=8;
+				}
+			}
+			else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_CROUCH && Link->Dir==DIR_DOWN){
+				beam = FireScriptedLWeapon(LW_BEAM, (Link->X-8)+FixedInFrontX(Link->Dir,2), (Link->Y-8)+FixedInFrontY(Link->Dir,2), 
+												Sprite, BEAM_SPEED, Damage,LWF_ZERO_G);
+				beam2 = FireScriptedLWeapon(LW_BEAM, Link->X+FixedInFrontX(Link->Dir,2), (Link->Y-8)+FixedInFrontY(Link->Dir,2), 
+												Sprite, BEAM_SPEED, Damage,LWF_ZERO_G);
+				beam3 = FireScriptedLWeapon(LW_BEAM, (Link->X+8)+FixedInFrontX(Link->Dir,2), (Link->Y-8)+FixedInFrontY(Link->Dir,2), 
+												Sprite, BEAM_SPEED, Damage,LWF_ZERO_G);								
+			}
+			else if(Link->Dir!=DIR_DOWN && SamusVars[SAMUS_ACTION]==SAMUS_ACTION_CROUCH){
+				beam = FireScriptedLWeapon(LW_BEAM, Link->X+FixedInFrontX(Link->Dir,2), Link->Y+FixedInFrontY(Link->Dir,2), 
+												Sprite, BEAM_SPEED, Damage,LWF_ZERO_G);
+				beam2 = FireScriptedLWeapon(LW_BEAM, Link->X+FixedInFrontX(Link->Dir,2), Link->Y+FixedInFrontY(Link->Dir,2), 
+												Sprite, BEAM_SPEED, Damage,LWF_ZERO_G);
+				beam3 = FireScriptedLWeapon(LW_BEAM, Link->X+FixedInFrontX(Link->Dir,2), Link->Y+FixedInFrontY(Link->Dir,2), 
+												Sprite, BEAM_SPEED, Damage,LWF_ZERO_G);								
+				if(Link->Dir!=DIR_UP){
+					beam->Y+=8;
+					beam3->Y+=24;
+				}
+				else{
+					beam->X-=8;
+					beam3->X+=8;
+				}
+			}
+			else{
+				beam = FireScriptedLWeapon(LW_BEAM, (Link->X-8)+FixedInFrontX(Link->Dir,2), (Link->Y-8)+FixedInFrontY(Link->Dir,2), 
+												Sprite, BEAM_SPEED, Damage,LWF_ZERO_G);
+				beam2 = FireScriptedLWeapon(LW_BEAM, Link->X+FixedInFrontX(Link->Dir,2), (Link->Y-8)+FixedInFrontY(Link->Dir,2), 
+												Sprite, BEAM_SPEED, Damage,LWF_ZERO_G);
+				beam3 = FireScriptedLWeapon(LW_BEAM, (Link->X+8)+FixedInFrontX(Link->Dir,2), (Link->Y-8)+FixedInFrontY(Link->Dir,2), 
+												Sprite, BEAM_SPEED, Damage,LWF_ZERO_G);								
+			}
+			beam->Angle = __DirtoRad(beam->Dir);
+			beam2->Angle = __DirtoRad(beam2->Dir);
+			beam3->Angle = __DirtoRad(beam3->Dir);
+			SetLWeaponLifespan(beam,LWL_EDGE,0);
+			SetLWeaponLifespan(beam2,LWL_EDGE,0);
+			SetLWeaponLifespan(beam3,LWL_EDGE,0);
+			SetLWeaponDeathEffect(beam,LWD_VANISH,0);
+			SetLWeaponDeathEffect(beam2,LWD_VANISH,0);
+			SetLWeaponDeathEffect(beam3,LWD_VANISH,0);
+			if(Charged){
+				beam->Misc[LW_ZH_I_FLAGS_2]|= LWF_LEVEL_2;
+				beam2->Misc[LW_ZH_I_FLAGS_2]|= LWF_LEVEL_2;
+				beam3->Misc[LW_ZH_I_FLAGS_2]|= LWF_LEVEL_2;
+			}
+			else{
+				beam->Misc[LW_ZH_I_FLAGS_2]|= LWF_LEVEL_1;
+				beam2->Misc[LW_ZH_I_FLAGS_2]|= LWF_LEVEL_1;
+				beam3->Misc[LW_ZH_I_FLAGS_2]|= LWF_LEVEL_1;
+			}
+		}
+		else if(SamusVars[BEAMS_EQUIPPED]&EQ_WAVE
+			&& SamusVars[BEAMS_EQUIPPED]&EQ_SPAZER){
+			if(Link->Dir!=DIR_DOWN && SamusVars[SAMUS_ACTION]!=SAMUS_ACTION_CROUCH){
+				beam = FireScriptedLWeapon(LW_BEAM, Link->X+FixedInFrontX(Link->Dir,2), (Link->Y-8)+FixedInFrontY(Link->Dir,2), 
+												Sprite, BEAM_SPEED, Damage,LWF_ZERO_G);
+				beam2 = FireScriptedLWeapon(LW_BEAM, Link->X+FixedInFrontX(Link->Dir,2), (Link->Y-8)+FixedInFrontY(Link->Dir,2), 
+												Sprite, BEAM_SPEED, Damage,LWF_ZERO_G);
+				beam3 = FireScriptedLWeapon(LW_BEAM, Link->X+FixedInFrontX(Link->Dir,2), (Link->Y-8)+FixedInFrontY(Link->Dir,2), 
+												Sprite, BEAM_SPEED, Damage,LWF_ZERO_G);
+				if(Link->Dir==DIR_LEFT
+					|| Link->Dir==DIR_RIGHT){
+					beam->Y-=8;
+					beam3->Y+=8;
+				}
+				else if(Link->Dir==DIR_UP){
+					beam->X-=8;
+					beam3->X+=8;
+				}
+				else if(Link->Dir==DIR_LEFTDOWN
+						|| Link->Dir == DIR_RIGHTDOWN){
+					beam->Y-=8;
+					beam3->X-=8;
+				}
+				else
+					beam->Y-=8;
+			}
+			else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_CROUCH && Link->Dir==DIR_DOWN){
+				beam = FireScriptedLWeapon(LW_BEAM, (Link->X-8)+FixedInFrontX(Link->Dir,2), (Link->Y-8)+FixedInFrontY(Link->Dir,2), 
+												Sprite, BEAM_SPEED, Damage,LWF_ZERO_G);
+				beam2 = FireScriptedLWeapon(LW_BEAM, Link->X+FixedInFrontX(Link->Dir,2), (Link->Y-8)+FixedInFrontY(Link->Dir,2), 
+												Sprite, BEAM_SPEED, Damage,LWF_ZERO_G);
+				beam3 = FireScriptedLWeapon(LW_BEAM, (Link->X+8)+FixedInFrontX(Link->Dir,2), (Link->Y-8)+FixedInFrontY(Link->Dir,2), 
+												Sprite, BEAM_SPEED, Damage,LWF_ZERO_G);								
+			}
+			else if(Link->Dir!=DIR_DOWN && SamusVars[SAMUS_ACTION]==SAMUS_ACTION_CROUCH){
+				beam = FireScriptedLWeapon(LW_BEAM, Link->X+FixedInFrontX(Link->Dir,2), Link->Y+FixedInFrontY(Link->Dir,2), 
+												Sprite, BEAM_SPEED, Damage,LWF_ZERO_G);
+				beam2 = FireScriptedLWeapon(LW_BEAM, Link->X+FixedInFrontX(Link->Dir,2), Link->Y+FixedInFrontY(Link->Dir,2), 
+												Sprite, BEAM_SPEED, Damage,LWF_ZERO_G);
+				beam3 = FireScriptedLWeapon(LW_BEAM, Link->X+FixedInFrontX(Link->Dir,2), Link->Y+FixedInFrontY(Link->Dir,2), 
+												Sprite, BEAM_SPEED, Damage,LWF_ZERO_G);								
+				if(Link->Dir==DIR_LEFT
+					|| Link->Dir==DIR_RIGHT){
+					beam->Y-=8;
+					beam3->Y+=8;
+				}
+				else if(Link->Dir==DIR_UP){
+					beam->X-=8;
+					beam3->X+=8;
+				}
+				else if(Link->Dir==DIR_LEFTDOWN
+						|| Link->Dir == DIR_RIGHTDOWN){
+					beam->Y-=8;
+					beam3->X-=8;
+				}
+				else
+					beam->Y-=8;
+			}
+			else{
+				beam = FireScriptedLWeapon(LW_BEAM, (Link->X-8)+FixedInFrontX(Link->Dir,2), (Link->Y-8)+FixedInFrontY(Link->Dir,2), 
+												Sprite, BEAM_SPEED, Damage,LWF_ZERO_G);
+				beam2 = FireScriptedLWeapon(LW_BEAM, Link->X+FixedInFrontX(Link->Dir,2), (Link->Y-8)+FixedInFrontY(Link->Dir,2), 
+												Sprite, BEAM_SPEED, Damage,LWF_ZERO_G);
+				beam3 = FireScriptedLWeapon(LW_BEAM, (Link->X+8)+FixedInFrontX(Link->Dir,2), (Link->Y-8)+FixedInFrontY(Link->Dir,2), 
+												Sprite, BEAM_SPEED, Damage,LWF_ZERO_G);								
+			}
+			
+			if(beam->Dir==DIR_UP || beam->Dir==DIR_DOWN)
+				SetLWeaponMovement(beam, LWM_SINE_WAVE, 6, 4);
+			else if(beam->Dir==DIR_LEFT || beam->Dir==DIR_RIGHT)
+				SetLWeaponMovement(beam, EWM_SINE_WAVE, 4, 6);
+			else
+				SetLWeaponMovement(beam, EWM_SINE_WAVE, 5, 5);
+
+			if(beam2->Dir==DIR_UP || beam2->Dir==DIR_DOWN)
+				SetLWeaponMovement(beam2, LWM_SINE_WAVE, 6, -4);
+			else if(beam2->Dir==DIR_LEFT || beam2->Dir==DIR_RIGHT)
+				SetLWeaponMovement(beam2, EWM_SINE_WAVE, -4, 6);
+			else
+				SetLWeaponMovement(beam2, EWM_SINE_WAVE, -5, -5);
+			if(beam2->Dir==DIR_UP || beam2->Dir==DIR_DOWN)
+				SetLWeaponMovement(beam3, LWM_SINE_WAVE, 6, 4);
+			else if(beam2->Dir==DIR_LEFT || beam2->Dir==DIR_RIGHT)
+				SetLWeaponMovement(beam3, EWM_SINE_WAVE, -4, 6);
+			else
+				SetLWeaponMovement(beam3, EWM_SINE_WAVE, -5, -5);	
+			beam->Angle = __DirtoRad(beam->Dir);
+			beam2->Angle = __DirtoRad(beam2->Dir);
+			beam3->Angle = __DirtoRad(beam3->Dir);
+			beam->Misc[LW_ZH_I_FLAGS_2]|=LWF_LEVEL_3;
+			beam2->Misc[LW_ZH_I_FLAGS_2]|=LWF_LEVEL_3;	
+			beam3->Misc[LW_ZH_I_FLAGS_2]|=LWF_LEVEL_3;
+			SetLWeaponLifespan(beam,LWL_EDGE,0);
+			SetLWeaponLifespan(beam2,LWL_EDGE,0);
+			SetLWeaponLifespan(beam3,LWL_EDGE,0);
+			SetLWeaponDeathEffect(beam,LWD_VANISH,0);
+			SetLWeaponDeathEffect(beam2,LWD_VANISH,0);
+			SetLWeaponDeathEffect(beam3,LWD_VANISH,0);	
+		}
+		else if((SamusVars[BEAMS_EQUIPPED]&EQ_WAVE)==0
+			&& (SamusVars[BEAMS_EQUIPPED]&EQ_SPAZER)==0){
+			if(Link->Dir!=DIR_DOWN && SamusVars[SAMUS_ACTION]!=SAMUS_ACTION_CROUCH)
+				beam = FireScriptedLWeapon(LW_BEAM, Link->X+FixedInFrontX(Link->Dir,2), (Link->Y+8)+FixedInFrontY(Link->Dir,2), 
+											Sprite, BEAM_SPEED, Damage,LWF_ZERO_G);
+			else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_CROUCH && Link->Dir==DIR_DOWN)
+				beam = FireScriptedLWeapon(LW_BEAM, Link->X+FixedInFrontX(Link->Dir,2), (Link->Y-8)+FixedInFrontY(Link->Dir,2), 
+												Sprite, BEAM_SPEED, Damage,LWF_ZERO_G);
+			else if(Link->Dir!=DIR_DOWN && SamusVars[SAMUS_ACTION]==SAMUS_ACTION_CROUCH)
+				beam = FireScriptedLWeapon(LW_BEAM, Link->X+FixedInFrontX(Link->Dir,2), (Link->Y+16)+FixedInFrontY(Link->Dir,2), 
+												Sprite, BEAM_SPEED, Damage,LWF_ZERO_G);
+			else
+				beam = FireScriptedLWeapon(LW_BEAM, Link->X+FixedInFrontX(Link->Dir,2), (Link->Y-8)+FixedInFrontY(Link->Dir,2), 
+												Sprite, BEAM_SPEED, Damage,LWF_ZERO_G);
+			if(SamusVars[BEAMS_EQUIPPED]&EQ_PLASMA){
+				beam->Misc[LW_ZH_I_FLAGS_2]|= LWF_LEVEL_4;
+				beam->Misc[LW_ZH_I_FLAGS]|= LWF_PIERCES_ENEMIES;
+			}
+			else{
+				if(Charged)
+					beam->Misc[LW_ZH_I_FLAGS_2]|= LWF_LEVEL_2;
+				else
+					beam->Misc[LW_ZH_I_FLAGS_2]|= LWF_LEVEL_1;
+			}
+			SetLWeaponLifespan(beam,LWL_EDGE,0);
+			SetLWeaponDeathEffect(beam,LWD_VANISH,0);
+		}
+		SamusVars[BEAM_CHARGING_TIME]= 0;
+		//You also have the ice beam active.
+		if(SamusVars[BEAMS_EQUIPPED]&EQ_ICE){
+			//Run the ice beam script on all active beams.
+			if(beam->isValid())
+				SetLWeaponScript(beam,ICE_BEAM_SCRIPT,Rand(0,255));
+			if(beam2->isValid())
+				SetLWeaponScript(beam2,ICE_BEAM_SCRIPT,Rand(0,255));
+			if(beam3->isValid())
+				SetLWeaponScript(beam3,ICE_BEAM_SCRIPT,Rand(0,255));
+		}
+		SamusVars[FIRE_BEAM]= 0;
+	}
+}
+
+const int SPR_HYPER_BEAM = 46;//Hyper beam sprite
+const int SFX_HYPER_BEAM = 105;//Hyper beam sfx
+
+//Runs hyper beam.
+
+void RunHyper(){
+	int Sprite = SPR_HYPER_BEAM;//Reset weapon sprite.
+	int Damage = 30;//Damage done by weapon.
+	int Sfx = SFX_HYPER_BEAM;//Basic shot sound.
+	int Combo_X;
+	int Combo_Y;
+	lweapon beam;
+	//Build charge time.
+	if(Link->Action!=LA_SCROLLING){
+		if(SamusVars[BEAM_FIRING_TIMER]<=0){
+			if(PressFire())
+				SamusVars[FIRE_BEAM]=1;
+		}
+	}
+	else if(Link->Action==LA_SCROLLING)
+		SamusVars[FIRE_BEAM]=0;
+	if(SamusVars[FIRE_BEAM] 
+		&& Link->Action!=LA_SCROLLING){
+		SamusVars[BEAM_FIRING_TIMER]=20;
+		Game->PlaySound(Sfx);
+		SamusVars[LINK_ACTION] = LA_ATTACKING;
+		if(Link->Dir!=DIR_DOWN && SamusVars[SAMUS_ACTION]!=SAMUS_ACTION_CROUCH)
+			beam = FireScriptedLWeapon(LW_BEAM, Link->X+FixedInFrontX(Link->Dir,2), (Link->Y+8)+FixedInFrontY(Link->Dir,2), 
+										Sprite, BEAM_SPEED, Damage,LWF_ZERO_G);
+		else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_CROUCH && Link->Dir==DIR_DOWN)
+			beam = FireScriptedLWeapon(LW_BEAM, Link->X+FixedInFrontX(Link->Dir,2), (Link->Y-8)+FixedInFrontY(Link->Dir,2), 
+											Sprite, BEAM_SPEED, Damage,LWF_ZERO_G);
+		else if(Link->Dir!=DIR_DOWN && SamusVars[SAMUS_ACTION]==SAMUS_ACTION_CROUCH)
+			beam = FireScriptedLWeapon(LW_BEAM, Link->X+FixedInFrontX(Link->Dir,2), (Link->Y+16)+FixedInFrontY(Link->Dir,2), 
+											Sprite, BEAM_SPEED, Damage,LWF_ZERO_G);
+		else
+			beam = FireScriptedLWeapon(LW_BEAM, Link->X+FixedInFrontX(Link->Dir,2), (Link->Y-8)+FixedInFrontY(Link->Dir,2), 
+											Sprite, BEAM_SPEED, Damage,LWF_ZERO_G);
+		beam->Misc[LW_ZH_I_FLAGS_2]|= LWF_LEVEL_4;
+		beam->Misc[LW_ZH_I_FLAGS]|= LWF_PIERCES_ENEMIES;
+		SetLWeaponLifespan(beam,LWL_EDGE,0);
+		SetLWeaponDeathEffect(beam,LWD_VANISH,0);
+		SamusVars[FIRE_BEAM]= 0;
+	}
+}
