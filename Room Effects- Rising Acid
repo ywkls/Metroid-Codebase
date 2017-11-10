@@ -1,0 +1,29 @@
+ffc script RisingAcid{
+    void run(int screennum, int depth){
+        int screentime= 600; //The time (in frames) for the water to cover a screen
+		int CurrentHeight; 
+		int BottomTime;
+        while(true){
+            if(SamusVars[ACID_TIMER] > (screentime*(screennum-1))){ //Should I draw water on screen?
+                BottomTime = (screentime*(screennum-1)); //The time when the water reaches the bottom of the screen
+                CurrentHeight = SamusVars[ACID_TIMER] - BottomTime; //The current time, normalized to reaching bottom of screen
+                int TopTime = 600; //The time when it reaches the top of the screen, normalized to reaching bottom of screen
+                int TheY = 172 - (CurrentHeight/TopTime)*172;
+				for(int i=0;i<depth;i++)
+					Screen->DrawLayer(6, 66, 0x77,0,0,TheY+(172*i),0,64);
+				if(Link->Y >= TheY){//Touch the water...
+					if(SamusVars[LAVA_TIMER]<=HP_REGEN_TIME)
+						SamusVars[LAVA_TIMER]++;
+					else{	
+						Link->HP-=2;
+						Game->PlaySound(SFX_OUCH);
+						SamusVars[LAVA_TIMER] = 0;
+					}
+				}
+            }
+			if(CurrentHeight<(BottomTime+354))
+				SamusVars[ACID_TIMER]++;
+            Waitframe();
+        }
+    }
+}
