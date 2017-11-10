@@ -1,0 +1,51 @@
+//Section 109. Dropping and Rising Pillar
+
+ffc script Drop_Pillar{
+	void run(int combo, int cset, int speed, int height, int sfx, int delay){
+		int BotY = this->Y+(height*16);
+		int CurrentY = this->Y;
+		int i;
+		if(speed==0)speed =1;
+		bool Falling = true;
+		int ComboArray[176];
+		for(i= 0;i<=175;i++)
+			ComboArray[i]= Screen->ComboD[i];
+		while(true){
+			while(CurrentY<BotY && Falling){
+				Screen->FastCombo(6, this->X, CurrentY, combo, cset, 128);
+				if(((CurrentY-this->Y)%16)==0){
+					Screen->ComboD[ComboAt(this->X,CurrentY)]= combo;
+					Game->PlaySound(sfx);
+				}
+				CurrentY+=speed;
+				if(delay){
+					for(i=delay;i>0;i--){
+						Screen->FastCombo(6, this->X, CurrentY, combo, cset, 128);
+						Waitframe();
+					}
+				}
+				else
+					Waitframe();
+			}
+			Falling = false;
+			while(CurrentY>this->Y && !Falling){
+				Screen->FastCombo(6, this->X, CurrentY, combo, cset, 128);
+				if(((CurrentY-this->Y)%16)==0){
+					Screen->ComboD[ComboAt(this->X,CurrentY)]= ComboArray[ComboAt(this->X,CurrentY)];
+					Game->PlaySound(sfx);
+				}
+				CurrentY-=speed;
+				if(delay){
+					for(i=delay;i>0;i--){
+						Screen->FastCombo(6, this->X, CurrentY, combo, cset, 128);
+						Waitframe();
+					}
+				}
+				else
+					Waitframe();
+			}
+			Falling= true;
+			Waitframe();
+		}
+	}
+}
