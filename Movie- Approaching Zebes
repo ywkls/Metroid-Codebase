@@ -1,0 +1,23 @@
+ffc script Ship_Approach3{
+	void run(int Combo){
+		int XScale = 144;
+		int YScale = 144;
+		int Timer = 240;
+		float angle = 0;
+		int ScaleTimer;
+		while(Timer>0){
+			Screen->DrawCombo(3,this->X-XScale/2,this->Y-YScale/2,Combo,
+										3,3,8,XScale, YScale, this->X-XScale/2,
+										this->Y-YScale/2, angle, 0, 0, true, 128);
+			Timer--;
+			if(Timer<73 && angle>-90)
+				angle--;
+			ScaleTimer = (ScaleTimer+1)%10;
+			if(ScaleTimer==0){
+				XScale-=6;
+				YScale-=6;
+			}
+			Waitframe();
+		}
+	}
+}
