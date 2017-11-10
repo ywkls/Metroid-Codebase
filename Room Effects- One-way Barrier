@@ -1,0 +1,69 @@
+//Section 112. Triggered Barrier
+//---COMMMENTING NEEDED--
+
+ffc script TriggerBarrier{
+	void run(int triggerlw, int level, int flag, int Sfx, int dir){
+		int BotY = this->Y+16;
+		int CurrentY;
+		int i;
+		int CurrentX;
+		for(i=0;i<=175;i++){
+			if(ComboFI(i,flag)){
+				CurrentY = ComboY(i);
+				CurrentX = ComboX(i);
+				break;
+			}	
+		}
+		lweapon wpn;
+		bool triggered = false;
+		while(!triggered){
+			for(i=Screen->NumLWeapons();i>0;i--){
+				wpn = Screen->LoadLWeapon(i);
+				if(wpn->ID ==triggerlw && 
+					(wpn->Misc[LW_ZH_I_FLAGS_2]&level)!=0
+					&& Collision(wpn,this)){
+					if(dir==DIR_LEFT){
+						if(wpn->Dir==DIR_RIGHT||
+							wpn->Dir==DIR_UP||
+							wpn->Dir==DIR_RIGHTUP){
+								triggered =true;
+								KillLWeapon(wpn);
+						}
+						else
+							KillLWeapon(wpn);
+					}
+					else if(dir==DIR_RIGHT){
+						if(wpn->Dir==DIR_LEFT||
+							wpn->Dir==DIR_UP||
+							wpn->Dir==DIR_LEFTUP){
+								triggered =true;
+								KillLWeapon(wpn);
+						}
+						else
+							KillLWeapon(wpn);
+					}
+					else if(dir==DIR_DOWN){
+						if(wpn->Dir!=DIR_DOWN
+							&& wpn->Dir!=DIR_RIGHTDOWN
+							&& wpn->Dir!=DIR_LEFTDOWN){
+								triggered =true;
+								KillLWeapon(wpn);
+						}
+						else
+							KillLWeapon(wpn);
+					}
+				}
+			}
+			Waitframe();
+		}
+		Screen->ComboD[ComboAt(CurrentX,CurrentY)]=GH_INVISIBLE_COMBO;
+		while(CurrentY>BotY){
+			CurrentY--;
+			if((CurrentY%16)==0){
+				Screen->ComboD[ComboAt(CurrentX,CurrentY)]=GH_INVISIBLE_COMBO;
+				Game->PlaySound(Sfx);
+			}
+			Waitframe();
+		}
+	}
+}
