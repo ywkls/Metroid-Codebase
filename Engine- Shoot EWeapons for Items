@@ -1,0 +1,29 @@
+//Section 93. EWeapon Item Drop
+
+void EWeaponItems(){
+	for(int i = Screen->NumEWeapons();i>0;i--){
+		eweapon ew = Screen->LoadEWeapon(i);
+		if(ew->ID == EW_SCRIPT10){
+			for(int j = Screen->NumLWeapons();j>0;j--){
+				lweapon lw = Screen->LoadLWeapon(j);
+				if(lw->ID ==LW_BEAM){
+					if(Collision(lw,ew)){
+						ItemSetAt(IS_COMBOS,ComboAt(lw->X,lw->Y));
+						KillLWeapon(lw);
+						KillEWeapon(ew);
+					}
+				}
+			}
+		}
+	}
+}
+
+void ItemSetAt(int itemset,int loc){
+    npc e = Screen->CreateNPC(NPC_ITEMSET);
+    e->ItemSet = itemset;
+	if(e->isValid()){
+		e->X = loc%16*16;
+		e->Y = loc-loc%16;
+	}
+    e->HP = HP_SILENT;
+}
