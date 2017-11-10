@@ -1,0 +1,82 @@
+//Section 111. Magdollite
+
+ffc script Magdollite{
+	void run(int enemyID){
+		npc ghost = Ghost_InitAutoGhost(this, enemyID);
+		bool Rise = true;//Whether enemy is currently rising.
+		int StartHeight= ghost->Y;
+		int combo = ghost->Attributes[10];
+		Ghost_SetSize(this,ghost,1,2);
+		int Timer = 90;
+		int Mode = 1;
+		Ghost_SetFlag(GHF_NO_FALL);
+		eweapon flame;
+		bool Fire = true;
+		while(true){
+			//Not jumping right now.
+			if(Rise){
+				if(Timer<=0){
+					if(Mode==1){
+						Ghost_Data = combo+1;
+						Mode=2;
+					}
+					else if(Mode==2){
+						Ghost_Data = combo+2;
+						Mode=3;
+						Ghost_Y-=16;
+						Ghost_SetSize(this,ghost,1,3);
+					}
+					else if(Mode==3){
+						Ghost_Data = combo+3;
+						Mode = 4;
+					}
+					else if(Mode==4){
+						Ghost_Data = combo+4;
+						Mode=5;
+						Ghost_Y-=16;
+						Ghost_SetSize(this,ghost,1,4);
+					}
+					else if(Mode==5)
+						Rise = false;
+					Timer = 60;	
+				}
+			}
+			else if(!Rise){
+				if(Timer<=0){
+					if(Mode==5)
+						Mode=4;
+					else if(Mode==4){
+						Ghost_Data = combo+3;
+						Mode=3;
+						Ghost_Y+=16;
+						Ghost_SetSize(this,ghost,1,3);
+					}
+					else if(Mode==3){
+						Ghost_Data = combo+2;
+						Mode = 2;
+					}
+					else if(Mode==2){
+						Ghost_Data = combo+2;
+						Mode=1;
+						Ghost_Y+=16;
+						Ghost_SetSize(this,ghost,1,2);
+					}
+					else if(Mode==1){
+						Rise = true;
+						Fire = true;
+					}
+					Timer = 60;	
+				}
+			}
+			if(Mode==5 && Fire){
+				flame = FireAimedEWeapon(EW_SCRIPT1, Ghost_X+8, Ghost_Y+8, DegtoRad(0), 
+											300, ghost->WeaponDamage,RIDLEY_FLAME_SPRITE, -1, 0);
+				SetEWeaponLifespan(flame,EWL_TIMER, 120); 
+				SetEWeaponDeathEffect(flame,EWD_VANISH, 0);
+				Fire = false;
+			}
+			Timer--;
+			Ghost_Waitframe(this,ghost,true,true);
+		}
+	}
+}
