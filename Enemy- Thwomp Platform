@@ -1,0 +1,202 @@
+//Section 123. Thwomp Platform
+
+ffc script Thwomp_Platform{
+	void run(int enemyID){
+		npc ghost = Ghost_InitAutoGhost(this, enemyID);
+		
+		int SPD = ghost->Step; //Speed of Thwomp rising after fall.
+		int WPND = ghost->WeaponDamage; // Damage dealt by shards form Skree
+		int EWID = WeaponTypeToID(ghost->Weapon);
+		
+		int SizeX = Ghost_GetAttribute(ghost, 2, 2); // Thwomp size, in tiles.
+		int SizeY = Ghost_GetAttribute(ghost, 3, 2); // X and Y, of course.
+		int proximity = Ghost_GetAttribute(ghost, 5, 16); //Thwomp`s proximity trigger X-distance, in pixels.
+		int Combo = ghost->Attributes[10];
+		Ghost_SetFlag(GHF_NORMAL);
+		Ghost_SetFlag(GHF_NO_FALL);
+		Ghost_SetFlag(GHF_MOVE_OFFSCREEN);
+		
+		Ghost_Transform(this, ghost, Combo, ghost->CSet, SizeX, SizeY);
+		Ghost_X += SizeX*16/2-8;
+		Ghost_Y += SizeY*16/2-8;
+		int FakeY= Ghost_Y- (SizeY*16);
+		int State = THWOMP_STATE_DEFAULT;
+		int haltcounter = -1;
+		int OrigY = Ghost_Y;
+		int OrigDamage = ghost->Damage;
+		bool Grounded = false;
+		int PlatformCooldown;
+		int velocity;
+		while(true){
+			velocity = Abs(Ghost_Jump);
+			ghost->Damage = Clamp(OrigDamage*(velocity/GH_TERMINAL_VELOCITY), 2, OrigDamage);
+			if (State==THWOMP_STATE_DEFAULT){
+				int distance = Abs((CenterLinkX() - CenterX(ghost)));
+				if (distance<=proximity){
+					if (Link->Y > Ghost_Y){
+						Ghost_UnsetFlag(GHF_NO_FALL);
+						Game->PlaySound(SFX_THWOMP_DROP);
+						State = THWOMP_STATE_FALLING;
+					}
+				}
+			}
+			if (State==THWOMP_STATE_FALLING){
+				Ghost_Data = Combo+1;
+				if (Ghost_OnSideviewPlatform(ghost,2)){
+					Game->PlaySound(SFX_THWOMP_CRASH);
+					Screen->Quake=30;
+					State = THWOMP_STATE_ON_GROUND;
+					ghost->Damage = OrigDamage;
+					haltcounter = 120;
+					Ghost_SetFlag(GHF_NO_FALL);
+				}
+			}
+			if (State == THWOMP_STATE_ON_GROUND){
+				Ghost_Jump = 0;
+				Ghost_Data = Combo;
+				haltcounter--;
+				if (haltcounter==0){
+					State = THWOMP_STATE_RISING;
+				}
+			}
+			if(State == THWOMP_STATE_RISING){
+				Ghost_Jump = 0;
+				Ghost_Move(DIR_UP, SPD/100, 2);
+				if (Ghost_Y<= OrigY){
+					State = THWOMP_STATE_DEFAULT;
+					Ghost_Y = OrigY;
+				}
+			}
+			 //This detects when Link gets on the platform
+			if(OnPlatform(this,false,this->Script) && PlatformCooldown<=0){
+				if (!Grounded){
+					Grounded = true;
+					SamusVars[ON_GROUND_OVERRIDE]=1;
+					Link->Y = this->Y-16;
+				}
+				//This snaps Link to the platform when he isn't hookshotting
+				if(PlatformCooldown<=0){
+					if(Link->Jump<=0)
+						Link->Jump = 0;
+				}
+				if(!(Link->PressLeft
+						||Link->InputLeft
+						||Link->InputRight
+						||Link->PressRight))
+						Link->X = this->X+(((this->TileWidth-1)*16)/2);
+				if(!SamusVars[IS_MORPHED]){
+					if(PressJump()){
+						Link->Y-=24;
+						Grounded = false;
+						Jump_Routine();
+						PlatformCooldown= 30;
+					}
+				}
+				else{
+					if(PressFire()){
+						if(SamusVars[EQUIPPED_ITEM]!=I_POWER_BOMB && Link->Item[I_BOMB]){
+							Link->Y-=24;
+							Grounded= false;
+							PlatformCooldown= 30;
+						}
+					}
+					if(Link->Item[I_SPRING_BALL] && PressJump()){
+						Link->Y-=24;
+						Grounded=false;
+						Jump_Routine();
+						PlatformCooldown= 30;
+					}
+				}
+				while(Grounded){
+					velocity = Abs(Ghost_Jump);
+					ghost->Damage = Clamp(OrigDamage*(velocity/GH_TERMINAL_VELOCITY), 2, OrigDamage);
+					if (State==THWOMP_STATE_DEFAULT){
+						int distance = Abs((CenterLinkX() - CenterX(ghost)));
+						if (distance<=proximity){
+							if (Link->Y > Ghost_Y){
+								Ghost_UnsetFlag(GHF_NO_FALL);
+								Game->PlaySound(SFX_THWOMP_DROP);
+								State = THWOMP_STATE_FALLING;
+							}
+						}
+					}
+					if (State==THWOMP_STATE_FALLING){
+						Ghost_Data = Combo+1;
+						if (Ghost_OnSideviewPlatform(ghost,2)){
+							Game->PlaySound(SFX_THWOMP_CRASH);
+							Screen->Quake=30;
+							State = THWOMP_STATE_ON_GROUND;
+							ghost->Damage = OrigDamage;
+							haltcounter = 120;
+							Ghost_SetFlag(GHF_NO_FALL);
+						}
+					}
+					if (State == THWOMP_STATE_ON_GROUND){
+						Ghost_Jump = 0;
+						Ghost_Data = Combo;
+						haltcounter--;
+						if (haltcounter==0){
+							State = THWOMP_STATE_RISING;
+						}
+					}
+					if(State == THWOMP_STATE_RISING){
+						Ghost_Jump = 0;
+						Ghost_Move(DIR_UP, SPD/100, 2);
+						if (Ghost_Y<= OrigY){
+							State = THWOMP_STATE_DEFAULT;
+							Ghost_Y = OrigY;
+						}
+					}
+					if(!SamusVars[IS_MORPHED]){
+						if(PressJump()){
+							Link->Y-=24;
+							Grounded = false;
+							Jump_Routine();
+							PlatformCooldown= 30;
+						}
+						else{
+							if(PlatformCooldown<=0)
+								Link->Y = this->Y-16;
+						}
+					}
+					else{
+						if(PressFire() && Link->Item[I_BOMB] && SamusVars[EQUIPPED_ITEM]!=I_POWER_BOMB){
+							Link->Y-=24;
+							Grounded = false;
+							PlatformCooldown= 30;
+						}
+						else if(Link->Item[I_SPRING_BALL] && PressJump()){
+							Link->Y-=24;
+							Grounded = false;
+							Jump_Routine();
+							PlatformCooldown= 30;
+						}
+						else{
+							if(PlatformCooldown<=0)
+								Link->Y = this->Y-16;
+						}
+					}
+					if (!OnPlatform(this, false,this->Script)){
+						Grounded = false;
+						SamusVars[ON_GROUND_OVERRIDE]=0;
+					}
+					if(!(Link->PressLeft||Link->InputLeft
+						||Link->InputRight||Link->PressRight))
+						Link->X = this->X+(((this->TileWidth-1)*16)/2);
+					if(PlatformCooldown>0)
+						PlatformCooldown--;
+					Ghost_Waitframe(this, ghost);
+				}
+			}
+			else if (Grounded && !OnPlatform(this, false,this->Script)){
+				Grounded = false;
+				PlatformCooldown= 30;
+				if (!OnPlatform(this, true,this->Script))
+					SamusVars[ON_GROUND_OVERRIDE]=0;
+			}
+			if(PlatformCooldown>0)
+				PlatformCooldown--;
+			Ghost_Waitframe(this, ghost);	
+		}
+	}
+}
