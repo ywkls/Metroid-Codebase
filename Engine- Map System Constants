@@ -18,3 +18,8 @@ const int MAP_SAMUS_CSET	= 2;
 //Subscreen Constants
 const int SUBSCREEN_SAMUS 	= 0;
 const int SUBSCREEN_MAP		= 1;
+
+//Section 107. Mini-map
+
+const int MINIMAP_SAMUS_COMBO = 3545;//Minimap combo of Samus.
+const int CRATERIA_EXTRA_TILE = 16272;//Tile from Crateria that doesn't fit.
