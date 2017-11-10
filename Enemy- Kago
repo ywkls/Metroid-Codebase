@@ -1,0 +1,35 @@
+//Section 99. Brain bug hive.
+
+const int BRAIN_BUG = 36;
+
+ffc script Kago{
+	void run(int enemyID){
+		npc ghost = Ghost_InitAutoGhost(this, enemyID);
+		npc bug;
+		int bugcount;
+		int limit = ghost->Attributes[0];
+		lweapon beam;
+		Ghost_SetFlag(GHF_NO_FALL);
+		Ghost_SetSize(this,ghost,2,2);
+		int i;
+		int hittimer;
+		float angle;
+		while(true){
+			if(bugcount<limit){
+				for(i=Screen->NumLWeapons();i>0;i--){
+					beam= Screen->LoadLWeapon(i);
+					if(Collision(ghost,beam) && hittimer <= 0){
+						hittimer = 30;
+						bug = Screen->CreateNPC(BRAIN_BUG);
+						angle = Rand(180,360);
+						bug->X = ghost->X+ 16 * (Sin(angle));
+						bug->Y = ghost->Y+ 16 * (Cos(angle));
+						bugcount++;
+					}
+				}
+			}
+			hittimer--;
+			Gen_Explode_Waitframe(this,ghost);
+		}
+	}
+}
