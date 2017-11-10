@@ -1,0 +1,59 @@
+//Section 116. Dachora
+
+ffc script Dachora{
+    void run(int screennum, bool jump){
+        int screentime= 300; //The time (in frames) for the water to cover a screen
+		int CurrentX; 
+		int LeftX;
+		int TheX;
+		int CalcX;
+		int ChargeTime = 90;
+		if(screennum==1 && !SamusVars[DACHORA_START])
+			SamusVars[DACHORA_START]= 1;
+		if(SamusVars[DACHORA_START]){
+			if(!jump){
+				while(TheX<=256){
+					if(SamusVars[DACHORA_TIMER] > (screentime*(screennum-1))){ //Should I draw water on screen?
+						LeftX = (screentime*(screennum-1)); //The time when the water reaches the bottom of the screen
+						CurrentX = SamusVars[DACHORA_TIMER] - LeftX; //The current time, normalized to reaching bottom of screen
+						int RightX = 300; //The time when it reaches the top of the screen, normalized to reaching bottom of screen
+						TheX = this->X+CurrentX;
+						Screen->DrawCombo(6, TheX, this->Y,this->Data, 
+											2, 3, 9, -1, -1, 0, 0, 0, 0, 0, true, 128);
+					}
+					SamusVars[DACHORA_TIMER]+=2;
+					Waitframe();
+				}
+			}
+			else{
+				while(TheX<=140){
+					if(SamusVars[DACHORA_TIMER] > (screentime*(screennum-1))){ //Should I draw water on screen?
+						LeftX = (screentime*(screennum-1)); //The time when the water reaches the bottom of the screen
+						CurrentX = SamusVars[DACHORA_TIMER] - LeftX; //The current time, normalized to reaching bottom of screen
+						int RightX = 300; //The time when it reaches the top of the screen, normalized to reaching bottom of screen
+						TheX = this->X+CurrentX;
+						Screen->DrawCombo(6, TheX, this->Y,this->Data, 
+											2, 3, 9, -1, -1, 0, 0, 0, 0, 0, true, 128);
+					}
+					SamusVars[DACHORA_TIMER]+=2;
+					Waitframe();
+				}
+				while(ChargeTime>0){
+					Screen->DrawCombo(6, TheX, this->Y+16,this->Data+1, 
+											2, 2, 9, -1, -1, 0, 0, 0, 0, 0, true, 128);
+					Game->PlaySound(SHINE_SPARK_SFX);
+					ChargeTime--;
+					Waitframe();
+				}
+				while(this->Y>-48){
+					this->Y-=4;
+					Screen->DrawCombo(6, TheX, this->Y,this->Data+2, 
+											2, 3, 9, -1, -1, 0, 0, 0, 0, 0, true, 128);
+					if((this->Y%8)==0)
+						Game->PlaySound(SHINE_SPARKING_SFX);
+					Waitframe();
+				}
+			}
+		}
+    }
+}

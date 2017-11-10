@@ -1,0 +1,19 @@
+// Returns true if Link is standing on the platform calling this function, or any platform running VJumpMovingPlatform if cycle_through_ffcs is true.
+bool OnPlatform(ffc this, bool cycle_through_ffcs,int script_num){
+	bool ret;
+	ffc f;
+	if (!cycle_through_ffcs){
+		return (Link->X >= this->X - 12 && Link->X <= this->X + 12 +(this->TileWidth-1)*16 && 
+				Link->Y>this->Y-17-Abs(this->Vy)&&Link->Y<this->Y-8);
+	}
+	else{
+		for (int i = 1; i <= 32; i++){
+			f = Screen->LoadFFC(i);
+			if (f->Script == script_num && Link->X >= f->X - 12 
+				&& Link->X <= f->X + 12+(f->TileWidth-1) * 16 
+				&& Link->Y>f->Y-17-Abs(f->Vy)&&Link->Y<f->Y-8)
+				ret = true;
+		}
+		return ret;
+	}
+}

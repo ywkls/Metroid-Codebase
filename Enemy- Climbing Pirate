@@ -1,0 +1,141 @@
+//Section 102. Climbing Gray Pirate
+
+const int SPR_PIRATE_LASER = 92;
+
+ffc script Climb_Pirate{
+		void run(int enemyid){
+		npc ghost = Ghost_InitAutoGhost(this, enemyid);
+		Ghost_SetFlag(GHF_NO_FALL);
+		int Combo = ghost->Attributes[10];
+		Ghost_SetSize(this,ghost,2,4);
+		if(!Ghost_CanMove(DIR_LEFT, 1, 0)){
+			Ghost_Dir = DIR_RIGHT;
+			Ghost_Data = Combo;
+		}
+		else if(!Ghost_CanMove(DIR_RIGHT, 1, 0)){
+			Ghost_Dir = DIR_LEFT;
+			Ghost_Data = Combo+1;
+		}
+		eweapon laser;
+		bool MovingVert = ChooseBool();
+		int Mode;
+		int JumpTimer = Rand(180,300);
+		float angle;
+		int i;
+		int Move_Dir;
+		while(true){
+			if(Mode == 0){
+				if(JumpTimer>0){
+					if(MovingVert && Ghost_CanMove(DIR_UP,16,0))
+						Ghost_Move(DIR_UP,ghost->Step/100, 0);
+					else if(MovingVert && !Ghost_CanMove(DIR_UP,16,0))
+						MovingVert = false;
+					else if(!MovingVert && Ghost_CanMove(DIR_DOWN,16,0))
+						Ghost_Move(DIR_DOWN,ghost->Step/100, 0);
+					else if(!MovingVert && !Ghost_CanMove(DIR_DOWN,16,0))
+						MovingVert = true;						
+				}
+				else{
+					Mode = Choose(1,2);
+					if(Mode==1){
+						if(!Ghost_CanMove(DIR_LEFT, 1, 0)){
+							Ghost_Dir = DIR_RIGHT;
+							Ghost_Data = Combo+2;
+						}
+						else if(!Ghost_CanMove(DIR_RIGHT, 1, 0)){
+							Ghost_Dir = DIR_LEFT;
+							Ghost_Data = Combo+3;
+						}
+					}
+					else{
+						if(!Ghost_CanMove(DIR_LEFT, 1, 0)){
+							Ghost_Dir = DIR_RIGHT;
+							Ghost_Data = Combo+4;
+							Move_Dir = DIR_RIGHT;
+						}
+						else if(!Ghost_CanMove(DIR_RIGHT, 1, 0)){
+							Ghost_Dir = DIR_LEFT;
+							Ghost_Data = Combo+5;
+							Move_Dir = DIR_LEFT;
+						}
+					}
+				}
+			}
+			else if(Mode ==1){
+				if(Ghost_Dir==DIR_RIGHT){
+					for(i=0;i<=4;i++){
+						angle = Angle(Ghost_X+32,Ghost_Y+32,Link->X+8,Link->Y);
+						laser = FireEWeapon(ghost->Weapon, Ghost_X+32, Ghost_Y+32, DegtoRad(angle), 
+								200, ghost->WeaponDamage, SPR_PIRATE_LASER, LASER_SFX, 0);
+						Ghost_Waitframes(this,ghost,true,true,5);
+					}
+					Mode = Choose(0,2);
+					if(Mode ==0){
+						JumpTimer = Rand(180,300);
+						Ghost_Data = Combo;
+						MovingVert = ChooseBool();
+					}
+					else{
+						Ghost_Data = Combo+4;
+						Move_Dir = DIR_RIGHT;
+					}
+					Ghost_Dir = DIR_RIGHT;
+				}
+				else if(Ghost_Dir==DIR_LEFT){
+					for(i=0;i<=4;i++){
+						angle = Angle(Ghost_X-32,Ghost_Y+32,Link->X+8,Link->Y);
+						laser = FireEWeapon(ghost->Weapon, Ghost_X-32, Ghost_Y+32, DegtoRad(angle), 
+								200, ghost->WeaponDamage, SPR_PIRATE_LASER, LASER_SFX, 0);
+						Ghost_Waitframes(this,ghost,true,true,5);
+					}
+					Mode = Choose(0,2);
+					if(Mode ==0){
+						JumpTimer = Rand(180,300);
+						Ghost_Data = Combo+1;
+						MovingVert = ChooseBool();
+					}
+					else{
+						Ghost_Data = Combo+5;
+						Move_Dir = DIR_LEFT;
+					}
+					Ghost_Dir = DIR_LEFT;
+				}
+			}
+			else if(Mode==2){
+				Ghost_SetFlag(GHF_IGNORE_ALL_TERRAIN);
+				Ghost_CSet = 2;
+				while(Ghost_CanMove(Move_Dir, 25, 0)){
+					Ghost_Move(Move_Dir, ghost->Step/100, 0);
+					Ghost_Waitframe(this, ghost,true,true);
+				}
+				Ghost_UnsetFlag(GHF_IGNORE_ALL_TERRAIN);
+				Ghost_CSet = 7;
+				Mode = Choose(0,1);
+				if(Mode ==0){
+					JumpTimer = Rand(180,300);
+					if(Move_Dir ==DIR_LEFT){
+						Ghost_Dir = DIR_RIGHT;
+						Ghost_Data = Combo;
+					}
+					else if(Move_Dir ==DIR_RIGHT){
+						Ghost_Dir = DIR_LEFT;
+						Ghost_Data = Combo+1;
+					}
+					MovingVert = ChooseBool();	
+				}
+				else if(Mode ==1){
+					if(Move_Dir ==DIR_LEFT){
+						Ghost_Dir = DIR_RIGHT;
+						Ghost_Data = Combo+2;
+					}
+					else if(Move_Dir ==DIR_RIGHT){
+						Ghost_Dir = DIR_LEFT;
+						Ghost_Data = Combo+3;
+					}
+				}
+			}
+			if(JumpTimer>0)JumpTimer--;
+			Ghost_Waitframe(this,ghost,true,true);
+		}
+	}
+}

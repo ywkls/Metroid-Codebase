@@ -1,0 +1,26 @@
+//Section 105. Change combo on enemy death.
+
+ffc script EnemyWatch{
+	void run(int enemyID,int flag, int perm){
+		npc ghost;
+		Waitframes(4);
+		bool Triggered = false;
+		int i;
+		ghost = LoadNPCOf(enemyID);
+		if(Screen->D[perm])
+			Triggered = true;
+		while(!Triggered){
+			if(ghost->HP<=0){
+				for(i=0; i<176; i++){
+					if(ComboFI(i,flag))Screen->ComboD[i] = Screen->UnderCombo;
+				}
+				Screen->D[perm]=1;
+				Triggered = true;
+			}
+			Waitframe();
+		}
+		for(i=0; i<176; i++){
+			if(ComboFI(i,flag))Screen->ComboD[i] = Screen->UnderCombo;
+		}
+	}
+}

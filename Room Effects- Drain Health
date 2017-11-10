@@ -1,0 +1,15 @@
+ffc script Drain_Samus{
+	void run(){
+		SamusVars[CURR_FILLED_TANKS]=1;
+		SamusVars[NUM_FILLED_RES_TANKS]=0;
+		Game->Counter[RESERVE_COUNTER]=0;
+		Game->DCounter[CR_MAGIC]-=Link->MaxMP;
+		while(Game->DCounter[CR_MAGIC]!=0)
+			WaitNoAction();
+		Game->DCounter[HEALTH_COUNTER]-=98;	
+		while(Game->DCounter[HEALTH_COUNTER]!=0)
+			WaitNoAction();
+		Game->Counter[HEALTH_COUNTER]=1;
+		this->Data = CM_AUTOWARPD;
+	}
+}

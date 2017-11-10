@@ -1,0 +1,45 @@
+//Section 110. Flame Gout
+
+ffc script FireGout{
+	void run(int enemyID){
+		npc ghost = Ghost_InitAutoGhost(this, enemyID);
+		bool Hot = false;//Whether it is currently jumping.
+		int StartHeight= ghost->Y;
+		int Height = ghost->Attributes[0];
+		int EndHeight= StartHeight-(Height*16);
+		Ghost_SetSize(this,ghost,1,Height);
+		int GoutTimer = Rand(30,60);
+		Ghost_SetFlag(GHF_NO_FALL);
+		Ghost_SetFlag(GHF_IGNORE_ALL_TERRAIN);
+		int i;
+		int combo = ghost->Attributes[10];
+		while(true){
+			//Not jumping right now.
+			if(!Hot){
+				Ghost_Data = GH_INVISIBLE_COMBO;
+				ghost->CollDetection = false;
+				//The jump timer has run out.
+				if(GoutTimer<=0)
+					//Jump now.
+					Hot = true;
+			}
+			//Currently jumping.
+			else if(Hot){
+				Ghost_Data = combo;
+				ghost->CollDetection = true;
+				Game->PlaySound(SFX_FIRE);
+				//Ascend to max jump height
+				while(Ghost_Y>EndHeight){
+					Ghost_Y-=2;
+					Ghost_Waitframe(this,ghost,true,true);
+				}
+				Ghost_Y= StartHeight;
+				Hot = false;
+				//Reset timer.
+				GoutTimer = Rand(30,60);
+			}
+			GoutTimer--;
+			Ghost_Waitframe(this,ghost,true,true);
+		}
+	}
+}

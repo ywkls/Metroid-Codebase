@@ -1,0 +1,26 @@
+//Missiles
+
+void RunMissiles(){
+	//Create and position Lweapon.
+	if(Game->Counter[CR_ARROWS]>0 && SamusVars[MISSILE_TIMER]==0){
+		int Damage = 2;
+		SamusVars[MISSILE_TIMER]=20;
+		lweapon beam;//Lweapon created by charge.
+		if(Link->Dir!=DIR_DOWN && SamusVars[SAMUS_ACTION]!=SAMUS_ACTION_CROUCH)
+			beam = FireScriptedLWeapon(LW_ARROW, Link->X+FixedInFrontX(Link->Dir,2), (Link->Y+8)+FixedInFrontY(Link->Dir,2), 
+											NORMAL_MISSILE_SPRITE, BEAM_SPEED, Damage,LWF_ZERO_G);
+		else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_CROUCH && Link->Dir==DIR_DOWN)
+			beam = FireScriptedLWeapon(LW_ARROW, Link->X+FixedInFrontX(Link->Dir,2), (Link->Y-8)+FixedInFrontY(Link->Dir,2), 
+										NORMAL_MISSILE_SPRITE, BEAM_SPEED, Damage,LWF_ZERO_G);
+		else if(Link->Dir!=DIR_DOWN && SamusVars[SAMUS_ACTION]==SAMUS_ACTION_CROUCH)
+			beam = FireScriptedLWeapon(LW_ARROW, Link->X+FixedInFrontX(Link->Dir,2), (Link->Y+16)+FixedInFrontY(Link->Dir,2), 
+										NORMAL_MISSILE_SPRITE, BEAM_SPEED, Damage,LWF_ZERO_G);
+		else
+			beam = FireScriptedLWeapon(LW_ARROW, Link->X+FixedInFrontX(Link->Dir,2), (Link->Y-8)+FixedInFrontY(Link->Dir,2), 
+										NORMAL_MISSILE_SPRITE, BEAM_SPEED, Damage,LWF_ZERO_G);
+		SetLWeaponLifespan(beam,LWL_EDGE,0);
+		Game->PlaySound(SFX_ARROW);
+		SamusVars[LINK_ACTION] = LA_ATTACKING;
+		Game->Counter[CR_ARROWS]--;
+	}
+}

@@ -1,0 +1,90 @@
+//Section 77. Reo
+
+ffc script Reo{
+	void run(int enemyID){
+		//Set up enemy.
+		npc ghost = Ghost_InitAutoGhost(this, enemyID);
+		Ghost_SetFlag(GHF_IGNORE_ALL_TERRAIN);
+		Ghost_SetFlag(GHF_NO_FALL);
+		Ghost_SetFlag(GHF_FAKE_Z);
+		float angle;
+		int TargetX;
+		int TargetY;
+		int Step = ghost->Step/100;
+		bool Diving = false;
+		bool Chasing = false;
+		int StartX = Ghost_X;
+		int StartY = Ghost_Y;
+		bool MovingRight;
+		int Combo = ghost->Attributes[10];
+		int SFX = ghost->Attributes[0];
+		Ghost_SetSize(this,ghost,2,2);
+		while(true){
+			while(!Diving && !Chasing){
+				angle = (angle+1)% 360;
+				Ghost_X = StartX+ 32 * Sin(angle);
+				Ghost_Y = StartY+ 32 * Cos(angle);
+				Ghost_Data = Combo;
+				if(Between(Link->X,Ghost_X-16,Ghost_X+48)){
+					Diving = true;
+					Game->PlaySound(SFX);
+					TargetX = Link->X+8;
+					TargetY = Link->Y+8;
+					Ghost_Data = Combo+1;
+					angle = Angle(Ghost_X,Ghost_Y,TargetX,TargetY);
+				}
+				Ghost_Waitframe(this,ghost,true,true);
+			}
+			while(Diving && !Chasing){
+				if(Ghost_Y<=TargetY)
+					Ghost_MoveAtAngle(angle,Step,2);
+				else
+					Chasing = true;
+				if(!Ghost_CanMove(DIR_DOWN,1,1))
+					Chasing = true;
+				Ghost_Waitframe(this,ghost,true,true);	
+			}
+			while(Diving && Chasing){
+				if(PressJump())
+					Diving = false;
+				else{
+					if(Link->X>Ghost_X){
+						Ghost_X+=Step;
+						MovingRight = true;
+					}
+					else{
+						Ghost_X-=Step;
+						MovingRight = false;
+					}
+					if(Ghost_CanMove(DIR_DOWN,1,0) && Ghost_Y<TargetY){
+						Chasing = false;
+						TargetX = Link->X+8;
+						TargetY = Link->Y+8;
+						angle = Angle(Ghost_X,Ghost_Y,TargetX,TargetY);
+					}
+				}
+				Ghost_Waitframe(this,ghost,true,true);	
+			}
+			while(Chasing && !Diving){
+				Ghost_Data = Combo;
+				if(Ghost_CanMove(DIR_RIGHT,1,0) && MovingRight)
+					Ghost_X+=Step;
+				else if(Ghost_CanMove(DIR_LEFT,1,0) && !MovingRight)
+					Ghost_X-=Step;
+				if(Ghost_Y>StartY)
+					Ghost_Y--;
+				else{
+					Chasing = false;
+					StartX = Ghost_X;
+				}
+				if(!Ghost_CanMove(DIR_UP,1,0)){
+					Chasing = false;
+					StartX = Ghost_X;
+					StartY = Ghost_Y;
+				}
+				Ghost_Waitframe(this,ghost,true,true);	
+			}
+			Ghost_Waitframe(this,ghost,true,true);
+		}
+	}
+}

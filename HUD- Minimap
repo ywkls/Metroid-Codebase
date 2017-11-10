@@ -1,0 +1,19 @@
+void DrawMiniMap(){
+	Screen->SetRenderTarget(RT_BITMAP0);
+	Screen->Rectangle(7, 0, 0, 512,512, 0x0F, -1, 0,0,0, true, 128);
+	Screen->Rectangle(7, 0, 0, 512,512, 0x00, -1, 0,0,0, true, 128);
+	Screen->DrawTile(7,0,0, SamusVars[MINIMAP_TILE], 
+					 SamusVars[MINIMAP_WIDTH], SamusVars[MINIMAP_HEIGHT], 
+					 2, -1, -1, 0, 0, 0, 0, true, 128);			 
+	if(SamusVars[CURRENT_AREA]==CRATERIA)
+		Screen->DrawTile(7,320,0, CRATERIA_EXTRA_TILE, 
+						 1, 4, 2, -1, -1, 0, 0, 0, 0, true, 128); 				 
+	Screen->SetRenderTarget(RT_SCREEN);
+	if(GotMap(SamusVars[CURRENT_AREA]))
+		Screen->DrawBitmap(7, RT_BITMAP0, SamusVars[MINIMAP_DRAW_X],
+					   SamusVars[MINIMAP_DRAW_Y],40, 24,180, -32, 40, 24, 0, true);
+	else
+		Screen->DrawBitmap(7, RT_BITMAP0, SamusVars[MINIMAP_DRAW_X]+16,
+					   SamusVars[MINIMAP_DRAW_Y]+8,8, 8,196, -24, 8, 8, 0, true);
+	Screen->FastCombo(7, 196, -32, MINIMAP_SAMUS_COMBO,2, 128);				   
+}

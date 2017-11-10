@@ -1,0 +1,14 @@
+//Section 79. Trace Screen Coordinates.
+
+ffc script TraceThings{
+	void run(){
+		int OldScreen = Game->GetCurDMapScreen();
+		while(true){
+			if(OldScreen != Game->GetCurDMapScreen()){
+				TraceDMapScreen();
+				OldScreen = Game->GetCurDMapScreen();
+			}
+			Waitframe();
+		}
+	}
+}

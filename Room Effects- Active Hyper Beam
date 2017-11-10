@@ -1,0 +1,19 @@
+ffc script Activate_Hyper{
+	void run(){
+		SamusVars[BEAMS_EQUIPPED]&= ~EQ_CHARGE;
+		SamusVars[BEAMS_EQUIPPED]&= ~EQ_ICE;
+		SamusVars[BEAMS_EQUIPPED]&= ~EQ_WAVE;
+		SamusVars[BEAMS_EQUIPPED]&= ~EQ_SPAZER;
+		SamusVars[BEAMS_EQUIPPED]&= ~EQ_PLASMA;
+		SamusVars[BEAMS_EQUIPPED]|=EQ_HYPER;
+		Game->Counter[CR_ARROWS] = 0;
+        Game->Counter[CR_RUPEES] = 0;
+        Game->Counter[CR_SBOMBS] = 0;
+		SamusVars[EQUIPPED_ITEM]= I_BEAM;
+		if (Link->HP < Link->MaxHP) Link->HP = Link->MaxHP;
+		if(Link->MP<Link->MaxMP)Link->MP = Link->MaxMP;
+		Game->Counter[HEALTH_COUNTER] = 99;
+		SamusVars[CURR_FILLED_TANKS]= SamusVars[NUM_TANKS];
+		Quit();
+	}
+}

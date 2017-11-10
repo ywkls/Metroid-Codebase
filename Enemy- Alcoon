@@ -1,0 +1,80 @@
+//Section 75. Alcoon
+
+const int ALCOON_JUMPING_COMBO = 2710;//Combo uses as Alcoon jumps out of the ground.
+
+ffc script Alcoon{
+	void run(int enemyID){
+		//Set up enemy.
+		npc ghost = Ghost_InitAutoGhost(this, enemyID);
+		Ghost_SetFlag(GHF_IGNORE_ALL_TERRAIN);
+		Ghost_SetFlag(GHF_FAKE_Z);
+		Ghost_SetFlag(GHF_NO_FALL);
+		Ghost_SetFlag(GHF_MOVE_OFFSCREEN);
+		int combo = ghost->Attributes[10];
+		Ghost_Data = GH_INVISIBLE_COMBO;
+		bool Jumping = false;
+		bool Walking = false;
+		Ghost_SetSize(this,ghost,2,3);
+		ghost->CollDetection = false;
+		int i;
+		bool MovingLeft;
+		Ghost_CSet = 6;
+		int offset;
+		while(true){
+			while(!Jumping && ! Walking){
+				if(Between(Link->Y,Ghost_Y,Ghost_Y+48))
+					Jumping = true;
+				Ghost_Waitframe(this,ghost,true,true);
+			}
+			while(Jumping && !Walking){
+				for(i=48;i>0;i--){
+					if(Link->X<Ghost_X)
+						offset = 0;
+					else
+						offset = 1;
+					Screen->DrawCombo(2,Ghost_X,Ghost_Y+i,ALCOON_JUMPING_COMBO+offset,2,3,Ghost_CSet,-1, -1, 0, 0, 0, -1, 0, true,128);
+					Ghost_Waitframe(this,ghost,true,true);
+				}
+				Walking = true;
+				ghost->CollDetection = true;
+				if(Link->X<Ghost_X){
+					MovingLeft = true;
+					Ghost_Data = combo;
+				}
+				else{
+					MovingLeft = false;
+					Ghost_Data = combo+1;
+				}
+				Ghost_Waitframe(this,ghost,true,true);
+			}
+			while(Walking){
+				if(MovingLeft){
+					if(Ghost_CanMove(DIR_LEFT,1,0))
+						Ghost_Move(DIR_LEFT,ghost->Step/100,0);
+					else{
+						MovingLeft = false;
+						Ghost_Data = combo+1;
+					}
+					if(Ghost_CanMove(DIR_DOWN,48,0))
+						Ghost_UnsetFlag(GHF_NO_FALL);
+					else if(!Ghost_CanMove(DIR_DOWN,48,0))
+						Ghost_SetFlag(GHF_NO_FALL);
+				}
+				else if(!MovingLeft){
+					if(Ghost_CanMove(DIR_RIGHT,1,0))
+						Ghost_Move(DIR_RIGHT,ghost->Step/100,0);
+					else{
+						MovingLeft = true;
+						Ghost_Data = combo;
+					}
+					if(Ghost_CanMove(DIR_DOWN,48,0))
+						Ghost_UnsetFlag(GHF_NO_FALL);
+					else if(!Ghost_CanMove(DIR_DOWN,48,0))
+						Ghost_SetFlag(GHF_NO_FALL);
+				}
+				Ghost_Waitframe(this,ghost,true,true);
+			}
+			Ghost_Waitframe(this,ghost,true,true);
+		}
+	}
+}

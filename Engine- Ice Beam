@@ -1,0 +1,226 @@
+ffc script Ice_Beam{
+	void run(int Weapon_ID){
+		this->Data = GH_INVISIBLE_COMBO;
+		this->Misc[MISC_ICE_TIMER]=-9999;
+		npc current_enemy;
+		bool Stop = false;
+		bool impact = false;//Tests whether an enemy or freezable combo has been hit.
+		//Two variables used to save location of ffc upon impact.
+		int impactX;
+		int impactY;
+		int SavedCombo[176];
+		int SavedLoc[176];
+		//Increase size of platform for larger enemies.
+		int BlockWidth;
+		int BlockHeight;
+		int Ice_Timer;//Used internally by ffc to track how long ice combo has existed.
+		int i;
+		int j;
+		int loc;
+		int loc2;
+		lweapon beam = FindMiscLWeapon(Weapon_ID);//Find previously saved lweapon.
+		//Position ffc.
+		if(beam->isValid()){
+			this->X = beam->X;
+			this->Y = beam->Y;
+		}
+		else{
+			this->Data = 0;
+			Quit();
+		}
+		while(!Stop){
+			while(!impact && this->X>0 && this->Y>0 && this->X<256 && this->Y<170){
+				//Adjust the position of the ffc every frame, based on the direction Link was facing when he fired it.
+				if(beam->isValid()){
+					this->X = beam->X;
+					this->Y = beam->Y;
+				}
+				else{
+					this->Data = 0;
+					Quit();
+				}
+				//Update current number of enemies.
+				for(i=Screen->NumNPCs();i>0;i--){
+					current_enemy = Screen->LoadNPC(i);
+					if(current_enemy->HP<=0)break;
+					if (Collision(beam,current_enemy)){
+						if(current_enemy->Defense[NPCD_SCRIPT]!=NPCDT_IGNORE
+							&& (current_enemy->Misc[GEN_MISC_FLAGS]&NPC_F_FREEZE)==0
+							&& current_enemy->Defense[NPCD_SCRIPT]!=NPCDT_BLOCK){
+							impactX = current_enemy->X;
+							impactY = current_enemy->Y;
+							if(current_enemy->TileWidth>1)BlockWidth = current_enemy->TileWidth;
+							if(current_enemy->TileHeight>1)BlockHeight = current_enemy->TileHeight;
+							//Stun the enemy.
+							current_enemy->Stun = MAX_ICE_PLATFORM_TIME;
+							current_enemy->Misc[GEN_MISC_FLAGS]|=NPC_F_FREEZE;
+							impact = true;
+							this->Flags[FFCF_OVERLAY]= true;
+							this->Flags[FFCF_TRANS] = true;
+							if(beam->isValid() && !GetLWeaponFlag(beam,LWF_PIERCES_ENEMIES))
+								KillLWeapon(beam);		
+						}
+						else{
+							if(beam->isValid() && !GetLWeaponFlag(beam,LWF_PIERCES_ENEMIES))
+								KillLWeapon(beam);
+						}
+					}
+				}
+				Waitframe();
+			}
+			//You've hit an enemy.
+			if(impact){
+				//Position the ffc.
+				this->X = impactX;
+				this->Y = impactY;
+				//Set up timer.
+				Ice_Timer = MAX_ICE_PLATFORM_TIME;
+				this->Misc[MISC_ICE_TIMER]=Ice_Timer;
+				if(!SamusVars[ICE_SCRIPT_CHECK]){
+					SamusVars[ICE_SCRIPT_CHECK]=1;
+					SamusVars[ICE_TIMER_RAN]=0;
+				}
+				//Change ffc appearance.
+				loc = ComboAt(this->X,this->Y);
+				if(BlockWidth>0){
+					for(i=loc;i<(loc+BlockWidth);i++){
+						if(!ComboFI(i,CF_NOENEMY) &&
+							!ComboT(i,CT_NOENEMY)){
+							SavedCombo[i]= Screen->ComboD[ComboAt(ComboX(i),ComboY(i))];
+							//Set these combos so they're retained between screens.
+							Game->SetComboData(Game->GetCurMap(),Game->GetCurDMapScreen(),i,ICE_BLOCK_COMBO);
+						}
+					}
+				}
+				else{
+					if(!ComboFI(loc,CF_NOENEMY)
+						&& !ComboT(loc,CT_NOENEMY))
+						Game->SetComboData(Game->GetCurMap(),Game->GetCurDMapScreen(),loc,ICE_BLOCK_COMBO);
+				}
+				if(BlockHeight >0){
+					for(j= ComboY(loc)+16;j<=ComboY(loc)+(BlockHeight*16);j+=16){
+						loc2 = ComboAt(impactX,j);
+						for(i=loc2;i<(loc2+BlockWidth);i++){
+							if(!ComboFI(i,CF_NOENEMY) &&
+								!ComboT(i,CT_NOENEMY)){
+								SavedCombo[i]= Screen->ComboD[ComboAt(ComboX(i),ComboY(i))];
+								Screen->ComboD[i]= ICE_FAKE_COMBO;
+							}
+						}	
+					}
+				}
+			}
+			while(Ice_Timer>0){
+				Ice_Timer--;
+				this->Misc[MISC_ICE_TIMER]=Ice_Timer;
+				if(Ice_Timer<5){
+					if(current_enemy->isValid())
+						current_enemy->Misc[GEN_MISC_FLAGS]&=~NPC_F_FREEZE;
+					if(BlockWidth>0){
+						for(i=loc;i<(loc+BlockWidth);i++)
+							Screen->ComboD[i]=SavedCombo[i];
+					}
+					if(BlockHeight>0){
+						for(j= ComboY(loc)+16;j<=ComboY(loc)+((BlockHeight-1)*16);j+=16){
+							loc2 = ComboAt(impactX,j);
+							for(i=loc2;i<(loc2+BlockWidth);i++)
+								Screen->ComboD[i]=SavedCombo[i];
+						}
+					}
+					SamusVars[ICE_SCRIPT_CHECK]=0;
+					Stop = true;
+					break;
+				}
+				Waitframe();
+			}
+			if(Ice_Timer<0){
+				if(BlockWidth>0){
+					for(i=loc;i<(loc+BlockWidth);i++)
+						Screen->ComboD[i]=SavedCombo[i];
+				}
+				if(BlockHeight>0){
+					for(j= ComboY(loc)+16;j<=ComboY(loc)+((BlockHeight-1)*16);j+=16){
+						loc2 = ComboAt(impactX,j);
+						for(i=loc2;i<(loc2+BlockWidth);i++)
+							Screen->ComboD[i]=SavedCombo[i];
+					}
+				}		
+				if(current_enemy->isValid())
+					current_enemy->Misc[GEN_MISC_FLAGS]&=~NPC_F_FREEZE;
+				SamusVars[ICE_SCRIPT_CHECK]=0;	
+				break;
+			}
+			if(Stop){
+				SamusVars[ICE_SCRIPT_CHECK]=0;
+				break;
+			}
+			Waitframe();	
+		}
+		SamusVars[ICE_SCRIPT_CHECK]=0;
+		this->Data = 0;
+		Quit();
+	}
+}
+
+const int ICE_TEMP_SCRIPT  = 94;
+const int MISC_ICE_TIMER   = 1;
+
+//Remove unwanted ice combos.
+void Ice_CleanUp(){
+	//Remove ice combos.
+	if(SamusVars[ICE_SCRIPT_CHECK] && !SamusVars[ICE_TIMER_RAN]){
+		if(CountFFCsRunning(ICE_BEAM_SCRIPT)==0
+			&& CountFFCsRunning(ICE_TEMP_SCRIPT)==0)
+			NewFFCScript(ICE_TEMP_SCRIPT,0);
+	}
+	else if(SamusVars[ICE_SCRIPT_CHECK] && SamusVars[ICE_TIMER_RAN]){
+		if(CountFFCsRunning(ICE_TEMP_SCRIPT)==0)
+			NewFFCScript(ICE_TEMP_SCRIPT,0);
+	}
+}
+
+//Temporary ice platforms.
+
+ffc script Ice_Temp{
+	void run(){
+		this->Data = GH_INVISIBLE_COMBO;
+		int Ice_Timer=MAX_ICE_PLATFORM_TIME;//Used internally by ffc to track how long ice combo has existed.
+		//Set up timer.
+		int i;
+		int NumCombos;
+		if(SamusVars[ICE_TIMER_RAN]){
+			for(i =0;i<=175;i++){
+				if(Screen->ComboD[i]==ICE_BLOCK_COMBO)
+					Game->SetComboData(Game->GetCurMap(),Game->GetCurDMapScreen(),i,GH_INVISIBLE_COMBO);
+			}	
+			SamusVars[ICE_SCRIPT_CHECK]=0;
+			Quit();
+		}
+		while(Ice_Timer>0 && !SamusVars[ICE_TIMER_RAN]){
+			if(CountFFCsRunning(ICE_BEAM_SCRIPT)!=0){
+				i=FindFFCRunning(ICE_BEAM_SCRIPT);
+				ffc other=Screen->LoadFFC(i);
+				if(other->Misc[MISC_ICE_TIMER]!=-9999)
+					Ice_Timer= other->Misc[MISC_ICE_TIMER];
+				else
+					Ice_Timer--;
+			}
+			else
+				Ice_Timer--;
+			Waitframe();
+		}
+		SamusVars[ICE_TIMER_RAN]=1;
+		for(i =0;i<=175;i++){
+			if(Screen->ComboD[i]==ICE_BLOCK_COMBO)
+				NumCombos++;
+		}
+		for(i =0;i<=175;i++){
+			if(NumCombos!=0){
+				if(Screen->ComboD[i]==ICE_BLOCK_COMBO)
+					Game->SetComboData(Game->GetCurMap(),Game->GetCurDMapScreen(),i,GH_INVISIBLE_COMBO);
+				SamusVars[ICE_SCRIPT_CHECK]=0;
+			}
+		}
+	}
+}
+

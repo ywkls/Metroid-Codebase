@@ -1,0 +1,35 @@
+//Section 101. Npc Spawns if you have item
+
+ffc script NPCItemSpawn{
+	void run(int enemy_id, int num_to_spawn, int item_id){
+		npc n;
+		int i;
+		int loc;
+		while(!Link->Item[item_id]){
+			Waitframe();
+		}
+		for(i=0;i<num_to_spawn;i++){
+			loc = FindSpawnPoint(CT_NONE,CF_ENEMY0+i);
+			n = CreateNPCAt(enemy_id,ComboX(loc),ComboY(loc));
+		}
+	}
+}
+
+ffc script MultiNPCItemSpawn{
+	void run(int enemy_id1, int enemy_id2, int num_to_spawn1, int num_to_spawn2, int item_id){
+		npc n;
+		int i;
+		int loc;
+		while(!Link->Item[item_id]){
+			Waitframe();
+		}
+		for(i=0;i<num_to_spawn1;i++){
+			loc = FindSpawnPoint(CT_NONE,CF_ENEMY0+i);
+			n = CreateNPCAt(enemy_id1,ComboX(loc),ComboY(loc));
+		}
+		for(i=0;i<num_to_spawn2;i++){
+			loc = FindSpawnPoint(CT_NONE,CF_ENEMY0+i+num_to_spawn1);
+			n = CreateNPCAt(enemy_id2,ComboX(loc),ComboY(loc));
+		}
+	}
+}

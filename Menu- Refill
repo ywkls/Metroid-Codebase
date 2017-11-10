@@ -1,0 +1,65 @@
+const int SFX_REFILL_STATION = 98;
+	
+int RefillMenu(int type){
+	if ( DEBUG_MENUS ) { 
+		DebuggingRefillMenu(); 
+		DebugRefill(type);
+	}
+	int lineBreak[]="@26";
+	
+	//Three springs per destination pair. We'll check if they are active, and only display those that are actie. 
+	
+	int restoredmissiles[]="Missile supply replenished.";
+	int restoredhealth[]="Energy supply replenished.";
+	int restoredboth[]="All supplies replenished.";
+	
+	//We can change '10' to cancel if needed. 
+	
+	SetUpWindow(WINDOW_SLOT_3, WINDOW_STYLE_1, 32, 16, SIZE_MEDIUM);
+	
+	int done = 0;
+	int choice;
+	
+	choice =1;
+   
+	// Save the state again...
+	int slotState[278];
+	int menuState[960];
+	int cursorPos;
+    
+	while(true){
+		Game->PlaySound(SFX_REFILL_STATION);
+		if ( type == 1 ) { //Refill missiles
+			RefillMissiles();
+			
+			ShowString(restoredmissiles, WINDOW_SLOT_4, WINDOW_STYLE_1, 48, 32);
+			Tango_ClearSlot(WINDOW_SLOT_2);
+			done = -99999; 
+		}
+		
+		if ( type == 2 ) { //Refill health
+			RefillHealth(); 
+			ShowString(restoredhealth, WINDOW_SLOT_4, WINDOW_STYLE_1, 48, 32);
+			Tango_ClearSlot(WINDOW_SLOT_2);
+			done = -99999; 
+		}
+		
+		if ( type == 3 ) { //Refill both
+			RefillMissiles(); 
+			RefillHealth();
+			RefillBombs();
+			ShowString(restoredboth, WINDOW_SLOT_4, WINDOW_STYLE_1, 48, 64);
+			Tango_ClearSlot(WINDOW_SLOT_2);
+			done = -99999; 
+		}
+		
+		if ( done ) {
+			Game->PlaySound(SFX_SAVE_SUCCESS);
+			break;
+		//	return choice;
+		}
+	}
+    
+	Tango_ClearSlot(WINDOW_SLOT_3);
+	return done;
+}

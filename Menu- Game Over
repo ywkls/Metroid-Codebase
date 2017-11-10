@@ -1,0 +1,135 @@
+//Section 84. Game Over Menu
+
+//Handles Game Over menu.
+
+ffc script Game_Over_Menu{
+	void run(){
+		if(!SamusVars[GAME_OVER_TIME]){
+			SamusVars[IS_INVISIBLE]= 0;
+			SamusVars[IS_FROZEN]=0;
+			if ( GetGameRestoreStation()!=128 ) 
+				WarpSamusForced( GetGameRestoreStation(), 0);
+			else
+				this->Data =  CM_AUTOWARPD;
+		}
+		SamusVars[IS_INVISIBLE]=1;
+		SamusVars[IS_FROZEN]= 1;
+		bool pressed;
+		int choice;
+		int Message[]= "Find the Metroid Larva";
+		int Message2[]= "Press Ex4";
+		while ( true ) {
+			//If this station is active....
+	
+			while ( ( !pressed && !Tango_MenuIsActive() ) ) {
+				if	( Link->PressEx4 ) { 
+					pressed = true; 
+					Link->PressEx4= false; 
+					Link->InputEx4 = false; 	
+				}
+				Screen->DrawString( 7, 32, 32,  FONT_SUBSCREEN3 ,0x01,-1,TF_NORMAL, Message, 128 );
+				Screen->DrawString( 7, 32, 48,  FONT_SUBSCREEN3 ,0x01,-1,TF_NORMAL, Message2, 128 );
+				Waitframe();
+			}
+				
+			if ( pressed ) {
+				pressed = false;
+				//Set coordinates for this station:
+				
+				choice = GameOver_Menu();
+				if(choice!=0)
+					break;
+			}
+			Waitframe(); //Main while loop. 
+		}
+		SamusVars[IS_INVISIBLE]=0;
+		SamusVars[IS_FROZEN]= 0;
+		SamusVars[GAME_OVER_TIME]= 0;
+		if ( GetGameRestoreStation()!=128 ) 
+			WarpSamusForced( GetGameRestoreStation(), 0);
+		else
+			this->Data =  CM_AUTOWARPD;
+	}
+}
+
+//Menu called by the save station ffc.
+int GameOver_Menu() {
+	int lineBreak[]="@26";
+	int line1[]="@choice(1)Continue@26";
+	int line2[]="@choice(2)Save and Continue@26";
+	int line3[]="@choice(4)Quit";
+	int line4[]="@choice(3)Save and Quit@26";
+	int initmenu[]="@domenu(1)@suspend()";
+	
+	SetUpWindow(WINDOW_SLOT_1, WINDOW_STYLE_1, 32, 16, SIZE_WIDE);
+	Tango_LoadString(WINDOW_SLOT_1, line1);
+	Tango_AppendString(WINDOW_SLOT_1, line2);
+	Tango_AppendString(WINDOW_SLOT_1, line4);
+	Tango_AppendString(WINDOW_SLOT_1, line3);
+	Tango_AppendString(WINDOW_SLOT_1, initmenu);
+	Tango_ActivateSlot(WINDOW_SLOT_1);
+	
+	while(!Tango_MenuIsActive()){
+        
+		Waitframe();
+	}
+    
+	// Save the state again...
+	int slotState[278];
+	int menuState[960];
+	int cursorPos;
+	Tango_SaveSlotState(WINDOW_SLOT_1, slotState);
+	Tango_SaveMenuState(menuState);
+    
+	int done = 0;
+	int choice;
+	while(true){
+    
+		while( Tango_MenuIsActive() ) {
+			if	( Link->PressEx4 ) { 
+				Link->PressEx4= false; 
+				Link->InputEx4 = false; 	
+			}
+			cursorPos=Tango_GetMenuCursorPosition();
+			Waitframe();
+		}
+        
+		choice = Tango_GetLastMenuChoice();
+		if ( choice == 1)
+			done= -999;
+		
+		else if ( choice == 3){//Cancel
+			SamusVars[IS_INVISIBLE]=0;
+			SamusVars[IS_FROZEN]= 0;
+			SamusVars[GAME_OVER_TIME]= 0;
+			SaveGame(GetGameRestoreStation());
+			Game->End();
+		}
+		else if ( choice == 2){//Cancel
+			SamusVars[IS_INVISIBLE]=0;
+			SamusVars[IS_FROZEN]= 0;
+			SamusVars[GAME_OVER_TIME]= 0;
+			SaveGame(GetGameRestoreStation());
+			done= -999;
+		}
+		else if ( choice == 4){//Cancel
+			SamusVars[IS_INVISIBLE]=0;
+			SamusVars[IS_FROZEN]= 0;
+			SamusVars[GAME_OVER_TIME]= 0;
+			Game->End();
+		}
+		
+		if ( done )
+			break;
+		//	return choice;
+		else {
+			Tango_RestoreSlotState(WINDOW_SLOT_1, slotState);
+			Tango_RestoreMenuState(menuState);
+			Tango_SetMenuCursorPosition(cursorPos);
+		}
+	}
+    
+	Tango_ClearSlot(WINDOW_SLOT_1);
+	//if ( DEBUG_MENUS ) DebugMetroidSaveStationMenu(done);
+	return done;
+}

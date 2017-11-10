@@ -1,0 +1,251 @@
+//Reads from array to determine what button to track.
+
+bool PressItemSwitch(){
+	if(SamusVars[SWITCH_BUTTON]==BUTTON_L)
+		return Link->PressL;
+	else if(SamusVars[SWITCH_BUTTON]==BUTTON_R)
+		return Link->PressR;
+	else if(SamusVars[SWITCH_BUTTON]==BUTTON_EX1)
+		return Link->PressEx1;
+	else if(SamusVars[SWITCH_BUTTON]==BUTTON_EX2)
+		return Link->PressEx2;
+	else if(SamusVars[SWITCH_BUTTON]==BUTTON_EX4)
+		return Link->PressEx4;
+	else if(SamusVars[SWITCH_BUTTON]==BUTTON_A)
+		return Link->PressA;
+	else if(SamusVars[SWITCH_BUTTON]==BUTTON_B)
+		return Link->PressB;
+}
+
+//Reads from array to determine what button to track.
+
+bool PressFire(){
+	if(SamusVars[FIRE_BUTTON]==BUTTON_L)
+		return Link->PressL;
+	else if(SamusVars[FIRE_BUTTON]==BUTTON_R)
+		return Link->PressR;
+	else if(SamusVars[FIRE_BUTTON]==BUTTON_EX1)
+		return Link->PressEx1;
+	else if(SamusVars[FIRE_BUTTON]==BUTTON_EX2)
+		return Link->PressEx2;
+	else if(SamusVars[FIRE_BUTTON]==BUTTON_EX4)
+		return Link->PressEx4;
+	else if(SamusVars[FIRE_BUTTON]==BUTTON_A)
+		return Link->PressA;
+	else if(SamusVars[FIRE_BUTTON]==BUTTON_B)
+		return Link->PressB;
+}
+
+//Reads from array to determine what button to track.
+
+bool InputFire(){
+	if(SamusVars[FIRE_BUTTON]==BUTTON_L)
+		return Link->InputL;
+	else if(SamusVars[FIRE_BUTTON]==BUTTON_R)
+		return Link->InputR;
+	else if(SamusVars[FIRE_BUTTON]==BUTTON_EX1)
+		return Link->InputEx1;
+	else if(SamusVars[FIRE_BUTTON]==BUTTON_EX2)
+		return Link->InputEx2;
+	else if(SamusVars[FIRE_BUTTON]==BUTTON_EX4)
+		return Link->InputEx4;
+	else if(SamusVars[FIRE_BUTTON]==BUTTON_A)
+		return Link->InputA;
+	else if(SamusVars[FIRE_BUTTON]==BUTTON_B)
+		return Link->InputB;				
+}
+
+//Reads from array to determine what button to track.
+
+bool PressDash(){
+	if(SamusVars[DASH_BUTTON]==BUTTON_L)
+		return Link->PressL;
+	else if(SamusVars[DASH_BUTTON]==BUTTON_R)
+		return Link->PressR;
+	else if(SamusVars[DASH_BUTTON]==BUTTON_EX1)
+		return Link->PressEx1;
+	else if(SamusVars[DASH_BUTTON]==BUTTON_EX2)
+		return Link->PressEx2;
+	else if(SamusVars[DASH_BUTTON]==BUTTON_EX4)
+		return Link->PressEx4;
+	else if(SamusVars[DASH_BUTTON]==BUTTON_A)
+		return Link->PressA;
+	else if(SamusVars[DASH_BUTTON]==BUTTON_B)
+		return Link->PressB;	
+}
+
+//Reads from array to determine what button to track.
+
+bool InputDash(){
+	if(SamusVars[DASH_BUTTON]==BUTTON_L)
+		return Link->InputL;
+	else if(SamusVars[DASH_BUTTON]==BUTTON_R)
+		return Link->InputR;
+	else if(SamusVars[DASH_BUTTON]==BUTTON_EX1)
+		return Link->InputEx1;
+	else if(SamusVars[DASH_BUTTON]==BUTTON_EX2)
+		return Link->InputEx2;
+	else if(SamusVars[DASH_BUTTON]==BUTTON_EX4)
+		return Link->InputEx4;
+	else if(SamusVars[DASH_BUTTON]==BUTTON_A)
+		return Link->InputA;
+	else if(SamusVars[DASH_BUTTON]==BUTTON_B)
+		return Link->InputB;		
+}
+
+//Reads from array to determine what button to track.
+
+bool PressJump(){
+	if(SamusVars[JUMP_BUTTON]==BUTTON_L)
+		return Link->PressL;
+	else if(SamusVars[JUMP_BUTTON]==BUTTON_R)
+		return Link->PressR;
+	else if(SamusVars[JUMP_BUTTON]==BUTTON_EX1)
+		return Link->PressEx1;
+	else if(SamusVars[JUMP_BUTTON]==BUTTON_EX2)
+		return Link->PressEx2;
+	else if(SamusVars[JUMP_BUTTON]==BUTTON_EX4)
+		return Link->PressEx4;
+	else if(SamusVars[JUMP_BUTTON]==BUTTON_A)
+		return Link->PressA;
+	else if(SamusVars[JUMP_BUTTON]==BUTTON_B)
+		return Link->PressB;
+}
+
+//Reads from array to determine what button to track.
+
+bool InputJump(){
+	if(SamusVars[JUMP_BUTTON]==BUTTON_L)
+		return Link->InputL;
+	else if(SamusVars[JUMP_BUTTON]==BUTTON_R)
+		return Link->InputR;
+	else if(SamusVars[JUMP_BUTTON]==BUTTON_EX1)
+		return Link->InputEx1;
+	else if(SamusVars[JUMP_BUTTON]==BUTTON_EX2)
+		return Link->InputEx2;
+	else if(SamusVars[JUMP_BUTTON]==BUTTON_EX4)
+		return Link->InputEx4;
+	else if(SamusVars[JUMP_BUTTON]==BUTTON_A)
+		return Link->InputA;
+	else if(SamusVars[JUMP_BUTTON]==BUTTON_B)
+		return Link->InputB;			
+}
+
+//Reads from array to determine what button to track.
+
+bool Press_Aim_Up(){
+	if(SamusVars[AIM_UP_BUTTON]==BUTTON_L)
+		return Link->PressL;
+	else if(SamusVars[AIM_UP_BUTTON]==BUTTON_R)
+		return Link->PressR;
+	else if(SamusVars[AIM_UP_BUTTON]==BUTTON_EX1)
+		return Link->PressEx1;
+	else if(SamusVars[AIM_UP_BUTTON]==BUTTON_EX2)
+		return Link->PressEx2;
+	else if(SamusVars[AIM_UP_BUTTON]==BUTTON_EX4)
+		return Link->PressEx4;
+	else if(SamusVars[AIM_UP_BUTTON]==BUTTON_A)
+		return Link->PressA;
+	else if(SamusVars[AIM_UP_BUTTON]==BUTTON_B)
+		return Link->PressB;
+}
+
+//Reads from array to determine what button to track.
+
+bool Input_Aim_Up(){
+	if(SamusVars[AIM_UP_BUTTON]==BUTTON_L)
+		return Link->InputL;
+	else if(SamusVars[AIM_UP_BUTTON]==BUTTON_R)
+		return Link->InputR;
+	else if(SamusVars[AIM_UP_BUTTON]==BUTTON_EX1)
+		return Link->InputEx1;
+	else if(SamusVars[AIM_UP_BUTTON]==BUTTON_EX2)
+		return Link->InputEx2;
+	else if(SamusVars[AIM_UP_BUTTON]==BUTTON_EX4)
+		return Link->InputEx4;
+	else if(SamusVars[AIM_UP_BUTTON]==BUTTON_A)
+		return Link->InputA;
+	else if(SamusVars[AIM_UP_BUTTON]==BUTTON_B)
+		return Link->InputB;		
+}
+
+//Reads from array to determine what button to track.
+
+bool Press_Aim_Dn(){
+	if(SamusVars[AIM_DN_BUTTON]==BUTTON_L)
+		return Link->PressL;
+	else if(SamusVars[AIM_DN_BUTTON]==BUTTON_R)
+		return Link->PressR;
+	else if(SamusVars[AIM_DN_BUTTON]==BUTTON_EX1)
+		return Link->PressEx1;
+	else if(SamusVars[AIM_DN_BUTTON]==BUTTON_EX2)
+		return Link->PressEx2;
+	else if(SamusVars[AIM_DN_BUTTON]==BUTTON_EX4)
+		return Link->PressEx4;
+	else if(SamusVars[AIM_DN_BUTTON]==BUTTON_A)
+		return Link->PressA;
+	else if(SamusVars[AIM_DN_BUTTON]==BUTTON_B)
+		return Link->PressB;	
+}
+
+//Reads from array to determine what button to track.
+
+bool Input_Aim_Dn(){
+	if(SamusVars[AIM_DN_BUTTON]==BUTTON_L)
+		return Link->InputL;
+	else if(SamusVars[AIM_DN_BUTTON]==BUTTON_R)
+		return Link->InputR;
+	else if(SamusVars[AIM_DN_BUTTON]==BUTTON_EX1)
+		return Link->InputEx1;
+	else if(SamusVars[AIM_DN_BUTTON]==BUTTON_EX2)
+		return Link->InputEx2;
+	else if(SamusVars[AIM_DN_BUTTON]==BUTTON_EX4)
+		return Link->InputEx4;
+	else if(SamusVars[AIM_DN_BUTTON]==BUTTON_A)
+		return Link->InputA;
+	else if(SamusVars[AIM_DN_BUTTON]==BUTTON_B)
+		return Link->InputB;			
+}
+
+//Hard coded because it can't be reset.
+
+bool PressExamine(){
+	return Link->PressEx3;
+}
+
+bool InputExamine(){
+	return Link->InputEx3;
+}
+
+//Block a particular button input. Used with array pointers.
+						
+void DampInput(int Button){
+	if(Button==BUTTON_A){
+		Link->PressA = false;
+		Link->InputA = false;
+	}
+	else if(Button==BUTTON_B){
+		Link->PressB = false;
+		Link->InputB = false;
+	}
+	else if(Button==BUTTON_EX1){
+		Link->PressEx1 = false;
+		Link->InputEx1 = false;
+	}
+	else if(Button==BUTTON_EX2){
+		Link->PressEx2 = false;
+		Link->InputEx2 = false;
+	}
+	else if(Button==BUTTON_EX3){
+		Link->PressEx3 = false;
+		Link->InputEx3 = false;
+	}
+	else if(Button==BUTTON_L){
+		Link->PressL = false;
+		Link->InputL = false;
+	}
+	else if(Button==BUTTON_R){
+		Link->PressR = false;
+		Link->InputR = false;
+	}
+}

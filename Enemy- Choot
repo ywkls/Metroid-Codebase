@@ -1,0 +1,121 @@
+//Section 76. Floating Rays.
+
+ffc script Jumping_Rays{
+	void run(int enemyID){
+		//Set up enemy.
+		npc ghost = Ghost_InitAutoGhost(this, enemyID);
+		Ghost_SetFlag(GHF_IGNORE_ALL_TERRAIN);
+		Ghost_SetFlag(GHF_NO_FALL);
+		Ghost_SetFlag(GHF_FAKE_Z);
+		//How high it can jump, in pixels.
+		int MaxJump = ghost->Attributes[0];
+		//How often to jump.
+		int JumpTimer = Rand(60,240);
+		bool Jumping = false;//Whether it is currently jumping.
+		//Whether this enemy floats to the ground.
+		int Floating = Ghost_GetAttribute(ghost,1,0);
+		//Remember starting X and Y.
+		int StartX = Ghost_X;
+		int StartY = Ghost_Y;
+		//Used to create sine wave movement.
+		int Misc1 = ghost->Attributes[2];//Horizontal movement amplitude
+		int Misc2 = ghost->Attributes[3];//Horizontal movement speed.
+		int Misc3 = ghost->Attributes[4];//Vertical movement amplitude.
+		int Misc4 = ghost->Attributes[5];//Vertical movement speed.
+		int T1 = 0;
+		int T2 = 0;
+		//Enemy width and height.
+		int Width = Ghost_GetAttribute(ghost,6,1);
+		int Height = Ghost_GetAttribute(ghost,7,1);
+		//Enemy Cset.
+		Ghost_CSet = Ghost_GetAttribute(ghost,8,0);
+		Ghost_SetSize(this,ghost,Width,Height);
+		//Remember initial combo.
+		//Not jumping = 1st combo.
+		//Jumping = second combo.
+		//Floating = third combo.
+		int combo = ghost->Attributes[10];
+		bool MovingRight = ChooseBool();
+		while(true){
+			//Not a floating enemy.
+			if(!Floating){
+				//Not jumping right now.
+				if(!Jumping){
+					//The jump timer has run out.
+					if(JumpTimer<=0)
+						//Jump now.
+						Jumping = true;
+				}
+				//Currently jumping.
+				else if(Jumping){
+					//Change appearance and play sound.
+					Ghost_Data = combo+1;
+					Game->PlaySound(SFX_JUMP);
+					//Ascend to max jump height
+					while(Ghost_Y>(StartY-MaxJump)
+							&& !Screen->isSolid(Ghost_X+8,Ghost_Y-1)){
+						Ghost_Y--;
+						Ghost_Waitframe(this,ghost,true,true);
+					}
+					//Drop back down.
+					while(Ghost_Y<StartY){
+						Ghost_Y++;
+						Ghost_Waitframe(this,ghost,true,true);
+					}
+					Game->PlaySound(SFX_SPLASH);
+					//Restore appearance.
+					Ghost_Data = combo;
+					//Not jumping anymore.
+					Jumping = false;
+					//Reset timer.
+					JumpTimer = Rand(60,240);
+				}
+			}
+			//This is a floating enemy.
+			else if(Floating){
+				if(!Jumping){
+					if(JumpTimer<=0)
+						Jumping = true;
+				}
+				else if(Jumping){
+					Ghost_Data = combo+1;
+					Game->PlaySound(SFX_JUMP);
+					while(Ghost_Y>(StartY-MaxJump) 
+							&& !Screen->isSolid(Ghost_X+16,Ghost_Y-1)){
+						Ghost_Y--;
+						Ghost_Waitframe(this,ghost,true,true);
+					}
+					//Change to floating combo.
+					Ghost_Data = combo+2;
+					while(Ghost_Y<StartY){
+						//Move back and forth as it drops.
+						T1+=Misc2;
+						WrapDegrees(T1);
+						T2+=Misc4;
+						WrapDegrees(T2);
+						//Handle left and right movement.
+						if(Ghost_X<(StartX+Misc2) && MovingRight)
+							Ghost_X = StartX+Misc1*Sin(T1);
+						else if(Ghost_X>=(StartX+Misc2) && MovingRight)
+							MovingRight = false;
+						else if(Ghost_X>(StartX-Misc2) && !MovingRight)
+							Ghost_X = StartX-Misc1*Sin(T1);
+						else if(Ghost_X<=(StartX-Misc2) && !MovingRight)
+							MovingRight =  true;
+						Ghost_UnsetFlag(GHF_NO_FALL);
+						Ghost_Waitframe(this,ghost,true,true);
+						Ghost_SetFlag(GHF_NO_FALL);
+						Ghost_Waitframes(this,ghost,true,true,10);
+					}
+					Ghost_SetFlag(GHF_NO_FALL);
+					Ghost_Data = combo;
+					Jumping = false;
+					JumpTimer = Rand(60,240);
+				}
+			}
+			//Reduce timer.
+			JumpTimer--;
+			Ghost_Waitframe(this,ghost,true,true);
+		}
+	}
+}

@@ -1,0 +1,39 @@
+//Section 95. Eating Plant
+
+ffc script Eating_Plant{
+	void run(int enemyID){
+		npc ghost = Ghost_InitAutoGhost(this, enemyID);
+		Ghost_SetFlag(GHF_NO_FALL);
+		int GrabTimer;
+		int GrabCooldown;
+		int Combo = ghost->Attributes[10];
+		Ghost_SetSize(this,ghost,4,2);
+		Ghost_SetHitOffsets(ghost,0,0,16,16);
+		bool Grabbed;
+		while(true){
+			while(!Grabbed){
+				GrabCooldown--;
+				if(GrabCooldown<=0){
+					if(Between(Link->X+8,Ghost_X+16,Ghost_X+32)
+						&& Between(Link->Y,Ghost_Y,Ghost_Y+32)){
+						Grabbed = true;
+						GrabTimer = 120;
+						Ghost_Data = Combo+1;
+					}
+				}
+				Ghost_Waitframe(this,ghost,true,true);
+			}
+			while(Grabbed && GrabCooldown <=0){
+				Link->X = Ghost_X+16;
+				Link->Y = Ghost_Y;
+				GrabTimer--;
+				if(GrabTimer<=0){
+					GrabCooldown = 120;
+					Grabbed = false;
+					Ghost_Data = Combo;
+				}
+				Ghost_Waitframe(this,ghost,true,true);
+			}
+		}
+	}
+}

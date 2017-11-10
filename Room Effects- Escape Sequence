@@ -1,0 +1,11 @@
+//Section 100. Ship at End
+
+ffc script Ship{
+	void run(){
+		while(true){
+			if(LinkCollision(this))
+				this->Data = CM_AUTOWARPD;
+			Waitframe();
+		}
+	}
+}

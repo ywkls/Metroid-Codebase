@@ -1,0 +1,10 @@
+ffc script OneTime_Cutscene{
+	void run(int perm){
+		if(Screen->D[perm]!=0)
+			Quit();
+		else{
+			Screen->D[perm]=1;
+			this->Data = CM_AUTOWARPD;
+		}
+	}
+}

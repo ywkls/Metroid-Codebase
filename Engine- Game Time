@@ -1,0 +1,24 @@
+//Section 53. Game Timer
+//---COMMMENTING NEEDED--
+
+void Game_Time(){
+	if(SamusVars[FRAMES_PLAYED]<59)
+		SamusVars[FRAMES_PLAYED]++;
+	else if(SamusVars[FRAMES_PLAYED]>=59){
+		if(SamusVars[SECONDS_PLAYED]<59)
+			SamusVars[SECONDS_PLAYED]++;
+		else if(SamusVars[SECONDS_PLAYED]>=59){
+			if(SamusVars[MINUTES_PLAYED]<59)
+				SamusVars[MINUTES_PLAYED]++;
+			else{
+				SamusVars[HOURS_PLAYED]++;
+				SamusVars[MINUTES_PLAYED]=0;
+			}
+			SamusVars[SECONDS_PLAYED]=0;
+		}
+		SamusVars[FRAMES_PLAYED]=0;
+	}
+	Game->Counter[CR_SCRIPT5]= SamusVars[HOURS_PLAYED];
+	Game->Counter[CR_SCRIPT6]= SamusVars[MINUTES_PLAYED];
+	Game->Counter[CR_SCRIPT7]= SamusVars[SECONDS_PLAYED];
+}

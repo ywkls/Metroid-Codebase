@@ -1,0 +1,114 @@
+const int CM_AUTOWARPD        = 74; //Combo ID of a transparent AutoWarp D combotype
+
+//Handles initial menu.
+
+ffc script StartMenu{
+	void run(){
+		SamusVars[IS_INVISIBLE]=1;
+		SamusVars[IS_FROZEN]= 1;
+		bool pressed;
+		int choice;
+		int Message[]= "Press Ex4";
+		while ( true ) {
+			//If this station is active...
+	
+			while ( ( !pressed && !Tango_MenuIsActive() ) ) {
+				if	( Link->PressEx4 ) { 
+					pressed = true; 
+					Link->PressEx4= false; 
+					Link->InputEx4 = false; 	
+				}
+				Screen->DrawString( 7, 112, 112,  FONT_SUBSCREEN3 ,0x01,-1,TF_NORMAL, Message, 128 );
+				Waitframe();
+			}
+				
+			if ( pressed ) {
+				pressed = false;
+				//Set coordinates for this station:
+				
+				choice = Start_Menu();
+				if ( choice < 0 && choice > -9999){
+					SetControls(SamusVars[CONTROL_SET]);
+					break;
+				}
+			}
+			Waitframe(); //Main while loop. 
+		}
+		
+		if ( GetGameRestoreStation()!=128 ){
+			SamusVars[IS_INVISIBLE]=0;
+			SamusVars[IS_FROZEN]= 0;
+			WarpSamusForced( GetGameRestoreStation(), 0);
+		}
+		else
+			this->Data =  CM_AUTOWARPD;
+	}
+}
+
+//Menu called by the save station ffc.
+int Start_Menu() {
+	int lineBreak[]="@26";
+	int line1[]="@choice(1)Start Game@26";
+	int line2[]="@choice(2)Set Up Controls@26";
+	int line3[]="@choice(3)Options";
+	int initmenu[]="@domenu(1)@suspend()";
+	
+	SetUpWindow(WINDOW_SLOT_1, WINDOW_STYLE_1, 32, 16, SIZE_WIDE);
+	Tango_LoadString(WINDOW_SLOT_1, line1);
+	Tango_AppendString(WINDOW_SLOT_1, line2);
+	Tango_AppendString(WINDOW_SLOT_1, line3);
+	Tango_AppendString(WINDOW_SLOT_1, initmenu);
+	Tango_ActivateSlot(WINDOW_SLOT_1);
+	
+	while(!Tango_MenuIsActive()){
+        
+		Waitframe();
+	}
+    
+	// Save the state again...
+	int slotState[278];
+	int menuState[960];
+	int cursorPos;
+	Tango_SaveSlotState(WINDOW_SLOT_1, slotState);
+	Tango_SaveMenuState(menuState);
+    
+	int done = 0;
+	int choice;
+	while(true){
+    
+		while( Tango_MenuIsActive() ) {
+			if	( Link->PressEx4 ) { 
+				Link->PressEx4= false; 
+				Link->InputEx4 = false; 	
+			}
+			cursorPos=Tango_GetMenuCursorPosition();
+			Waitframe();
+		}
+        
+		choice = Tango_GetLastMenuChoice();
+		if ( choice == 1)
+			done = -999;
+		
+		else if ( choice == 2){//Cancel
+			ControlMenu();
+			done =1;
+		}
+		else if ( choice == 3){//Cancel
+			Option_Menu();
+			done =1;
+		}
+		
+		if ( done )
+			break;
+		//	return choice;
+		else {
+			Tango_RestoreSlotState(WINDOW_SLOT_1, slotState);
+			Tango_RestoreMenuState(menuState);
+			Tango_SetMenuCursorPosition(cursorPos);
+		}
+	}
+    
+	Tango_ClearSlot(WINDOW_SLOT_1);
+	//if ( DEBUG_MENUS ) DebugMetroidSaveStationMenu(done);
+	return done;
+}

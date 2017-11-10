@@ -1,0 +1,30 @@
+const int KRAID_RISING_COMBO = 184;//Combo to draw rising Kraid.
+
+ffc script Kraid_Rises{
+	void run(){
+		int timer;
+		int YPos;
+		while(true){
+			if(timer<176){
+				Screen->DrawCombo(3,144,16+YPos,KRAID_RISING_COMBO,
+											13,20,8,-1, -1, 0, 0, 0, 48, 0, true, 128);
+				Screen->DrawCombo(4,160,118+YPos,KRAID_CLAW_COMBO,
+											4,2,8,-1, -1, 0, 0, 0, 48, 0, true, 128);
+				Screen->DrawCombo(4,144,240+YPos,KRAID_FOOT,
+											6,5,8,-1, -1, 0, 0, 0, 48, 0, true, 128);
+			}
+			else{
+				Screen->DrawCombo(3,144,16+YPos,KRAID_RISING_COMBO,
+											13,20,8,-1, -1, 0, 0, 0, 48, 0, true, 128);
+				Screen->DrawCombo(4,160,118+YPos,KRAID_CLAW_COMBO,
+											4,2,8,-1, -1, 0, 0, 0, 48, 0, true, 128);
+				Screen->DrawCombo(4,144,240+YPos,KRAID_FOOT,
+											6,5,8,-1, -1, 0, 0, 0, 48, 0, true, 128);
+				this->Data = CM_AUTOWARPD;
+			}
+			timer++;
+			YPos--;
+			Waitframe();
+		}
+	}
+}

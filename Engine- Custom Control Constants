@@ -1,0 +1,10 @@
+//Control set constants.
+
+const int SET_DEFAULT = 0;
+const int SET_SWTICHED1 = 1;
+const int SET_SWTICHED2 = 2;
+const int SET_REVERSED1 = 3;
+const int SET_REVERSED2 = 4;
+const int SET_SW_REVERSED1 = 5;
+const int SET_SW_REVERSED2 = 6;
+const int SET_DEFAULT_RT = 7;

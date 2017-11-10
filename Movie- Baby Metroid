@@ -1,0 +1,30 @@
+//Section 113. Baby Metroid Cutscene
+
+ffc script Draw_BabyMetroid{
+	void run(bool dies){
+		int bomb_timer;
+		while(true){
+			if(!dies)
+				Screen->DrawCombo(4,this->X,this->Y,this->Data, 
+									5,5, 2, -1, -1, 0, 0, 0, 0, 0, true, 128);
+			else{
+				bomb_timer =(bomb_timer+1)%16;
+				if(bomb_timer==0){
+					// One explosion every 16 frames, 15 times
+					for(int i=0; i<7; i++){
+						lweapon explosion=Screen->CreateLWeapon(LW_BOMBBLAST);
+						explosion->X=this->X+Rand(80)-8;
+						explosion->Y=this->Y+Rand(80)-8;
+						explosion->CollDetection=false;
+						Screen->DrawCombo(4,this->X,this->Y,this->Data, 
+										  5,5, 2, -1, -1, 0, 0, 0, 0, 0, true, 64);
+						Waitframe();
+					}
+				}
+				Screen->DrawCombo(4,this->X,this->Y,this->Data, 
+								   5,5, 2, -1, -1, 0, 0, 0, 0, 0, true, 64);
+			}
+			Waitframe();
+		}
+	}
+}

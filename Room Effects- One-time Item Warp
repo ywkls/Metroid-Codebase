@@ -1,0 +1,14 @@
+//Section 121. One Time Item Warp
+
+ffc script One_Time_Itm_Warp{
+	void run(int item_id, int perm){
+		bool triggered = false;
+		if(Screen->D[perm]==1)
+			triggered = true;
+		while(!triggered && !Link->Item[item_id])
+			Waitframe();
+		Screen->D[perm]=1;
+		if(!triggered)
+			this->Data = CM_AUTOWARPD;
+	}
+}

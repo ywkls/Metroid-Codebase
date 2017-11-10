@@ -1,0 +1,17 @@
+//Section 119. Animal Rescue
+
+ffc script Animal_Rescue{
+    void run(int combo, int height, int CSet){
+       while(!Screen->State[ST_SECRET]){
+			Screen->DrawCombo(6, this->X, this->Y,combo, 
+								2, height, CSet, -1, -1, 0, 0, 0, 0, 0, true, 128);
+			Waitframe();
+	   }
+	   while(this->X<=300){
+			Screen->DrawCombo(6, this->X, this->Y,combo+1, 
+								2, height, CSet, -1, -1, 0, 0, 0, 0, 0, true, 128);
+			this->X++;
+			Waitframe();
+	   }
+	}
+}

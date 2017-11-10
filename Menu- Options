@@ -1,0 +1,78 @@
+void ChoiceMenu(){
+	int lineBreak[]="@26";
+	int Yes[]= "Yes@26";
+	int Nope[]= "No@26";
+	SetUpWindow(WINDOW_SLOT_2, WINDOW_STYLE_2, 128, 16, SIZE_TALL);
+	if(!SamusVars[HEART_BEEP_OFF])
+		Tango_LoadString(WINDOW_SLOT_2, Yes);
+	else if(SamusVars[HEART_BEEP_OFF])
+		Tango_LoadString(WINDOW_SLOT_2, Nope);
+	Tango_ActivateSlot(WINDOW_SLOT_2);
+}
+
+//Menu called by the save station ffc.
+int Option_Menu() {
+	int lineBreak[]="@26";
+	int Beep[]= "@choice(1)Heart Beep@26";
+	int Done[]= "@choice(2)Done@26";
+	int initmenu[]="@domenu(1)@suspend()";
+	SetUpWindow(WINDOW_SLOT_1, WINDOW_STYLE_1, 16, 16, SIZE_TALL);
+	Tango_LoadString(WINDOW_SLOT_1, Beep);
+	Tango_AppendString(WINDOW_SLOT_1, Done);
+	Tango_AppendString(WINDOW_SLOT_1, initmenu);
+	Tango_ActivateSlot(WINDOW_SLOT_1);
+	ChoiceMenu();
+	
+	while(!Tango_MenuIsActive()){
+        
+		Waitframe();
+	}
+    
+	// Save the state again...
+	int slotState[278];
+	int menuState[960];
+	int cursorPos;
+	Tango_SaveSlotState(WINDOW_SLOT_1, slotState);
+	Tango_SaveMenuState(menuState);
+    
+	int done = 0;
+	int choice;
+	while(true){
+    
+		while( Tango_MenuIsActive() ) {
+			if	( Link->PressEx4 ) { 
+				Link->PressEx4= false; 
+				Link->InputEx4 = false; 	
+			}
+			cursorPos=Tango_GetMenuCursorPosition();
+			Waitframe();
+		}
+        
+		choice = Tango_GetLastMenuChoice();
+		if ( choice == 2)
+			done = -999;
+		
+		else if ( choice == 1){//Cancel
+			if(!SamusVars[HEART_BEEP_OFF])
+				SamusVars[HEART_BEEP_OFF]=1;
+			else if(SamusVars[HEART_BEEP_OFF])
+				SamusVars[HEART_BEEP_OFF]=0;
+			Tango_ClearSlot(WINDOW_SLOT_2);
+			ChoiceMenu();
+		}
+		if ( done )
+			break;
+		//	return choice;
+		else {
+			Tango_RestoreSlotState(WINDOW_SLOT_1, slotState);
+			Tango_RestoreMenuState(menuState);
+			Tango_SetMenuCursorPosition(cursorPos);
+		}
+	}
+	Tango_ClearSlot(WINDOW_SLOT_1);
+    Tango_ClearSlot(WINDOW_SLOT_2);
+	//if ( DEBUG_MENUS ) DebugMetroidSaveStationMenu(done);
+	return done;
+}
+
+const int SFX_ACCEPTED = 27;//Sound to make if input is accepted.

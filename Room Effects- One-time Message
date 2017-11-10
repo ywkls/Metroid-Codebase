@@ -1,0 +1,9 @@
+//Section 82. One Time Message
+
+ffc script OneTimeMessage{
+	void run(int message, int perm){
+		if(Screen->D[perm]!=0)Quit();
+		Screen->Message(message);
+		Screen->D[perm]= 1;
+	}
+}

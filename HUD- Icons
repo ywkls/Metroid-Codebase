@@ -1,0 +1,39 @@
+//Section 72. Scripted Interface
+
+//Draws icons on the subscreen based on what item is in inventory and equipped.
+
+void DrawIcons(){
+	if(Link->Item[I_MISSILES]){
+		if(SamusVars[EQUIPPED_ITEM]==I_MISSILES)
+			Screen->FastTile(7, 74, -56, 14220, 8, 128 );
+		else
+			Screen->FastTile(7, 74, -56, 14240, 8, 128 );
+		Screen->DrawInteger(7, 66, -40, FONT_Z1,0x03, -1,-1, -1, Game->Counter[CR_ARROWS], 0,128);
+	}
+	if(Link->Item[I_SUPERMISSILE]){
+		if(SamusVars[EQUIPPED_ITEM]==I_SUPERMISSILE)
+			Screen->FastTile(7, 98, -56, 14221, 8, 128 );
+		else
+			Screen->FastTile(7, 98, -56, 14241, 8, 128 );
+		Screen->DrawInteger(7, 98, -40, FONT_Z1,0x03, -1,-1, -1, Game->Counter[CR_RUPEES], 0,128);
+	}
+	if(Link->Item[I_POWER_BOMB]){
+		if(SamusVars[EQUIPPED_ITEM]==I_POWER_BOMB)
+			Screen->FastTile(7, 122, -56, 14222, 8, 128 );
+		else
+			Screen->FastTile(7,122, -56, 14242, 8, 128 );
+		Screen->DrawInteger(7, 122, -40, FONT_Z1,0x03, -1,-1, -1, Game->Counter[CR_SBOMBS], 0,128);
+	}
+	if(Link->Item[I_GRAPPLE]){
+		if(SamusVars[EQUIPPED_ITEM]==I_GRAPPLE)
+			Screen->FastTile(7, 146, -56, 14223, 8, 128 );
+		else
+			Screen->FastTile(7, 146, -56, 14243, 8, 128 );
+	}
+	if(Link->Item[I_X_RAY]){
+		if(SamusVars[EQUIPPED_ITEM]==I_X_RAY)
+			Screen->FastTile(7, 170, -56, 14224, 8, 128 );
+		else
+			Screen->FastTile(7, 170, -56, 14244, 8, 128 );
+	}
+}

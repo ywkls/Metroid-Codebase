@@ -1,0 +1,44 @@
+//Section 120. Eye Sentry
+
+ffc script Eye_Sentry{
+	void run(int item_id, int perm, bool left){
+		bool triggered = false;
+		float angle;
+		int sfxTimer;
+		if(Screen->D[perm]==1)
+			triggered= true;
+		while(!Link->Item[item_id])
+			Waitframe();
+		//Screen->D[perm]=1;
+		this->Data++;
+		while(!triggered){
+			if(left){
+				angle = Angle(this->X+24, this->Y+8,Link->X+8,Link->Y);
+				FakeArc(3, this->X+24, this->Y+8, 256,angle-10,angle+10,7,1,0,0,0,true,true, 64);
+			}
+			else{
+				angle = Angle(this->X+8, this->Y+8,Link->X+8,Link->Y);
+				FakeArc(3, this->X+8, this->Y+8, 256,angle-10,angle+10,7,1,0,0,0,true,true, 64);
+			}
+			//Create sound every sixty seconds.
+			if ( sfxTimer == 0 ) Game->PlaySound(SFX_X_RAY);
+			sfxTimer = (sfxTimer+1)% 60;
+			Waitframe();
+		}
+		this->Data=GH_INVISIBLE_COMBO;
+	}
+}
+
+const int WHITE_TILE = 315;
+
+void FakeArc(int layer, int x, int y, int radius, int startangle, int endangle, int color, float scale, int rx, int ry, int rangle, bool closed, bool fill, int opacity){
+    int x1 = x+VectorX(radius, startangle);
+    int y1 = y+VectorY(radius, startangle);
+    
+    int x2 = x+VectorX(radius, endangle);
+    int y2 = y+VectorY(radius, endangle);
+    if(opacity==128)
+		Screen->Triangle(layer, x2, y2, x1, y1, x, y, 1, 1, color, 0, -1, PT_FLAT);
+	else
+		Screen->Triangle(layer, x2, y2, x1, y1, x, y, 1, 1, color, 0, WHITE_TILE, PT_TRANSTEXTURE);	
+}

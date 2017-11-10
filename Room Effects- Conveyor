@@ -1,0 +1,103 @@
+//Section 104. Conveyor Script
+
+ffc script Conveyor{
+	void run(int Speed, int Frames){
+		int Conveyor_Link_Lf;
+		int Conveyor_Link_Rt;
+		int Conveyor_NPC_Lf;
+		int Conveyor_NPC_Rt;
+		int Conveyor_Link_Dn;
+		while(true){
+			// If player is on top of a conveyor combo, move player in the proper direction.
+			// Left Hand Conveyor
+			if(isLeftConveyor(Link->X+7,Link->Y+16) ||
+				isLeftConveyor(Link->X+4,Link->Y+16) ||
+				isLeftConveyor(Link->X+12,Link->Y+16)){
+				if(!Screen->isSolid(Link->X - 1, Link->Y - 8) &&
+					!Screen->isSolid(Link->X - 1, Link->Y + 8)){
+					Conveyor_Link_Lf++;
+					if(Conveyor_Link_Lf>=Frames){
+						Link->X-=Speed;
+						Conveyor_Link_Lf = 0;
+					}
+				}
+
+			}
+			// Right Hand Conveyor
+			if(isRightConveyor(Link->X+7,Link->Y+16) ||
+				isRightConveyor(Link->X+4,Link->Y+16) ||
+				isRightConveyor(Link->X+12,Link->Y+16)){
+				if(!Screen->isSolid(Link->X + 15, Link->Y -8) &&
+					!Screen->isSolid(Link->X + 15, Link->Y + 8)){
+					Conveyor_Link_Rt++;
+					if(Conveyor_Link_Rt>=Frames){
+						Link->X+=Speed;
+						Conveyor_Link_Rt = 0;
+					}
+				}
+
+			}
+			// Quicksand
+			if(isDownConveyor(Link->X,Link->Y) ||
+				isRightConveyor(Link->X+8,Link->Y+8) ||
+				isRightConveyor(Link->X+16,Link->Y+16)){
+				if(!Screen->isSolid(Link->X, Link->Y+17) &&
+					!Screen->isSolid(Link->X + 8, Link->Y + 17)
+					&& !Screen->isSolid(Link->X + 16, Link->Y + 17)){
+					Conveyor_Link_Dn++;
+					if(Conveyor_Link_Dn>=Frames){
+						Link->Y+=Speed;
+						Conveyor_Link_Rt = 0;
+					}
+				}
+
+			}
+			for(int i= Screen->NumNPCs();i>0;i--){
+				npc n = Screen->LoadNPC(i);
+				// If player is on top of a conveyor combo, move player in the proper direction.
+				// Left Hand Conveyor
+				if(isLeftConveyor(n->X+7,n->Y+16) ||
+					isLeftConveyor(n->X+4,n->Y+16) ||
+					isLeftConveyor(n->X+12,n->Y+16)){
+					if(!Screen->isSolid(n->X - 1, (n->Y+n->HitYOffset+n->HitHeight)-8)){
+						Conveyor_NPC_Lf++;
+						if(Conveyor_NPC_Lf>=Frames){
+							n->X-=Speed;
+							Conveyor_NPC_Lf = 0;
+						}
+					}
+
+				}
+				// Right Hand Conveyor
+				if(isRightConveyor(n->X+7,n->Y+16) ||
+					isRightConveyor(n->X+4,n->Y+16) ||
+					isRightConveyor(n->X+12,n->Y+16)){
+					if(!Screen->isSolid(n->X + 15,(n->Y+n->HitYOffset+n->HitHeight)-8)){
+						Conveyor_NPC_Rt++;
+						if(Conveyor_NPC_Rt>=Frames){
+							n->X+=Speed;
+							Conveyor_NPC_Rt = 0;
+						}
+					}
+
+				}
+			}
+			Waitframe();
+		}
+	}
+}
+
+bool isLeftConveyor(int x, int y){
+	return ComboFIT(ComboAt(x,y),CF_SPEED_BOOST,CT_CONVEYOR);
+}
+
+bool isRightConveyor(int x, int y){
+	return ComboFIT(ComboAt(x,y),CF_BEAM_NX,CT_CONVEYOR);
+}
+
+bool isDownConveyor(int x, int y){
+	return ComboFIT(ComboAt(x,y),CF_RAFT_BOUNCE,CT_WALKSLOW);
+}
+
+const int CT_CONVEYOR = 143;//Combo type for conveyors. Script 2.
+const int CF_RAFT_BOUNCE= 103;//Combo flag for raft bounce.

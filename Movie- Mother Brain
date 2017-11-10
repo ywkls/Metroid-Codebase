@@ -1,0 +1,88 @@
+const int MB_NECK_TILE = 9366;
+const int SFX_SPECIAL_LASER = 106;
+
+ffc script Mother_Brain_Cutscene{
+	void run(int combo, bool walking, int fire_type, bool baby, int TargetX, int TargetY){
+		//Create the neck.
+		int i;//Iterative variable.
+		//Position the body.
+		int HeadX = 128;
+		int HeadY = 0;
+		int bodyX = HeadX-96;
+		int bodyY = HeadY+32;
+		int Mode;//Controls behavior.
+		int WalkTimer;//Controls walking animation.
+		//Whether we're moving right or not.
+		bool MovingRight = true;
+		int bodyTile= MOTHER_BRAIN_NORMAL_TILE;
+		float angle;
+		int color;
+		while(true){
+			bodyX = HeadX-96;
+			if(walking){
+				WalkTimer = (WalkTimer+1)%8;
+				//Change appearance based on current tile.
+				if(WalkTimer ==0){
+					if(bodyTile ==MOTHER_BRAIN_NORMAL_TILE)bodyTile = MOTHER_BRAIN_WALK_TILE;
+					else if(bodyTile ==MOTHER_BRAIN_WALK_TILE)bodyTile = MOTHER_BRAIN_WALK_TILE+6;
+					else if(bodyTile ==MOTHER_BRAIN_WALK_TILE+6)bodyTile = MOTHER_BRAIN_WALK_TILE+12;
+					else if(bodyTile ==MOTHER_BRAIN_WALK_TILE+12)bodyTile = MOTHER_BRAIN_NORMAL_TILE;
+				}
+				if(WalkTimer ==0){
+					//Move right.
+					if(MovingRight && HeadX<=190)HeadX+=4;
+					//Gone too far.
+					else if(MovingRight && HeadX>190)MovingRight = false;
+					//Move left.
+					else if(!MovingRight && HeadX>=128)HeadX-=4;
+					//Too far left.
+					else if(!MovingRight && HeadX<128)MovingRight = true;
+				}
+			}
+			
+			if(fire_type==1){
+				color= (color +1)%60;
+				angle = Angle(HeadX+48,HeadY+32,TargetX,TargetY);
+				if((color%10)==0)
+					Game->PlaySound(SFX_SPECIAL_LASER);
+				DrawLaser(3, (HeadX+48) + 1 * Cos(RadtoDeg(angle)),(HeadY+32) + 1 * Sin(RadtoDeg(angle)), 
+								8, angle, color);
+			}
+			else if(fire_type==2){
+				angle = Angle(HeadX+48,HeadY+32,TargetX,TargetY);
+				if(WalkTimer==0){
+					eweapon wave = FireEWeapon(EW_SCRIPT1, HeadX+48, HeadY+32, 
+												DegtoRad(angle), 300,0, SPR_SPREAD_SHOT, 
+												LASER_SFX, EWF_ROTATE_360|EWF_NO_COLLISION);
+					SetEWeaponLifespan(wave,EWL_TIMER, 120);
+					SetEWeaponDeathEffect(wave,EWD_VANISH, 0);
+					Draw_MB_Waitframes(combo,HeadX,HeadY,bodyX,bodyY,bodyTile,10);
+				}
+			}
+			if(baby)
+				Screen->DrawCombo(6,HeadX-16,HeadY-32,this->Data, 
+									5,5, 2, -1, -1, 0, 0, 0, 0, 0, true, 128);
+			Draw_MB_Waitframe(combo,HeadX,HeadY,bodyX,bodyY,bodyTile);
+		}
+	}
+	void Draw_MB_Waitframe(int combo,int HeadX, int HeadY, int BodyX, int BodyY, int BodyTile){
+		int CalcX;
+		int CalcY;
+		int NeckX[4];
+		int NeckY[4];
+		CalcX = (Abs((BodyX+64)-HeadX))/4;
+		CalcY = (Abs(BodyY-(HeadY+48)))/4;
+		for(int i=0;i<=3;i++){
+			NeckX[i] = (BodyX+64)+(i*CalcX);
+			NeckY[i] = BodyY-(CalcY*i);
+			Screen->FastTile(3,NeckX[i],NeckY[i],MB_NECK_TILE, 8, 128 );
+		}
+		Screen->DrawTile(3,BodyX,BodyY,BodyTile,6,8,8,-1,-1,0,0,0,0,true,128);
+		Screen->DrawCombo(3,HeadX,HeadY,combo,3,4,8,-1, -1, 0, 0, 0, -1, 0, true, 128);
+		Waitframe();
+	}
+	void Draw_MB_Waitframes(int combo,int HeadX,int HeadY, int BodyX, int BodyY, int BodyTile,int frames){
+		for(;frames>0;frames--)
+			Draw_MB_Waitframe(combo,HeadX,HeadY,BodyX,BodyY,BodyTile);
+	}
+}

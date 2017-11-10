@@ -1,0 +1,114 @@
+//Section 64. Metroid Save Station Settings.
+
+/// Metroid Save Point and Warp System
+/// v0.8.0
+/// 25-JULY-2016
+/// By: ZoriaRPG
+
+//Usage Constants - ! Do not change !
+
+const int BUTTON_A 	= -1;//Changed so as not to be zero. For custom controls script.
+const int BUTTON_B 	= 1;
+const int BUTTON_L	= 2;
+const int BUTTON_R	= 3;
+const int BUTTON_EX1	= 4;
+const int BUTTON_EX2	= 5;
+const int BUTTON_EX3	= 6;
+const int BUTTON_EX4	= 7;
+const int BUTTON_START	= 8;
+const int BUTTON_MAP	= 9;
+
+//!Indices 0-5 are not used to store coordinates
+
+const int MET_SAVE_LAST_SAVESTATION = 0; //ID of last	 save station used. arr[0]
+const int ISWARPING = 1; //arr[1] : 	Used by accessors
+const int FLASHINGGREEN = 2; //arr[2] : ...
+const int TELEPORTING = 3; //arr[3] : 	...
+const int ARRIVING = 4; //arr[4] :	...
+
+//Because we number stations starting at '1', array indices arr[5] through arr[10] are unused. 
+
+const int MET_SAVE_BASE = 5; // First index of save point values. 
+				//! 	In reality, it is this, plus six, because we start Warp Station IDs at '1'. 
+const int MET_SAVE_INDICES = 14; //Math. Indices used per set o hold warp station datum. 
+
+const int MET_SAVE_ID 				= 0; //Holds the ID of the point in game.
+const int MET_SAVE_DMAP				= 1; //The DMAP for a given warp.
+const int MET_SAVE_SCREEN 			= 2; //The screen of a given warp.
+const int MET_SAVE_X 				= 3; //The X position to warp to.
+const int MET_SAVE_Y 				= 4; //The Y position to warp to.
+const int MET_SAVE_STATION_ACTIVE 	= 5; //The Y position to warp to.
+const int MET_MAP_X	 				= 6;//Big Map X coordinates.
+const int MET_MAP_Y					= 7;//Big Map Y coordinates
+const int MET_CURR_MAP				= 8;//Current map area.
+const int MET_MINI_X				= 9;//Minimap X coordinates.
+const int MET_MINI_Y				= 10;//Minimap Y coordinates.
+const int MET_SOURCE_X				= 11;//Source X coordinates for not having map.
+const int MET_SOURCE_Y				= 12;//Source Y coordinates for not having map.
+const int MET_MINI_TILE				= 13;//Tile used to draw map.
+
+/// Settings ///
+
+const int MET_SAVE_NUMBER_OF_SAVEPOINTS = 20;
+const int DEBUG_MENUS = 1;//Activate menu debugging.
+
+//Activation Buttons
+const int MET_SAVE_USE_BUTTON_EX3 = 1;
+
+//Settings
+const int MET_WARP_EFFECT_DURATION = 60;  //Duration of warp special visuals. 
+
+int MetroidWarps[214747]; 
+
+const int MET_SAVE_STATION_REG = 9; //Screen->D[reg]
+const int MET_SAVE_STATION_DRAW_ID_FONT = 0; 
+const int MET_SAVE_STATION_DRAW_ID_FONT_LAYER = 2;
+const int MET_SAVE_STATION_DRAW_ID_FONT_BACKGROUND_COLOUR = 0x0F; //Black
+const int MET_SAVE_STATION_DRAW_ID_FONT_FOREGROUND_COLOUR = 0x01; //White
+const int MET_SAVE_STATION_DRAW_ID_FONT_FOREGROUND_Y_SCALE = -1;  //DrawString(0 scale factor
+const int MET_SAVE_STATION_DRAW_ID_FONT_BACKGROUND_X_OFFSET = 8;  //Offset from f->X
+const int MET_SAVE_STATION_DRAW_ID_FONT_FOREGROUND_X_OFFSET = 9;  //Offset from f->X
+const int MET_SAVE_STATION_DRAW_ID_FONT_BACKGROUND_Y_OFFSET = -8;  //Offset from f->Y
+const int MET_SAVE_STATION_DRAW_ID_FONT_FOREGROUND_Y_OFFSET = -9;  //Offset from f->Y
+const int MET_SAVE_STATION_ = 0; //Default constant template for this beast. 
+const int MET_SAVE_STATION_DRAW_ID_FONT_WIDTH = 16; 
+const int MET_SAVE_STATION_DRAW_ID_FONT_HEIGHT = 16; 
+
+//Initial DMap, screen and position.
+
+const int INITIAL_SCREEN = 0x01;
+const int INITIAL_DMAP = 10; 
+const int INITIAL_X = 120;
+const int INITIAL_Y = 112; 
+
+const int SFX_SAVE_ERROR = 80; //Failed to save.
+const int SFX_SAVE_SUCCESS = 7; //Successfully saved.
+const int SFX_TELEPORT_TRANSITION = 37; //Sound effect of teleportation EFFECT. 
+const int SFX_WARP_ERROR = 80;//Failed to warp.
+const int SFX_TELEPORT = 67; //Sound effect for teleportation matrix item.
+
+//const int WARP_WAVE = 30;
+
+const int TELEPORT_CIRCLE_COLOUR = 181; //Colour for teleport circle.
+const int TELEPORT_WAVE = 60; //Duration of Teleport Wave Effect
+
+//! We'll remove this in a future edit. 
+//const int SFX_SET_TELEPORT = 21; //Menu Sound for Setting Teleport Destination
+
+
+//const int FLASH_LAYER = 6;
+//const int TELEPORT_OVERLAY = 5;
+//const int TELEPORT_SAFETY = 10;
+
+//const int WARP_DURATION = 80;
+
+//Drawing Colours - ! Set to colours in your palette, or adjust as you see fit. 
+const int WARP_GREEN = 45;
+const int WARP_BLUE = 11;
+const int WARP_YELLOW = 126;
+const int WARP_TEAL = 88;
+const int WARP_LTBLUE = 93; //or 88
+const int WARP_LTGREEN = 44;
+const int WARP_BRIGHTGREEN = 47;
+const int WARP_PERIDOT = 97;
+const int WARP_SMOKE = 73;

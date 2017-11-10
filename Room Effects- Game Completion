@@ -1,0 +1,53 @@
+//Section 87. Game Completion
+
+ffc script Completion{
+	void run(int Secret, int Message){
+		int Itembuffer[256];
+		int Deathbuffer[256];
+		int Hourbuffer[256];
+		int Minutebuffer[256];
+		int Secondbuffer[256];
+		int Itemformat[] = "Items Obtained: %d%";
+		int Deathformat[]= "Total Deaths: %d";
+		int Hourformat[] = "Hours- %d";
+		int Minuteformat[]= "Minutes= %d";
+		int Secondformat[]= "seconds- %d";
+		int Instruct[]= "Press Start to Quit";
+		sprintf(Itembuffer, Itemformat, Game->Counter[SECRET_COUNTER]);
+		sprintf(Deathbuffer, Deathformat, Game->NumDeaths);
+		sprintf(Hourbuffer,Hourformat,SamusVars[HOURS_PLAYED]);
+		sprintf(Minutebuffer,Minuteformat,SamusVars[MINUTES_PLAYED]);
+		sprintf(Secondbuffer,Secondformat,SamusVars[SECONDS_PLAYED]);
+		while(!Link->PressStart){
+			Screen->DrawString(7,0,0,FONT_SUBSCREEN3,1,0x0F,TF_NORMAL,Itembuffer,128);
+			Screen->DrawString(7,0,16,FONT_SUBSCREEN3,1,0x0F,TF_NORMAL,Deathbuffer,128);
+			Screen->DrawString(7,0,32,FONT_SUBSCREEN3,1,0x0F,TF_NORMAL,Hourbuffer,128);
+			Screen->DrawString(7,0,48,FONT_SUBSCREEN3,1,0x0F,TF_NORMAL,Minutebuffer,128);
+			Screen->DrawString(7,0,64,FONT_SUBSCREEN3,1,0x0F,TF_NORMAL,Secondbuffer,128);
+			Screen->DrawString(7,0,80,FONT_SUBSCREEN3,1,0x0F,TF_NORMAL,Instruct,128);
+			Link->PressA = false;
+			Link->PressB = false;
+			Link->PressEx1 = false;
+			Link->PressL = false;
+			Link->PressR = false;
+			Link->InputA = false;
+			Link->InputB = false;
+			Link->InputEx1 = false;
+			Link->InputL = false;
+			Link->InputR = false;
+			Waitframe();
+		}
+		if(SamusVars[HOURS_PLAYED]<3 
+			&& Game->Counter[SECRET_COUNTER]==100 && Game->NumDeaths==0){
+			this->Data = Secret;
+			this->TileHeight = 2;
+			Screen->Message(Message);
+		}
+		else{
+			this->Data = SAMUS_GRAVITY_WALK_COMBO;
+			this->TileHeight = 2;
+		}
+		Waitframes(10);
+		Game->End();
+	}
+}

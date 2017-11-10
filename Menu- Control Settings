@@ -1,0 +1,104 @@
+//Menu that allows setting controls.
+int ControlMenu() {
+	int lineBreak[]="@26";
+	int line0[]="@choice(1)Default Left@26";
+	int line7[]="@choice(2)Default Right@26";
+	int line1[]="@choice(3)Switched 1@26";
+	int line2[]="@choice(4)Switched 2@26";
+	int line3[]="@choice(5)Reversed 1@26";
+	int line4[]="@choice(6)Reversed 2@26";
+	int line5[]="@choice(7)Alternate 1@26";
+	int line6[]="@choice(8)Alternate 2@26";
+	int End[]="@choice(9)End@26";
+	int initmenu[]="@domenu(1)@suspend()";
+	
+	//Default settings.
+	
+	//Ex1 = Switch items.
+	//Ex2 = Dash
+	//B = Fire.
+	//A = Jump
+	//L = Diagonal up.
+	//R = Diagonal Dn.
+	//Ex3 = Examine Objects
+	
+	SetUpWindow(WINDOW_SLOT_1, WINDOW_STYLE_1, 16, 16, SIZE_TALL);
+	Tango_LoadString(WINDOW_SLOT_1, line0);
+	Tango_AppendString(WINDOW_SLOT_1, line7);
+	Tango_AppendString(WINDOW_SLOT_1, line1);
+	Tango_AppendString(WINDOW_SLOT_1,line2);
+	Tango_AppendString(WINDOW_SLOT_1, line3);
+	Tango_AppendString(WINDOW_SLOT_1, line4);
+	Tango_AppendString(WINDOW_SLOT_1, line5);
+	Tango_AppendString(WINDOW_SLOT_1, line6);
+	Tango_AppendString(WINDOW_SLOT_1, End);
+	Tango_AppendString(WINDOW_SLOT_1, initmenu);
+	Tango_ActivateSlot(WINDOW_SLOT_1);
+	
+	while(!Tango_MenuIsActive()){
+        
+		Waitframe();
+	}
+    
+	// Save the state again...
+	int slotState[278];
+	int menuState[960];
+	int cursorPos;
+	Tango_SaveSlotState(WINDOW_SLOT_1, slotState);
+	Tango_SaveMenuState(menuState);
+    
+	int done = 0;
+	int choice;
+	while(true){
+		while( Tango_MenuIsActive() ) {
+			if	( Link->PressEx4 ) { 
+				Link->PressEx4= false; 
+				Link->InputEx4 = false; 	
+			}
+			cursorPos=Tango_GetMenuCursorPosition();
+			Waitframe();
+		}
+        
+		choice = Tango_GetLastMenuChoice();
+		if ( choice == 1)
+			SamusVars[CONTROL_SET]=SET_DEFAULT;
+		else if ( choice == 2)
+			SamusVars[CONTROL_SET]=SET_DEFAULT_RT;	
+		else if ( choice == 3)
+			SamusVars[CONTROL_SET]=SET_SWTICHED1;
+		else if ( choice == 4)
+			SamusVars[CONTROL_SET]=SET_SWTICHED2;
+		else if ( choice == 5)
+			SamusVars[CONTROL_SET]=SET_REVERSED1;
+		else if ( choice == 6)
+			SamusVars[CONTROL_SET]=SET_REVERSED2;
+		else if ( choice == 7)
+			SamusVars[CONTROL_SET]=SET_SW_REVERSED1;
+		else if ( choice == 8)
+			SamusVars[CONTROL_SET]=SET_SW_REVERSED2;
+		else
+			done = -9999;
+		if(choice!=8){
+			if(!Tango_SlotIsActive(WINDOW_SLOT_2)){
+				Button_Menu();
+				done = 1;
+			}
+		}
+
+		if ( done )
+			break;
+		//	return choice;
+		else{ 
+			Tango_RestoreSlotState(WINDOW_SLOT_1, slotState);
+			Tango_RestoreMenuState(menuState);
+			Tango_SetMenuCursorPosition(cursorPos);
+		}
+			
+	}
+    
+	Tango_ClearSlot(WINDOW_SLOT_1);
+	if(Tango_SlotIsActive(WINDOW_SLOT_2))
+		Tango_ClearSlot(WINDOW_SLOT_2);
+	//if ( DEBUG_MENUS ) DebugMetroidSaveStationMenu(done);
+	return done;
+}

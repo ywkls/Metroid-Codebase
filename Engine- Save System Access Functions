@@ -1,0 +1,144 @@
+//Accessors
+bool SamusIsWarping(){ 
+	return (MetroidWarps[ISWARPING] != 0); 
+}
+
+bool FlashingGreen(){ 
+	return (MetroidWarps[FLASHINGGREEN] != 0); 
+}
+
+bool SamusTeleporting(){ 
+	return (MetroidWarps[TELEPORTING] != 0); 
+}
+
+bool SamusArriving(){ 
+	return (MetroidWarps[ARRIVING] != 0); 
+}
+
+void SamusWarping(bool state){ 
+	if ( state ) MetroidWarps[ISWARPING] = 1; 
+	else MetroidWarps[ISWARPING] = 0;
+}
+
+void FlashingGreen(bool state){ 
+	if ( state ) MetroidWarps[FLASHINGGREEN] = 1; 
+	else MetroidWarps[FLASHINGGREEN] = 0;
+}
+
+void SamusTeleporting(bool state){ 
+	if ( state ) MetroidWarps[TELEPORTING] = 1; 
+	else MetroidWarps[TELEPORTING] = 0;
+}
+
+void SamusArriving(bool state){ 
+	if ( state ) MetroidWarps[ARRIVING] = 1; 
+	else MetroidWarps[ARRIVING] = 0;
+}
+
+//Returns if samus can teleport, or activate a save point station. 
+bool SamusCanTeleport(){
+	return ( !SamusVars[IS_JUMPING] && ( SamusVars[SAMUS_ACTION] == SAMUS_ACTION_NONE || SamusVars[SAMUS_ACTION] == SAMUS_ACTION_CROUCH ) 
+		&& !SamusVars[IS_SHINE_SPARK] && OnGround() && !SamusVars[IS_SPEED_BOOSTING] && !SamusVars[SAMUS_HAS_DIED] ); 
+}
+
+//We do this when we activate the station. 
+void SetWarpPoint(int warp_id, ffc f){
+	MetroidWarps[MET_SAVE_BASE + MET_SAVE_ID + ( warp_id * MET_SAVE_INDICES ) ] = warp_id;
+	MetroidWarps[MET_SAVE_BASE + MET_SAVE_DMAP + ( warp_id * MET_SAVE_INDICES ) ] = Game->GetCurDMap();
+	MetroidWarps[MET_SAVE_BASE + MET_SAVE_SCREEN + ( warp_id * MET_SAVE_INDICES ) ] = Game->GetCurScreen();
+	MetroidWarps[MET_SAVE_BASE + MET_SAVE_X + ( warp_id * MET_SAVE_INDICES ) ] = f->X;
+	MetroidWarps[MET_SAVE_BASE + MET_SAVE_Y + ( warp_id * MET_SAVE_INDICES ) ] = f->Y;
+}
+
+//A way to set the point based on Samus coordinates, instead of ffc coordinates, if needed. 
+void SetWarpPoint(int warp_id){
+	MetroidWarps[MET_SAVE_BASE + MET_SAVE_ID + ( warp_id * MET_SAVE_INDICES ) ] = warp_id;
+	MetroidWarps[MET_SAVE_BASE + MET_SAVE_DMAP + ( warp_id * MET_SAVE_INDICES ) ] = Game->GetCurDMap();
+	MetroidWarps[MET_SAVE_BASE + MET_SAVE_SCREEN + ( warp_id * MET_SAVE_INDICES ) ] = Game->GetCurScreen();
+	MetroidWarps[MET_SAVE_BASE + MET_SAVE_X + ( warp_id * MET_SAVE_INDICES ) ] = Link->X;
+	MetroidWarps[MET_SAVE_BASE + MET_SAVE_Y + ( warp_id * MET_SAVE_INDICES ) ] = Link->Y;
+}
+
+void SetDefaultWarpPoint(){
+	MetroidWarps[MET_SAVE_BASE + MET_SAVE_ID + ( 128 * MET_SAVE_INDICES ) ] = 128;
+	MetroidWarps[MET_SAVE_BASE + MET_SAVE_DMAP + ( 128 * MET_SAVE_INDICES ) ] = INITIAL_DMAP;
+	MetroidWarps[MET_SAVE_BASE + MET_SAVE_SCREEN + ( 128 * MET_SAVE_INDICES ) ] = INITIAL_SCREEN;
+	MetroidWarps[MET_SAVE_BASE + MET_SAVE_X + ( 128 * MET_SAVE_INDICES ) ] = INITIAL_X;
+	MetroidWarps[MET_SAVE_BASE + MET_SAVE_Y + ( 128 * MET_SAVE_INDICES ) ] = INITIAL_Y;
+	SetGameRestoreStation(128);
+}
+
+//We do this when we activate the station. 
+void GetMapCoords(int warp_id){
+	MetroidWarps[MET_SAVE_BASE + MET_MAP_X + ( warp_id * MET_SAVE_INDICES ) ] = SamusVars[MAP_DRAW_X];
+	MetroidWarps[MET_SAVE_BASE + MET_MAP_Y + ( warp_id * MET_SAVE_INDICES ) ] = SamusVars[MAP_DRAW_Y];
+	MetroidWarps[MET_SAVE_BASE + MET_CURR_MAP + ( warp_id * MET_SAVE_INDICES ) ] = SamusVars[CURRENT_AREA];
+	MetroidWarps[MET_SAVE_BASE + MET_MINI_X + ( warp_id * MET_SAVE_INDICES ) ] = SamusVars[MINIMAP_DRAW_X];
+	MetroidWarps[MET_SAVE_BASE + MET_MINI_Y + ( warp_id * MET_SAVE_INDICES ) ] = SamusVars[MINIMAP_DRAW_Y];
+	MetroidWarps[MET_SAVE_BASE + MET_SOURCE_X + ( warp_id * MET_SAVE_INDICES ) ] = SamusVars[MAP_SOURCE_X];
+	MetroidWarps[MET_SAVE_BASE + MET_SOURCE_Y + ( warp_id * MET_SAVE_INDICES ) ] = SamusVars[MAP_SOURCE_Y];	
+	MetroidWarps[MET_SAVE_BASE + MET_MINI_TILE + ( warp_id * MET_SAVE_INDICES ) ] = SamusVars[MINIMAP_TILE];	
+}
+
+//We do this when we activate the station. 
+void SetMapCoords(int warp_id){
+	SamusVars[MAP_DRAW_X]= MetroidWarps[MET_SAVE_BASE + MET_MAP_X + ( warp_id * MET_SAVE_INDICES ) ]; 
+	SamusVars[MAP_DRAW_Y]=MetroidWarps[MET_SAVE_BASE + MET_MAP_Y + ( warp_id * MET_SAVE_INDICES ) ];
+	SamusVars[CURRENT_AREA]=MetroidWarps[MET_SAVE_BASE + MET_CURR_MAP + ( warp_id * MET_SAVE_INDICES ) ];
+	SamusVars[MINIMAP_DRAW_X]=MetroidWarps[MET_SAVE_BASE + MET_MINI_X + ( warp_id * MET_SAVE_INDICES ) ];
+	SamusVars[MINIMAP_DRAW_Y]=MetroidWarps[MET_SAVE_BASE + MET_MINI_Y + ( warp_id * MET_SAVE_INDICES ) ];
+	SamusVars[MAP_SOURCE_X]=MetroidWarps[MET_SAVE_BASE + MET_SOURCE_X + ( warp_id * MET_SAVE_INDICES ) ]; 
+	SamusVars[MAP_SOURCE_Y]=MetroidWarps[MET_SAVE_BASE + MET_SOURCE_Y + ( warp_id * MET_SAVE_INDICES ) ];	
+	SamusVars[MINIMAP_TILE]=MetroidWarps[MET_SAVE_BASE + MET_MINI_TILE + ( warp_id * MET_SAVE_INDICES ) ];
+}
+
+//Checks if a given station is active. 
+int WarpPointActive(int station_id) {
+	return MetroidWarps[MET_SAVE_BASE + MET_SAVE_STATION_ACTIVE + ( station_id * MET_SAVE_INDICES )];
+}
+
+//Sets a given warp point active/inactive. 
+void WarpPointActive(int station_id, bool setting) {
+	if ( setting ) MetroidWarps[MET_SAVE_BASE + MET_SAVE_STATION_ACTIVE + ( station_id * MET_SAVE_INDICES )] = 1;
+	else MetroidWarps[MET_SAVE_BASE + MET_SAVE_STATION_ACTIVE + ( station_id * MET_SAVE_INDICES )] = 0;
+}	
+
+//Saving the game automation.
+void SaveGame(int station_id){
+	SetGameRestoreStation(station_id);
+	///
+	Game->Save();
+}
+
+//Save and quit automation.
+void SaveGameAndQuit(int station_id){
+	SetGameRestoreStation(station_id);
+	Game->Save();
+	Game->End();
+}
+
+//Sets the station that we'll load when the player reloads the game. 
+void SetGameRestoreStation(int station_id){
+	MetroidWarps[MET_SAVE_LAST_SAVESTATION] = station_id;
+}
+
+//Gets the station to use as a restore point, on player death, or onContinue. 
+int GetGameRestoreStation(){
+	return MetroidWarps[MET_SAVE_LAST_SAVESTATION];
+}
+
+//Call during onContinue script, or on death. 
+void RestoreGame(){
+	SamusVars[GAME_OVER_TIME]=0;
+	SamusVars[IS_INVISIBLE]=0;
+	SamusVars[IS_FROZEN]=0;
+	//if the game has been saved, then we have a restore station set
+	if ( GetGameRestoreStation()!=128 ) 
+		WarpSamusForced( GetGameRestoreStation(), 0);
+	else
+		WarpSamusForced( GetGameRestoreStation(), 0 );
+}
+
+void ResumeGame(){ 
+	RestoreGame();
+}

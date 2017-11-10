@@ -1,0 +1,13 @@
+//Section 92. Major boss death.
+
+ffc script MajorBoss{
+	void run(int index){
+		bool triggered = false;
+		if(SamusVars[index])
+			triggered = true;
+		while(!Screen->State[ST_SECRET] && !triggered){
+			Waitframe();
+		}
+		SamusVars[index]= 1;
+	}
+}

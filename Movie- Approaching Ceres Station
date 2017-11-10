@@ -1,0 +1,36 @@
+ffc script Ship_Approach2{
+	void run(int Combo){
+		int XScale = 144;
+		int YScale = 144;
+		int Timer = 120;
+		int ScaleTimer;
+		while(Timer>0){
+			Screen->DrawCombo(3,this->X-XScale/2,this->Y-YScale/2,Combo,
+										3,3,8,XScale, YScale, 0, 0, 0, 48, 0, true, 128);
+			Timer--;
+			ScaleTimer = (ScaleTimer+1)%10;
+			if(ScaleTimer==0){
+				XScale-=12;
+				YScale-=12;
+			}
+			Waitframe();
+		}
+	}
+}
+
+ffc script Ship_Approach1{
+	void run(int Combo){
+		int XScale = 1;
+		int YScale = 1;
+		int Timer = 120;
+		while(Timer>0){
+			Screen->DrawCombo(0,this->X-XScale/2,this->Y-YScale/2,Combo,
+										12,5,9,XScale, YScale, this->X-XScale/2,this->Y-YScale/2, 
+										-45, 48, 0, true, 128);
+			Timer--;
+			XScale+=2;
+			YScale++;
+			Waitframe();
+		}
+	}
+}

@@ -1,0 +1,45 @@
+void DrawMap(){
+	int Width = SamusVars[MINIMAP_WIDTH]*16;
+	int Height= SamusVars[MINIMAP_HEIGHT]*16;
+	//Black out the screen.
+	Screen->Rectangle(6, 0, 0, 256,176, 0x0F, -1, 0,0,0, true, 128);
+	Screen->SetRenderTarget(RT_BITMAP1);
+	Screen->Rectangle(7, 0, 0, 512,512, 0x0F, -1, 0,0,0, true, 128);
+	//Clear preexisting bitmap.
+	Screen->Rectangle(7, 0, 0, 512,512, 0x00, -1, 0,0,0, true, 128);
+	//Draw a selection of tiles, the width and height of this area.
+	Screen->DrawTile(7,0,0, SamusVars[MINIMAP_TILE], 
+					 SamusVars[MINIMAP_WIDTH], SamusVars[MINIMAP_HEIGHT], 
+					 2, -1, -1, 0, 0, 0, 0, true, 128);
+	//If we're in this area, add a few more tiles.
+	if(SamusVars[CURRENT_AREA]==CRATERIA)
+		Screen->DrawTile(7,320,0, CRATERIA_EXTRA_TILE, 
+						 1, 4, 2, -1, -1, 0, 0, 0, 0, true, 128); 				 
+	Screen->SetRenderTarget(RT_SCREEN);
+	//Do we have the map for this area?
+	if(GotMap(SamusVars[CURRENT_AREA])){
+		//Draw everything from the bitmap to the screen.
+		//Slightly different for one area.
+		if(SamusVars[CURRENT_AREA]!=CRATERIA)
+			Screen->DrawBitmap(6, RT_BITMAP1, 0,0,Width,Height,SamusVars[MAP_DRAW_X], 
+								SamusVars[MAP_DRAW_Y], Width*1.5, Height*1.5, 0, true);
+		else
+			//Draw everything from the bitmap to the screen.
+			Screen->DrawBitmap(6, RT_BITMAP1, 0,0,Width+16,Height,SamusVars[MAP_DRAW_X], 
+								SamusVars[MAP_DRAW_Y], (Width+16)*1.5, Height*1.5, 0, true);
+			
+	}
+	//Only draw a section of the bitmap.
+	//The coordinates for this to draw from seem messed up.
+	else{
+		Screen->DrawBitmap(6, RT_BITMAP1, SamusVars[MAP_SOURCE_X],SamusVars[MAP_SOURCE_Y],
+							8,8, SamusVars[MAP_SAMUS_X]+2, SamusVars[MAP_SAMUS_Y]+2, 
+							12,12, 0, true);	
+	}
+	//Draw the player icon.					
+	Screen->DrawCombo(6, SamusVars[MAP_SAMUS_X], SamusVars[MAP_SAMUS_Y], 
+					  MAP_SAMUS_COMBO, 1, 1, MAP_SAMUS_CSET, -1, -1, 0, 0, 0, 48, 0, true, 128);
+	//Draw the map hud over everything.
+	Screen->DrawTile(7, 0, 0, MAP_TILE, 16, 11, 
+					 MAP_TILE_CSET, -1, -1, 0,  0,0, 0, true, 128);				  
+}

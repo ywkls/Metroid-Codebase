@@ -1,0 +1,76 @@
+//Read control set array and set controls.
+
+void SetControls(int Control_Set){
+	//B = Fire.
+	//A = Jump
+	//Ex1 = Switch items.
+	//Ex2 = Dash
+	//L = Diagonal up.
+	//R = Diagonal Dn.
+	//Ex3 = Examine.
+	//Ex4 = Menu.
+	if(Control_Set== SET_DEFAULT){
+		SamusVars[FIRE_BUTTON]= BUTTON_B;
+		SamusVars[JUMP_BUTTON]= BUTTON_A;
+		SamusVars[DASH_BUTTON]= BUTTON_EX2;
+		SamusVars[SWITCH_BUTTON]= BUTTON_EX1;
+		SamusVars[AIM_UP_BUTTON]= BUTTON_L;
+		SamusVars[AIM_DN_BUTTON]=BUTTON_R;
+	}
+	else if(Control_Set== SET_DEFAULT_RT){
+		SamusVars[FIRE_BUTTON]= BUTTON_B;
+		SamusVars[JUMP_BUTTON]= BUTTON_A;
+		SamusVars[DASH_BUTTON]= BUTTON_EX2;
+		SamusVars[SWITCH_BUTTON]= BUTTON_EX1;
+		SamusVars[AIM_UP_BUTTON]= BUTTON_R;
+		SamusVars[AIM_DN_BUTTON]=BUTTON_L;
+	}
+	else if(Control_Set== SET_SWTICHED1){
+		SamusVars[FIRE_BUTTON]=BUTTON_EX2;
+		SamusVars[JUMP_BUTTON]=BUTTON_EX1;
+		SamusVars[DASH_BUTTON]=BUTTON_B;
+		SamusVars[SWITCH_BUTTON]=BUTTON_A;
+		SamusVars[AIM_UP_BUTTON]=BUTTON_L;
+		SamusVars[AIM_DN_BUTTON]=BUTTON_R;
+	}
+	else if(Control_Set== SET_SWTICHED2){
+		SamusVars[FIRE_BUTTON]=BUTTON_EX2;
+		SamusVars[JUMP_BUTTON]=BUTTON_EX1;
+		SamusVars[DASH_BUTTON]=BUTTON_L;
+		SamusVars[SWITCH_BUTTON]=BUTTON_R;
+		SamusVars[AIM_UP_BUTTON]=BUTTON_B;
+		SamusVars[AIM_DN_BUTTON]=BUTTON_A;
+	}
+	else if(Control_Set== SET_REVERSED1){
+		SamusVars[FIRE_BUTTON]=BUTTON_A;
+		SamusVars[JUMP_BUTTON]=BUTTON_B;
+		SamusVars[DASH_BUTTON]=BUTTON_EX1;
+		SamusVars[SWITCH_BUTTON]=BUTTON_EX2;
+		SamusVars[AIM_UP_BUTTON]=BUTTON_R;
+		SamusVars[AIM_DN_BUTTON]=BUTTON_L;
+	}
+	else if(Control_Set== SET_REVERSED2){
+		SamusVars[FIRE_BUTTON]=BUTTON_EX1;
+		SamusVars[JUMP_BUTTON]=BUTTON_EX2;
+		SamusVars[DASH_BUTTON]=BUTTON_A;
+		SamusVars[SWITCH_BUTTON]=BUTTON_B;
+		SamusVars[AIM_UP_BUTTON]=BUTTON_R;
+		SamusVars[AIM_DN_BUTTON]=BUTTON_L;
+	}
+	else if(Control_Set== SET_SW_REVERSED1){
+		SamusVars[FIRE_BUTTON]=BUTTON_B;
+		SamusVars[JUMP_BUTTON]=BUTTON_A;
+		SamusVars[DASH_BUTTON]=BUTTON_R;
+		SamusVars[SWITCH_BUTTON]=BUTTON_L;
+		SamusVars[AIM_UP_BUTTON]=BUTTON_EX1;
+		SamusVars[AIM_DN_BUTTON]=BUTTON_EX2;
+	}
+	else if(Control_Set== SET_SW_REVERSED2){
+		SamusVars[FIRE_BUTTON]=BUTTON_R;
+		SamusVars[JUMP_BUTTON]=BUTTON_L;
+		SamusVars[DASH_BUTTON]=BUTTON_B;
+		SamusVars[SWITCH_BUTTON]=BUTTON_A;
+		SamusVars[AIM_UP_BUTTON]=BUTTON_EX1;
+		SamusVars[AIM_DN_BUTTON]=BUTTON_EX2;
+	}
+}

@@ -1,0 +1,30 @@
+//Section 52. Constant Shooter.
+//---COMMMENTING NEEDED--
+
+ffc script RoomShooter{
+	void run(int enemyID){
+		npc ghost = Ghost_InitAutoGhost(this, enemyID);
+		float angle;
+		int firetimer;
+		int Randtimer = Rand(60,180);
+		eweapon fireball;
+		Ghost_SetFlag(GHF_IGNORE_ALL_TERRAIN);
+		Ghost_SetFlag(GHF_IGNORE_NO_ENEMY);
+		Ghost_SetFlag(GHF_NO_FALL);
+		int Sprite = ghost->Attributes[0];
+		int Sfx = ghost->Attributes[1];
+		int type= ghost->Attributes[2];
+		while(true){
+			firetimer = (firetimer+1)%Randtimer;
+			if(firetimer ==0){
+				if(type==0)
+					fireball =  FireAimedEWeapon(ghost->Weapon, Ghost_X+8, Ghost_Y+8, 0, 200, ghost->WeaponDamage, Sprite, Sfx, 0);
+				else if(type==1)
+					fireball =  FireEWeapon(ghost->Weapon, Ghost_X+8, Ghost_Y+8, DegtoRad(90), 100, ghost->WeaponDamage, Sprite, Sfx, 0);
+				SetEWeaponDeathEffect(fireball,EWD_VANISH,0);
+				Randtimer = Rand(60,180);
+			}
+			Ghost_Waitframe(this,ghost,true,true);
+		}
+	}
+}

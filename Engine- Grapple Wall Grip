@@ -1,0 +1,134 @@
+//Section 86. Grapple Wall grip.
+
+//Test if combo is a Sideview grip.
+bool isGRGrip(int x, int y){
+   int loc = ComboAt(x,y);
+   return( Screen->ComboT[loc] == CT_GRAPPLE);
+}
+
+void Grapple_Grip(){
+	if(SamusVars[GRAPPLE_GRIP_ON]){
+		if(SamusVars[GRAPPLE_GRIP_TIMER]<=0
+			&& !SamusVars[GRIP_TIMER_START]){
+			SamusVars[GRAPPLE_GRIP_TIMER]= 60;
+			SamusVars[GRIP_TIMER_START]= 1;
+		}
+		else if(SamusVars[GRIP_TIMER_START]){
+			SamusVars[GRAPPLE_SFX_TIMER]= (SamusVars[GRAPPLE_SFX_TIMER]+1)%FREQ_GRAPPLESOUND;
+			if(SamusVars[GRAPPLE_SFX_TIMER]==0)
+				Game->PlaySound(SFX_GRAPPLESOUND);
+			int JumpHeight;
+			if(Screen->Flags[SF_MISC]&SF_MISC_SCRIPT1 && !SamusVars[IN_WATER]){
+				if(!Link->Item[I_GRAVITY_SUIT]){
+					if(!Link->Item[I_HIGHJUMP])JumpHeight = BOMB_HOP;
+					else JumpHeight= JUMP_HEIGHT_NORMAL;
+				}
+				else if(Link->Item[I_HIGHJUMP] && Link->Item[I_GRAVITY_SUIT])
+					JumpHeight = JUMP_HEIGHT_HIGH;
+			}
+			else if(SamusVars[IN_WATER] && !ScreenFlagTest(SF_MISC,SF_MISC_SCRIPT1)){
+				if(!Link->Item[I_GRAVITY_SUIT]){
+					if(!Link->Item[I_HIGHJUMP])JumpHeight = BOMB_HOP;
+					else JumpHeight= JUMP_HEIGHT_NORMAL;
+				}
+				else if(Link->Item[I_HIGHJUMP] && Link->Item[I_GRAVITY_SUIT])
+					JumpHeight = JUMP_HEIGHT_HIGH;
+			}
+			else{
+				if(Link->Item[I_HIGHJUMP])
+					JumpHeight = JUMP_HEIGHT_HIGH;
+			}
+			//You have the first grip.
+			if(isGRGrip(Link->X+24,Link->Y-8)){
+				Screen->DrawTile(2, Link->X+24, Link->Y+8, TIL_GRAPPLEHOOK+9, 1, 1, 
+								CS_GRAPPLEHOOK, -1, -1, Link->X+24,  Link->Y+8, 
+								Angle(Link->X,Link->Y-16,Link->X+24,Link->Y+9), 0, true, 128);	
+				SamusVars[SAMUS_ACTION] = SAMUS_ACTION_HANGING_RIGHT;
+				// Link is on SV Grip
+				if(Link->Jump < 0) Link->Jump=0;
+				//Climb or descend.
+				if(Link->InputLeft && !PressJump()){
+					Link->InputLeft = false;
+					Link->Dir = DIR_LEFT;
+				}
+				//Jump left.
+				else if(Link->InputLeft && PressJump() && SamusVars[GRAPPLE_GRIP_ON]){
+					Game->PlaySound(SFX_JUMP);
+					Link->Jump=(JumpHeight+2)*0.8;
+					Link->X-=8;
+					SamusVars[IS_JUMPING] = 1;
+					SamusVars[GRAPPLE_GRIP_ON]=0;
+					SamusVars[GRAPPLE_GRIP_TIMER]=0;
+					SamusVars[GRIP_TIMER_START]=0;
+					SamusVars[SAMUS_ACTION]= SAMUS_ACTION_NONE;
+				}
+				//Jump up.
+				else if(PressJump() && SamusVars[GRAPPLE_GRIP_ON]){
+					if(!Screen->isSolid(Link->X+1, Link->Y-17) && !Screen->isSolid(Link->X+8, Link->Y-17) && !Screen->isSolid(Link->X+14, Link->Y-17)){
+						Game->PlaySound(SFX_JUMP);
+						Link->Jump=(JumpHeight+2)*0.8;
+						SamusVars[IS_JUMPING] = 1;
+						SamusVars[GRAPPLE_GRIP_ON]=0;
+						SamusVars[GRAPPLE_GRIP_TIMER]=0;
+						SamusVars[GRIP_TIMER_START]=0;
+						SamusVars[SAMUS_ACTION]= SAMUS_ACTION_NONE;
+					}
+				}
+				else if(!PressJump()  && SamusVars[GRAPPLE_GRIP_ON])
+					SamusVars[IS_JUMPING] = 0;
+			 }
+			 //Left combo is Sideview grip.
+			 else if(isGRGrip(Link->X-8,Link->Y-8)){
+				Screen->DrawTile(2, Link->X-8, Link->Y+8, TIL_GRAPPLEHOOK+9, 1, 1, 
+								CS_GRAPPLEHOOK, -1, -1, Link->X-8,  Link->Y+8, 
+								Angle(Link->X,Link->Y-16,Link->X-8,Link->Y+8), 0, true, 128);	
+				SamusVars[SAMUS_ACTION] = SAMUS_ACTION_HANGING_LEFT;
+				// Link is on SV Grip
+				if(Link->Jump < 0) Link->Jump=0;
+				if(Link->InputRight && !PressJump() ){
+					Link->Dir = DIR_RIGHT;
+					Link->InputRight = false;
+				}
+				//Jump right.
+				else if(Link->InputRight && PressJump() ){
+					Game->PlaySound(SFX_JUMP);
+					Link->Jump=(JumpHeight+2)*0.8;
+					Link->X+=8;
+					SamusVars[IS_JUMPING] = 1;
+					SamusVars[GRAPPLE_GRIP_ON]=0;
+					SamusVars[GRAPPLE_GRIP_TIMER]=0;
+					SamusVars[GRIP_TIMER_START]=0;
+					SamusVars[SAMUS_ACTION] = SAMUS_ACTION_NONE;
+				}
+				//Jump up.
+				else if(PressJump()  && SamusVars[GRAPPLE_GRIP_ON]){
+					if( !Screen->isSolid(Link->X+1, Link->Y-17) && !Screen->isSolid(Link->X+8, Link->Y-17) && !Screen->isSolid(Link->X+14, Link->Y-17)){
+						Game->PlaySound(SFX_JUMP);
+						Link->Jump =(JUMP_HEIGHT_NORMAL+2)*0.8;
+						SamusVars[IS_JUMPING]= 1;
+						SamusVars[GRAPPLE_GRIP_ON]=0;
+						SamusVars[GRAPPLE_GRIP_TIMER]=0;
+						SamusVars[GRIP_TIMER_START]=0;
+						SamusVars[SAMUS_ACTION] = SAMUS_ACTION_NONE;
+					}
+				}
+				else if(!PressJump()  && SamusVars[GRAPPLE_GRIP_ON])
+					SamusVars[IS_JUMPING]= 0;
+			 }
+			 else{
+				if(SamusVars[GRAPPLE_GRIP_ON]){
+					SamusVars[GRAPPLE_GRIP_ON]= 0;
+					SamusVars[GRAPPLE_GRIP_TIMER]=0;
+					SamusVars[GRIP_TIMER_START]=0;
+					SamusVars[SAMUS_ACTION] = SAMUS_ACTION_NONE;
+				}
+			 }
+			 if(SamusVars[GRAPPLE_GRIP_TIMER]<=0){
+				SamusVars[GRIP_TIMER_START]=0;
+				SamusVars[GRAPPLE_GRIP_ON]= 0;
+				SamusVars[SAMUS_ACTION] = SAMUS_ACTION_NONE;
+			 }
+			SamusVars[GRAPPLE_GRIP_TIMER]--; 
+		}
+	}
+}//end ru

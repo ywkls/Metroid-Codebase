@@ -1,0 +1,93 @@
+//Section 83. Beetom
+
+ffc script Beetom{
+	void run(int enemyid){
+		npc ghost = Ghost_InitAutoGhost(this, enemyid);
+		Ghost_SetFlag(GHF_NORMAL);
+		int MinJumpHeight = Ghost_GetAttribute(ghost, 0, 24);
+		int MaxJumpHeight = Ghost_GetAttribute(ghost, 1, MinJumpHeight);
+		int MinJumpPause = Ghost_GetAttribute(ghost, 2, 48);
+		int MaxJumpPause = Ghost_GetAttribute(ghost, 3, MinJumpPause);
+		int MoveOnGround = ghost->Attributes[4];
+		int StartDir = Clamp(ghost->Attributes[5], 0, 3);
+		int Dir = StartDir;
+		if(StartDir==2)Dir = Choose(0, 1);
+		else if(StartDir==3)Dir = 0;
+		int Combo = ghost->Attributes[10];
+		Ghost_SetSize(this,ghost,2,1);
+		int Pause = 0;
+		bool GrabbedSamus = false;
+		while(true){
+			while(!GrabbedSamus){
+				if(Dir==0&&Ghost_X<=0){
+					Dir = 1;
+					Ghost_Data = Combo+1;
+				}
+				else if(Dir==1&&Ghost_X>=240){
+					Dir = 0;
+					Ghost_Data = Combo;
+				}
+				if(Pause>0)Pause--;
+				else if(!Ghost_CanMove(DIR_DOWN, 1, 0)&&Ghost_Jump==0){
+					if(Pause==-1){
+						if(MinJumpPause>0){
+							if(Dir==0)Ghost_Data = Combo;
+							else Ghost_Data = Combo+1;
+						}
+						Pause = Rand(MinJumpPause, MaxJumpPause);
+					}
+					else{
+						if(Dir==0)Ghost_Data = Combo+2;
+						else Ghost_Data = Combo+3;
+						Pause = -1;
+						Ghost_Jump = Rand(MinJumpHeight, MaxJumpHeight)/10;
+					}
+				}
+				if(StartDir>2&&Pause>0){
+					if(CenterLinkX()<CenterX(ghost)){
+						Dir = 0;
+						if(Pause>0)Ghost_Data = Combo;
+						else Ghost_Data = Combo+2;
+					}
+					else if(CenterLinkX()>CenterX(ghost)){
+						Dir = 1;
+						if(Pause>0)Ghost_Data = Combo+1;
+						else Ghost_Data = Combo+3;
+					}
+				}
+				if((MoveOnGround==0&&Ghost_CanMove(DIR_DOWN, 1, 0))||MoveOnGround!=0){
+					if(Dir==0){
+						Ghost_Move(DIR_LEFT, ghost->Step/100, 0);
+						if(!Ghost_CanMove(DIR_LEFT, 1, 0)&&Ghost_CanMove(DIR_RIGHT, 1, 0)){
+							if(Pause>0)Ghost_Data = Combo+1;
+							else Ghost_Data = Combo+3;
+							Dir = 1;
+						}
+					}
+					else if(Dir==1){
+						Ghost_Move(DIR_RIGHT, ghost->Step/100, 0);
+						if(!Ghost_CanMove(DIR_RIGHT, 1, 0)&&Ghost_CanMove(DIR_LEFT, 1, 0)){
+							if(Pause>0)Ghost_Data = Combo;
+							else Ghost_Data = Combo+2;
+							Dir = 0;
+						}
+					}
+				}
+				if(Dir==0)Ghost_Dir = DIR_LEFT;
+				else Ghost_Dir = DIR_RIGHT;
+				if(Between(Ghost_X+16,Link->X,Link->X+16) && Between(Ghost_Y+8,Link->Y-16,Link->Y+16)){
+					Ghost_Data = Combo+4;
+					Ghost_SetSize(this,ghost,1,2);
+					GrabbedSamus = true;
+				}
+				Ghost_Waitframe(this, ghost);
+			}
+			while(GrabbedSamus){
+				Ghost_X = Link->X;
+				Ghost_Y = Link->Y;
+				Ghost_Waitframe(this, ghost);
+			}
+			Ghost_Waitframe(this, ghost);
+		}
+	}
+}

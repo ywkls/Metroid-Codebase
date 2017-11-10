@@ -1,0 +1,14 @@
+//Beam Constants for equipping multiple beams at once.
+
+const int EQ_POWER 					= 00000000001b;//Power Beam equipped.
+const int EQ_CHARGE				    = 00000000010b;//Charge Beam equipped.
+const int EQ_ICE			        = 00000000100b;//Ice Beam equipped.
+const int EQ_WAVE		            = 00000001000b;//Wave Beam equipped.
+const int EQ_SPAZER				    = 00000010000b;//Spazer Beam equipped.
+const int EQ_PLASMA			        = 00000100000b;//Plasma Beam equipped.
+const int EQ_HYPER			        = 00001000000b;//Plasma Beam equipped.
+
+const int SFX_STORED_CHARGE	= 89;
+const int SFX_PLASMA_BEAM= 97;
+const int SFX_SPAZER_BEAM= 102;
+const int SFX_WAVE_BEAM = 104;

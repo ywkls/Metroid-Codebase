@@ -1,0 +1,37 @@
+//Section 70. Global Item scripts.
+//Activates items from the global script based on which is currently equipped.
+
+void ItemUse(){
+	if(!SamusVars[IS_MORPHED]){
+		if(SamusVars[EQUIPPED_ITEM]==I_BEAM || SamusVars[EQUIPPED_ITEM]==I_POWER_BOMB
+			|| (SamusVars[EQUIPPED_ITEM]==I_MISSILES
+				&& Game->Counter[CR_ARROWS]==0)
+			|| (SamusVars[EQUIPPED_ITEM]==I_SUPERMISSILE
+				&& Game->Counter[CR_RUPEES]==0)){
+			if((SamusVars[BEAMS_EQUIPPED]&EQ_HYPER)==0)
+				RunBeams();
+			else
+				RunHyper();
+		}
+		else if(PressFire()){
+			if(SamusVars[EQUIPPED_ITEM]==I_MISSILES){
+				if(Game->Counter[CR_ARROWS]!=0)
+					RunMissiles();
+			}
+			else if(SamusVars[EQUIPPED_ITEM]==I_SUPERMISSILE){
+				if(Game->Counter[CR_RUPEES]!=0)
+					RunSuperMissile();
+			}
+			else if(SamusVars[EQUIPPED_ITEM]==I_X_RAY)
+				RunX_Ray();
+			else
+				DampInput(SamusVars[FIRE_BUTTON]);
+		}
+		else if(InputFire()){
+			if(SamusVars[EQUIPPED_ITEM]==I_GRAPPLE && !SamusVars[GRAPPLE_GRIP_ON])
+				RunGrappleBeam();
+			else
+				DampInput(SamusVars[FIRE_BUTTON]);
+		}
+	}
+}

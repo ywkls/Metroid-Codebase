@@ -1,0 +1,22 @@
+ffc script Lava_Movie{
+	void run(){
+		int timer;
+		int Ypos;
+		int ComboArray[176];
+		int i;
+		for(i=0;i<175;i++)
+			ComboArray[i]= GetRemoteComboD(42,120,i);
+		while(true){
+			if(timer<64){
+				for(i=0;i<175;i++)
+					Screen->DrawCombo(3,ComboX(i),ComboY(i)+Ypos,ComboArray[i],
+										1,1,8,-1, -1, 0, 0, 0, 48, 0, true, 64);
+			}
+			else
+				this->Data = CM_AUTOWARPD;
+			timer++;
+			Ypos++;
+			Waitframe();
+		}
+	}
+}
