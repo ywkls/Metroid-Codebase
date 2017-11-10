@@ -1,0 +1,10 @@
+//Increase Metroid HP.
+
+item script Metroid_Upgrade{
+	void run(int message, int icon){
+		SamusVars[METROID_MAX_HP]+=100;
+		Game->Counter[SECRET_COUNTER] ++;
+		Screen->Message(message);
+		SamusVars[METROID_ICON]= icon;
+	}
+}
