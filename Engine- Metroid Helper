@@ -1,0 +1,225 @@
+//Section 35. Metroid Helper
+
+int METROID_HP_COUNTER = CR_SCRIPT4;//Counter for Metroid HP.
+const int I_METROID_FIRE = 127;//Item to give Metroid fire ability.
+const int I_BIG_METROID = 128;//Item to give Metroid a larger size.
+const int I_FINAL_METROID= 129;//Item to give invulnerability to ice.
+const int METROID_COOLDOWN_REQUIRED = 3600;//How long to wait before you can use Metroid again.
+const int METROID_SCRIPT_SLOT = 30;//Script slot for Metroid Helper.
+const int NORMAL_METROID_COMBO = 235;//Normal Metroid combo.
+const int BIG_METROID_COMBO =1653;//Big Metroid Combo.
+const int NORMAL_METROID_RADIUS =16;//Normal loop radius.
+const int METROID_FIRE_SPRITE = 80;//Sprite of fire attack.
+const int FINAL_METROID_COMBO = 1868;//Combo of final Metroid form.
+const int METROID_CSET = 8;//Metroid CSet.
+const int METROID_DETECTION_RANGE = 32;//Range of enemy detection.
+const int METROID_SFX = 66;//Sound Metroid makes.
+
+void RunFriendly_Metroid(){
+	if(!SamusVars[USING_METROID] &&(SamusVars[METROID_CURR_HP]-9)>0 
+		&& !SamusTeleporting() && !SamusVars[IS_MORPHED]
+		&& SamusVars[SAMUS_ACTION]!=SAMUS_ACTION_SHINE_SPARK_LEFT
+		&& SamusVars[SAMUS_ACTION]!=SAMUS_ACTION_SHINE_SPARK_RIGHT
+		&& SamusVars[SAMUS_ACTION]!=SAMUS_ACTION_SHINE_SPARK_UP){
+		Game->PlaySound(METROID_SFX);
+		if((SamusVars[METROID_CURR_HP]-9)>=0)
+			SamusVars[METROID_CURR_HP]-=9;
+		else
+			SamusVars[METROID_CURR_HP]= 0;
+		SamusVars[USING_METROID] = 1;
+		int Args[8];
+		ffc launch = NewFFCScriptOrQuit(METROID_SCRIPT_SLOT, Args);
+	}
+	else{
+		SamusVars[USING_METROID] = 0;
+		if(SamusVars[METROID_CURR_HP]==0){
+			if(SamusVars[CURR_FILLED_TANKS]>=2){
+				Game->Counter[HEALTH_COUNTER]-=9;
+				SamusVars[METROID_CURR_HP]=SamusVars[METROID_MAX_HP];
+			}
+			else if(SamusVars[CURR_FILLED_TANKS]==1){
+				if(Game->Counter[HEALTH_COUNTER]>=10){
+					Game->Counter[HEALTH_COUNTER]-=9;
+					SamusVars[METROID_CURR_HP]=SamusVars[METROID_MAX_HP];
+				}
+			}
+		}
+	}	
+}
+
+void RunMetroid(){
+	if(CountFFCsRunning(METROID_SCRIPT_SLOT)==0){
+		Game->PlaySound(METROID_SFX);
+		int Args[8];
+		ffc launch = NewFFCScriptOrQuit(METROID_SCRIPT_SLOT, Args);
+	}
+}
+
+ffc script Metroid_Helper{
+	void run(int this_id){
+		lweapon Metroid;
+		float angle;
+		int timer = 10;
+		npc n;
+		npc target;
+		bool isAttacking = false;
+		int i;
+		int HungerTimer;
+		while(SamusVars[METROID_CURR_HP]>0 && SamusVars[USING_METROID]){
+			this->Flags[FFCF_OVERLAY] = true;
+			if(Screen->NumNPCs()!=0){
+				for(i=1;i<=Screen->NumNPCs();i++){
+					n= Screen->LoadNPC(i);
+					//if(n->Misc[NPC_METROID_MISC_INDEX] ==0)n->Misc[NPC_METROID_MISC_INDEX]= 1;
+					if(Abs((n->X+8)-(this->X+8))<METROID_DETECTION_RANGE
+						&&Abs((n->Y+8)-(this->Y+8))<METROID_DETECTION_RANGE 
+						&& n->Defense[NPCD_FIRE]==NPCDT_NONE){
+						target = n;
+						isAttacking = true;
+						Game->PlaySound(METROID_SFX);
+						break;
+					}		
+				}
+			}
+			for (i = 1; i <= Screen->NumEWeapons(); i++){
+				eweapon e = Screen->LoadEWeapon(i);
+				if(Collision(this,e)){
+					if(SamusVars[METROID_CURR_HP]>e->Damage)
+						SamusVars[METROID_CURR_HP]-=e->Damage;
+					else
+						SamusVars[METROID_CURR_HP]=0;
+					e->DeadState = 0;
+				}
+			}
+			if(!Link->Item[I_BIG_METROID] && !Link->Item[I_FINAL_METROID]){
+				this->Data = NORMAL_METROID_COMBO;
+				this->CSet = METROID_CSET;
+				this->TileWidth = 1;
+				this->TileHeight = 1;
+				if(!isAttacking){
+					this->X = (Link->X+8)+ (2*NORMAL_METROID_RADIUS)* Cos(angle);
+					this->Y = (Link->Y-8)+ NORMAL_METROID_RADIUS * Sin(angle);
+				}
+				else{
+					if(target->HP <= 0)isAttacking = false;
+					if(this->X<target->X)this->X++;
+					else this->X--;
+					if(this->Y<target->Y)this->Y++;
+					else this->Y--;
+					if(Screen->NumNPCs()==0)isAttacking = false;
+					else{
+						if(timer>0)timer--;
+						if(timer<=0){
+							target->HP--;
+							timer = 10;
+							if(SamusVars[METROID_CURR_HP]<SamusVars[METROID_MAX_HP])SamusVars[METROID_CURR_HP]++;
+							Game->PlaySound(METROID_SFX);
+						}
+					}
+				}
+				angle = (angle+1)%360;
+				if(Link->Item[I_METROID_FIRE] && Link->PressEx3){
+					Link->PressEx3 = false;
+					Metroid = Screen->CreateLWeapon(LW_FIRE);
+					Metroid->X = this->X+8;
+					Metroid->Y = this->Y+8;
+					Metroid->UseSprite(METROID_FIRE_SPRITE);
+					if(this->X>Link->X)Metroid->Dir = DIR_RIGHT;
+					else Metroid->Dir = DIR_LEFT;
+					Metroid->DeadState = 60;
+					Metroid->Misc[LW_ZH_I_FLAGS_2]|=LWF_LEVEL_1;
+				}				
+			}
+			else if(Link->Item[I_BIG_METROID] && !Link->Item[I_FINAL_METROID]){
+				this->Data = BIG_METROID_COMBO;
+				this->CSet = METROID_CSET;
+				this->TileHeight = 2;
+				this->TileWidth = 2;
+				if(!isAttacking){
+					this->X = (Link->X+8)+ (4*NORMAL_METROID_RADIUS)* Cos(angle);
+					this->Y = (Link->Y-8)+ (2*NORMAL_METROID_RADIUS) * Sin(angle);
+				}
+				else{
+					if(target->HP <= 0)isAttacking = false;
+					if(this->X<target->X)this->X++;
+					else this->X--;
+					if(this->Y<target->Y)this->Y++;
+					else this->Y--;
+					if(Screen->NumNPCs()==0)isAttacking = false;
+					else{
+						if(timer>0)timer--;
+						if(timer<=0){
+							target->HP-=4;
+							timer = 10;
+							if((SamusVars[METROID_CURR_HP]+4)<SamusVars[METROID_MAX_HP])SamusVars[METROID_CURR_HP]+=4;
+							else SamusVars[METROID_CURR_HP] = SamusVars[METROID_MAX_HP];
+							Game->PlaySound(METROID_SFX);
+						}
+					}
+				}
+				angle = (angle+3)%360;
+				if(Link->PressEx3){
+					Link->PressEx3 = false;
+					Metroid = Screen->CreateLWeapon(LW_FIRE);
+					Metroid->X = this->X+16;
+					Metroid->Y = this->Y+16;
+					Metroid->UseSprite(METROID_FIRE_SPRITE);
+					if(this->X>Link->X)Metroid->Dir = DIR_RIGHT;
+					else Metroid->Dir = DIR_LEFT;
+					Metroid->DeadState = 60;
+					Metroid->Misc[LW_ZH_I_FLAGS_2]|=LWF_LEVEL_2;
+				}	
+			}
+			else if(Link->Item[I_FINAL_METROID] && Link->Item[I_BIG_METROID]){
+				this->Data = FINAL_METROID_COMBO;
+				this->CSet = METROID_CSET;
+				this->TileHeight = 2;
+				this->TileWidth = 2;
+				if(!isAttacking){
+					this->X = (Link->X+8)+ (8*NORMAL_METROID_RADIUS)* Cos(angle);
+					this->Y = (Link->Y-8)+ (4*NORMAL_METROID_RADIUS) * Sin(angle);
+				}
+				else{
+					if(target->HP <= 0)isAttacking = false;
+					if(this->X<target->X)this->X++;
+					else this->X--;
+					if(this->Y<target->Y)this->Y++;
+					else this->Y--;
+					if(Screen->NumNPCs()==0)isAttacking = false;
+					else{
+						if(timer>0)timer--;
+						if(timer<=0){
+							target->HP-=10;
+							timer = 10;
+							if((SamusVars[METROID_CURR_HP]+10)<SamusVars[METROID_MAX_HP])SamusVars[METROID_CURR_HP]+=10;
+							else SamusVars[METROID_CURR_HP] = SamusVars[METROID_MAX_HP];
+							Game->PlaySound(METROID_SFX);
+						}
+					}
+				}
+				angle = (angle+6)%360;
+				if(Link->PressEx3){
+					Link->PressEx3 = false;
+					Metroid = Screen->CreateLWeapon(LW_FIRE);
+					Metroid->X = this->X+16;
+					Metroid->Y = this->Y+16;
+					Metroid->UseSprite(METROID_FIRE_SPRITE);
+					if(this->X>Link->X)Metroid->Dir = DIR_RIGHT;
+					else Metroid->Dir = DIR_LEFT;
+					Metroid->DeadState = 60;
+					Metroid->Misc[LW_ZH_I_FLAGS_2]|=LWF_LEVEL_3;
+				}	
+			}
+			HungerTimer = (HungerTimer+1)% 360;
+			if(HungerTimer==0){
+				if((SamusVars[METROID_CURR_HP]-9)>=0)
+					SamusVars[METROID_CURR_HP]-=9;
+				else
+					SamusVars[METROID_CURR_HP]= 0;
+			}
+			Waitframe();
+		}
+		this->Data =0;
+		Quit();
+	}
+}
