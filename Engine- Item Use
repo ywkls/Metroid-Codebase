@@ -35,3 +35,10 @@ void ItemUse(){
 		}
 	}
 }
+
+void Aux_Items(){
+	if(Press_Aim_Up())
+		RunFriendly_Metroid();
+	else if(Press_Aim_Dn() && Link->Item[I_ATOMIZER])
+		RunAtomic_Disintegrator();
+}
