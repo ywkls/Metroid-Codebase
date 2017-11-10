@@ -1,0 +1,259 @@
+//Section 81. Ridley First Form
+
+const int RIDLEY_CERES_BODY = 86;//Npc for actual body of Ridley.
+
+ffc script Ridley_First{
+	void run(int enemyID){
+		npc ghost = Ghost_InitAutoGhost(this, enemyID);
+		//Create body.
+		npc body = Screen->CreateNPC(RIDLEY_CERES_BODY);
+		//Create tail end.
+		npc end = Screen->CreateNPC(RIDLEY_TAIL_END);
+		//Resize body.
+		Enemy_ExtendSimple(body,6,7);
+		//Position enemies.
+		body->X = 176;
+		body->Y = 64;
+		Ghost_X = body->X+32;
+		Ghost_Y = body->Y;
+		end->X = body->X+16;
+		end->Y = body->Y+96;
+		//Resize tail end.
+		Enemy_ExtendSimple(end,1,2);
+		//Remember tail original tile.
+		int EndTile = end->OriginalTile;
+		//4 eweapons we can make for the fireballs.
+		eweapon fireball[4];
+		npc tail_segments[4];//Npcs used by tail segments.
+		int TailAction;//Used to control tail behavior.
+		int CalcX;//Used to calculate relative X movement of tail.
+		int CalcY;//Used to calculate relative Y movement of tail.
+		int i;//Iterative variable so we don't have to set it up a million times.
+		//An array to remember the tiles for the tail segments.
+		int TailTile[4];
+		//Set up tail segments
+		for(i = 0;i<=3;i++){
+			tail_segments[i]= Screen->CreateNPC(RIDLEY_TAIL_SEGMENTS);
+			Enemy_ExtendSimple(tail_segments[i],2,2);
+			tail_segments[i]->X =end->X;
+			tail_segments[i]->Y =end->Y;
+			TailTile[i] = tail_segments[i]->OriginalTile;
+		}
+		//Set flags.
+		Ghost_SetFlag(GHF_IGNORE_ALL_TERRAIN);
+		Ghost_SetFlag(GHF_IGNORE_NO_ENEMY);
+		Ghost_SetFlag(GHF_NO_FALL);
+		Ghost_SetFlag(GHF_FAKE_Z);
+		//Hover code from sideview enemies.
+		int Misc1 = ghost->Attributes[1];//Half width of horizontal movement
+		int Misc2 = ghost->Attributes[2];//X speed
+		int Misc3 = ghost->Attributes[3];//Half Height of vertical movement
+		int Misc4 = ghost->Attributes[4];//Y speed
+		//These four variables handle the parametric movement.
+		int StartX= 88;
+		int StartY= 48;
+		int T1 = 0;
+		int T2 = 0;
+		//Tile width and height.
+		int Width = Ghost_GetAttribute(ghost,5,1);
+		int Height = Ghost_GetAttribute(ghost,6,1);
+		Ghost_SetSize(this,ghost,Width,Height);
+		int MaxHP = Ghost_HP;//Remember enemy HP.
+		float angle;//Use by rotating tail.
+		int IntroTimer= 60;//Timer for intro segment.
+		int InitY = end->Y;//Remember original end->Y position.
+		int Mode = 0;//Controls behavior.
+		int ModeTimer;//Timer for changing behavior.
+		//Saves CalcY
+		int SavedCalcY;
+		Ghost_Data = GH_INVISIBLE_COMBO;
+		int InvisTimer = 60;//Timer for invisible segment.
+		while(true){
+			//Intro segment.
+			while(IntroTimer>0){
+				//The enemy is invisible when you enter the room.
+				while(InvisTimer>0){
+					body->CollDetection = false;
+					end->OriginalTile = INVISIBLE_ENEMY_TILE;
+					end->CollDetection = false;
+					for(i=0;i<=3;i++){
+						tail_segments[i]->OriginalTile = INVISIBLE_ENEMY_TILE;
+						tail_segments[i]->CollDetection = false;
+					}
+					ghost->CollDetection = false;
+					InvisTimer--;
+					Gen_Leader_Waitframe(this,ghost);
+				}
+				//Make it vulnerable.
+				body->CollDetection = true;
+				ghost->CollDetection = true;
+				end->CollDetection = true;
+				//Make it appear.
+				for(i=0;i<=3;i++){
+					tail_segments[i]->OriginalTile = TailTile[i];
+					tail_segments[i]->CollDetection = true;
+				}
+				end->OriginalTile = EndTile;
+				body->OriginalTile = RIDLEY_BODY_LEFT_TILE;
+				//Rise into the air. Keep body aligned with core.
+				body->Y--;
+				Ghost_X = body->X;
+				Ghost_Y = body->Y;
+				end->X = body->X+56;
+				CalcY = Abs(InitY-(body->Y+72))/4;
+				end->Y = (body->Y+72)+(CalcY*5);
+				for(i = 0;i<=3;i++){
+					tail_segments[i]->X = end->X;
+					tail_segments[i]->Y = (body->Y+72)+(i*CalcY);
+				}
+				//Reduce timer.
+				IntroTimer--;
+				//Save values whenever it starts moving.
+				if(IntroTimer==1)
+					SavedCalcY = CalcY;
+				Gen_Leader_Waitframe(this,ghost);
+			}
+			Ghost_X = body->X;
+			Ghost_Y = body->Y;
+			end->X = body->X+56;
+			//Do this because size changes during firing mode.
+			Enemy_ExtendSimple(body,6,7);
+			//Align parts.
+			end->Y = (body->Y+72)+(SavedCalcY*5);
+			CalcY = Abs(end->Y-(body->Y+72))/4;
+			//Change behavior as HP drops.
+			if(Ghost_HP>(MaxHP/2)){
+				if(ModeTimer<=0){
+					if(Mode ==0)Mode = Choose(1,2);
+					else if(Mode==1)Mode = Choose(0,2);
+					else Mode = Choose(0,1);
+					ModeTimer = Rand(90,150);
+				}
+			}	
+			else{
+				if(ModeTimer<=0){
+					if(Mode ==0)Mode = Choose(1,2);
+					else if(Mode==1)Mode = Choose(0,2);
+					else Mode = Choose(0,1);
+					ModeTimer = Rand(75,135);
+				}
+			}
+			//Normal movement.
+			if(ModeTimer>0 && Mode ==0){
+				//Move the enemy.
+				//Move the enemy.
+				T1+=Misc2;
+				WrapDegrees(T1);
+				T2+=Misc4;
+				WrapDegrees(T2);
+				//Align parts.
+				Ghost_X = StartX+Misc1*Cos(T1);
+				Ghost_Y = StartY+Misc3*Sin(2*T2);
+				//Alter appearance based on its position relative to you.
+				body->X= Ghost_X;
+				body->Y= Ghost_Y;
+				body->OriginalTile = RIDLEY_BODY_LEFT_TILE;
+				end->X = body->X+56;
+				end->Y = (body->Y+72)+(SavedCalcY*5);
+				CalcY = Abs(end->Y-(body->Y+72))/4;
+				for(i = 0;i<=3;i++){
+					tail_segments[i]->X = end->X;
+					tail_segments[i]->Y = (body->Y+72)+(i*CalcY);
+				}
+				//Reduce timer inside each mode.
+				ModeTimer--;
+			}
+			//Time to do tail stuff.
+			else if(ModeTimer>0 && Mode ==1){
+				//Choose a tail behavior.
+				TailAction = 1;
+				ModeTimer--;
+			}
+			//Fire fireballs.
+			else if(ModeTimer>0 && Mode ==2){
+				//Reduce overall mode timer for this section.
+				//Done to keep from spewing fireballs forever.
+				ModeTimer = ModeTimer/10;
+				//Change how it fires based on where it is relative to you.
+				Enemy_ExtendSimple(body,7,6);
+				//Handle body appearance.
+				Ghost_X = body->X;
+				Ghost_Y = body->Y;
+				body->OriginalTile = RIDLEY_BODY_LEFT_FIRING_TILE;
+				end->X = body->X+64;
+				end->Y = (body->Y+72)+(SavedCalcY*5);
+				CalcY = Abs(end->Y-(body->Y+72))/4;
+				for(i = 0;i<=3;i++){
+					tail_segments[i]->X = end->X;
+					tail_segments[i]->Y = (body->Y+72)+(i*CalcY);
+				}
+				//Make a noise.
+				Game->PlaySound(RIDLEY_ROAR_SFX);
+				//Fire weapons.
+				for(i = 0;i<=3;i++){
+					fireball[i] = FireEWeapon(ghost->Weapon, body->X, body->Y+32, DegtoRad(Rand(135,225)), 300, ghost->WeaponDamage, RIDLEY_FLAME_SPRITE, 40, 0);
+					SetEWeaponLifespan(fireball[i],EWL_TIMER, 60);
+					SetEWeaponDeathEffect(fireball[i],EWD_EXPLODE, 8);
+				}
+				ModeTimer--;
+			}
+			//Tail swiping.				
+			if(ModeTimer>0 && TailAction ==1){
+				//Swipe tail forward.
+				while(end->X>body->X){
+					Ghost_X = body->X;
+					Ghost_Y = body->Y;
+					body->OriginalTile = RIDLEY_BODY_LEFT_TILE;
+					end->X-=5;
+					CalcX = Abs(end->X-(body->X+56))/4;
+					CalcY = Abs(end->Y-(body->Y+72))/4;
+					for(i = 0;i<=3;i++){
+						tail_segments[i]->X = (body->X+56)-(i*CalcX);
+						tail_segments[i]->Y = (body->Y+72)+(i*CalcY);
+					}
+					ModeTimer--;
+					Gen_Leader_Waitframe(this,ghost);
+				}
+				//Swipe it back again.
+				while(end->X<body->X+56){
+					Ghost_X = body->X;
+					Ghost_Y = body->Y;
+					body->OriginalTile = RIDLEY_BODY_LEFT_TILE;
+					end->X+=5;
+					CalcX = Abs(end->X-(body->X+56))/4;
+					CalcY = Abs(end->Y-(body->Y+72))/4;
+					for(i = 0;i<=3;i++){
+						tail_segments[i]->X = (body->X+56)-(i*CalcX);
+						tail_segments[i]->Y = (body->Y+72)+(i*CalcY);
+					}
+					ModeTimer--;
+					Gen_Leader_Waitframe(this,ghost);
+				}
+				//Reset variable.
+				TailAction = 0;
+			}
+			if(Game->Counter[HEALTH_COUNTER]<=30){
+				while(Ghost_Y>-176){
+					ghost->CollDetection = false;
+					body->CollDetection = false;
+					end->CollDetection = false;
+					Ghost_Y--;
+					body->X= Ghost_X;
+					body->Y= Ghost_Y;
+					body->OriginalTile = RIDLEY_BODY_LEFT_TILE;
+					end->X = body->X+56;
+					end->Y = (body->Y+72)+(SavedCalcY*5);
+					CalcY = Abs(end->Y-(body->Y+72))/4;
+					for(i = 0;i<=3;i++){
+						tail_segments[i]->CollDetection = false;
+						tail_segments[i]->X = end->X;
+						tail_segments[i]->Y = (body->Y+72)+(i*CalcY);
+					}
+					Gen_Leader_Waitframe(this,ghost);
+				}
+				Ghost_HP = 0;	
+			}
+			Gen_Leader_Waitframe(this,ghost);
+		}
+	}
+}
