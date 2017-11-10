@@ -1,0 +1,52 @@
+//Section 108. Boyon
+
+ffc script Boyon{
+	void run(int enemyID){
+		//Set up enemy.
+		npc ghost = Ghost_InitAutoGhost(this, enemyID);
+		//How often to jump.
+		int JumpTimer = Rand(30,90);
+		bool Jumping = false;//Whether it is currently jumping.
+		//Whether this enemy floats to the ground.
+		Ghost_SetFlag(GHF_STUN);
+		int StartY = Ghost_Y;
+		//Enemy width and height.
+		int Width = Ghost_GetAttribute(ghost,6,1);
+		int Height = Ghost_GetAttribute(ghost,7,1);
+		//Enemy Cset.
+		Ghost_CSet = Ghost_GetAttribute(ghost,8,0);
+		Ghost_SetSize(this,ghost,Width,Height);
+		int combo = ghost->Attributes[10];
+		this->Flags[FFCF_OVERLAY]= true;
+		while(true){
+			//Not jumping right now.
+			if(!Jumping){
+				//The jump timer has run out.
+				if(JumpTimer<=0)
+					//Jump now.
+					Jumping = true;
+				else{
+					if(!Screen->isSolid(Ghost_X+8,Ghost_Y+17))
+						Ghost_UnsetFlag(GHF_NO_FALL);
+					else
+						Ghost_SetFlag(GHF_NO_FALL);
+				}
+			}
+			//Currently jumping.
+			else if(Jumping){
+				Game->PlaySound(SFX_JUMP);
+				Ghost_SetFlag(GHF_NO_FALL);
+				//Ascend to max jump height
+				while(Ghost_Y>StartY){
+					Ghost_Y--;
+					Ghost_Waitframe(this,ghost,true,true);
+				}
+				Jumping = false;
+				//Reset timer.
+				JumpTimer = Rand(60,90);
+			}
+			JumpTimer--;
+			Ghost_Waitframe(this,ghost,true,true);
+		}
+	}
+}
