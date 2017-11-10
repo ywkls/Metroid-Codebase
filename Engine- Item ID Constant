@@ -1,5 +1,3 @@
-//Section 69/ Control Settings
-
 //Item Ids for equipped items.
 
 const int I_MISSILES = 13;
