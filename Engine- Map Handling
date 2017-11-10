@@ -54,3 +54,28 @@ void MapAdjust(){
 			SamusVars[MAP_SCROLL_DIR]=-1;
 	}
 }
+
+ffc script SetMiniMap{
+	void run(int MiniMapTile,int MiniMapX,int MiniMapY,int MiniMapWidth,int MiniMapHeight){
+		SamusVars[MINIMAP_TILE]=MiniMapTile;
+		SamusVars[MINIMAP_DRAW_X]=MiniMapX;
+		SamusVars[MINIMAP_DRAW_Y]=MiniMapY;
+		SamusVars[MINIMAP_WIDTH]=MiniMapWidth;
+		SamusVars[MINIMAP_HEIGHT]=MiniMapHeight;
+	}
+}
+
+bool GotMap(int Area){
+	if(Area==CRATERIA||Area==CRATERIA_EAST)
+		return SamusVars[CRATERIA_MAP];
+	else if(Area==MARIDIA)
+		return SamusVars[MARIDIA_MAP];
+	else if(Area==BRINSTAR)
+		return SamusVars[BRINSTAR_MAP];
+	else if(Area==NORFAIR)
+		return SamusVars[NORFAIR_MAP];
+	else if(Area==WRECKED_SHIP)
+		return SamusVars[WRECKED_MAP];
+	else if(Area==CERES||Area==TOURIAN)
+		return true;
+}
