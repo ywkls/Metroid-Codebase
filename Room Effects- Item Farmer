@@ -1,0 +1,37 @@
+//Section 73. Item Farm
+
+ffc script ItemFarmer{
+	 void run(int enemy_id, int delay){
+		  bool runs = false; 
+		  int q; 
+		  npc n;
+		  int timer = delay;
+		  Waitframes(5);
+		  while(true){
+			   if ( timer-- ) {
+					Waitframe();
+					continue;
+			   }
+			   if ( timer<=0 )timer = delay;
+			   
+			   //Set up conditions to make this run.
+			   if ( Screen->NumItems()==0 ) runs = true;
+			   else runs = false;
+			   
+			   //Check to see if the enemy is on the screen, and do not spawn more, if it is. 
+			   
+			   for ( q = Screen->NumNPCs(); q > 0; q-- ) {
+					n = Screen->LoadNPC(q);
+					if ( n->ID ==enemy_id  && OnScreen(n)) runs = false;
+			   }
+			   
+			   if ( runs ) {
+					n = Screen->CreateNPC(enemy_id);
+					n->X = this->X;
+					n->Y = this->Y;
+					Waitframes(5);
+			   }
+			   Waitframe();
+		  }
+	 }
+}
