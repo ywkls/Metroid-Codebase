@@ -1,0 +1,21 @@
+//Section 118. Giant Explosion
+
+const int BOMB_SPRITE = 9;//Bomb exploding sprite.
+
+//D0- Width of explosion.
+//D1- Height of explosion.
+//D2- How long explosion goes on for.
+
+ffc script Giant_Explosion{
+	void run(int width, int height, int time){
+		eweapon bomb;
+		int i;
+		while(time>0){
+			bomb = FireEWeapon(EW_FIRE2,this->X+(Rand(0,width)),this->Y+(Rand(0,height)), DegtoRad(0), 0, 0, BOMB_SPRITE, SFX_BOMB, 0);
+			SetEWeaponLifespan(bomb,EWL_TIMER, 5);
+			SetEWeaponDeathEffect(bomb,EWD_VANISH,0);
+			time--;
+			Waitframes(5);
+		}
+	}
+}
