@@ -1,0 +1,46 @@
+//! The physical map station. 
+//! D0 : What Map to check
+
+ffc script MetroidMapStation{
+	void run(int map){
+		bool pressed;
+		int MapObtained[]= "Map Obtained"; 
+		while ( true ) {
+			while ( ( !pressed && !Tango_MenuIsActive() ) ) {
+				if ( DistX(this, 16) && DistY(this, 32)){
+					Screen->DrawCombo(7, 0, -53, SCAN_COMBO, 1, 1, SCAN_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+					if	( PressExamine() && !GotMap(map) ) { 
+						pressed = true; 
+						DampInput(BUTTON_EX3);
+					}	
+				}
+				Waitframe();
+			}
+			if ( pressed ) {
+				pressed = false;
+				//Set coordinates for this station:
+				if(!GotMap(map)){
+					if(map==CRATERIA)
+						SamusVars[CRATERIA_MAP]=1;
+					else if(map==NORFAIR)
+						SamusVars[NORFAIR_MAP]=1;
+					else if(map==MARIDIA)
+						SamusVars[MARIDIA_MAP]=1;
+					else if(map==BRINSTAR)
+						SamusVars[BRINSTAR_MAP]=1;
+					else if(map==WRECKED_SHIP)
+						SamusVars[WRECKED_MAP]= 1;
+					SetUpWindow(WINDOW_SLOT_1, WINDOW_STYLE_1, 48, 32,SIZE_SMALL);
+					Tango_LoadString(WINDOW_SLOT_1, MapObtained);
+					Tango_ActivateSlot(WINDOW_SLOT_1);
+					while(Tango_SlotIsActive(WINDOW_SLOT_1))   
+						Waitframe();
+					Game->PlaySound(SFX_SECRET);	
+					break;
+				}				
+			}
+			Waitframe(); //Main while loop. 
+		}
+		Tango_ClearSlot(WINDOW_SLOT_1);
+	}
+}
