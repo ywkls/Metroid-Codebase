@@ -1,0 +1,14 @@
+void TraceMap(){
+	int DrawX[]= "Map X is ";
+	int DrawY[]= "Map Y is ";
+	int SourceX[]= "Map X source is ";
+	int SourceY[]= "Map Y source is ";
+	TraceS(DrawX);
+	Trace(SamusVars[MAP_DRAW_X]);
+	TraceS(DrawY);
+	Trace(SamusVars[MAP_DRAW_Y]);
+	TraceS(SourceX);
+	Trace(SamusVars[MAP_SOURCE_X]);
+	TraceS(SourceY);
+	Trace(SamusVars[MAP_SOURCE_Y]);
+}
