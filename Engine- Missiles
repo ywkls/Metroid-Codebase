@@ -171,3 +171,12 @@ ffc script Diffusion_Missile{
 		Quit();
 	}
 }
+
+const int I_DIFFUSION = 14;
+const int I_HOMING	  = 57;
+
+void RunDiffusion(){
+	int Args[8]= {4,DIFFUSION_MISSILE_SPRITE};
+	if(CountFFCsRunning(DIFFUSION_SCRIPT)==0)
+		NewFFCScript(DIFFUSION_SCRIPT,Args);
+}
