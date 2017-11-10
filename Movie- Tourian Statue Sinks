@@ -1,0 +1,22 @@
+ffc script Statue_Movie{
+	void run(){
+		int timer;
+		int Ypos;
+		int ComboArray[176];
+		int i;
+		for(i=0;i<175;i++)
+			ComboArray[i]= GetRemoteComboD(42,107,i);
+		while(true){
+			if(timer<180){
+				for(i=0;i<175;i++)
+					Screen->DrawCombo(3,ComboX(i),ComboY(i)+Ypos,ComboArray[i],
+										1,1,9,-1, -1, 0, 0, 0, 48, 0, true, 128);
+			}
+			else
+				this->Data = CM_AUTOWARPD;
+			timer++;
+			Ypos++;
+			Waitframe();
+		}
+	}
+}
