@@ -1,0 +1,86 @@
+
+ffc script Super_Bang{
+	void run(int enemyID){
+		npc ghost = Ghost_InitAutoGhost(this, enemyID);
+		int combo = ghost->Attributes[10];
+		Ghost_SetFlag(GHF_NO_FALL);
+		Ghost_SetSize(this,ghost,4,3);
+		int Mode;
+		int ModeTimer = Rand(100,200);
+		bool MovingDown = ChooseBool();
+		Ghost_X= 80;
+		Ghost_Y= 32;
+		int speed= ghost->Step/100;
+		int wait;
+		int color;
+		int firetimer = Rand(90,150);
+		int orient;
+		while(true){
+			if(Mode==0){
+				if(MovingDown && Ghost_CanMove(DIR_DOWN,1,0)){
+					Ghost_UnsetFlag(GHF_NO_FALL);
+					if(Ghost_X<Link->X+8)
+						Ghost_X+=speed;
+					else
+						Ghost_X-=speed;
+				}
+				else if(MovingDown && !Ghost_CanMove(DIR_DOWN,1,0)){
+					MovingDown= false;
+					Ghost_SetFlag(GHF_NO_FALL);
+				}
+				else if(!MovingDown && Ghost_Y>=32)
+					Ghost_Y-=speed;
+				else if(!MovingDown && Ghost_Y<32)
+					MovingDown = true;
+			}
+			else if(Mode==1){
+				for(int i=Screen->NumLWeapons();i>0;i--){
+					lweapon wpn = Screen->LoadLWeapon(i);
+					if(Collision(ghost,wpn))
+						firetimer =0;
+				}
+			}
+			if(firetimer<=0){
+				wait = 120;
+				while(wait>0){
+					color = (color+1)%16;
+					if(orient ==0){
+						Laser(3, Ghost_X, Ghost_Y+24, 8, 180, ghost->WeaponDamage, color);
+						Laser(3, Ghost_X+64, Ghost_Y+24, 8, 0, ghost->WeaponDamage, color);
+					}
+					else{
+						Laser(3, Ghost_X+24, Ghost_Y, 8, 270, ghost->WeaponDamage, color);
+						Laser(3, Ghost_X+24, Ghost_Y+64, 8, 90, ghost->WeaponDamage, color);
+					}
+					wait--;
+					Gen_Explode_Waitframe(this,ghost);
+				}
+				firetimer = Rand(90,150);
+				if(orient ==0){
+					orient = 1;
+					Ghost_Data = combo+1;
+					Ghost_SetSize(this,ghost,3,4);
+				}
+				else if(orient ==1){
+					orient = 0;
+					Ghost_Data = combo;
+					Ghost_SetSize(this,ghost,4,3);
+				}
+			}
+			firetimer--;
+			ModeTimer--;
+			if(ModeTimer<=0){
+				if(Mode==0)
+					Mode =1;
+				else if(Mode==1)
+					Mode = 0;
+				ModeTimer = Rand(100,200);
+			}
+			if(orient==0)
+				Ghost_ForceDir(DIR_DOWN);
+			else
+				Ghost_ForceDir(DIR_LEFT);
+			Gen_Explode_Waitframe(this,ghost);
+		}
+	}
+}
