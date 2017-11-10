@@ -1,0 +1,102 @@
+const int CMB_FLAMEJET = 3772; //First of three combos for the flamejet, each facing right. Dimensions are (5x3, 5x2, 5x1)
+const int CS_FLAMEJET = 2; //CSet of the flame jet
+const int LAYER_FLAMEJET = 7; //Layer the flame jet is drawn to
+const int SFX_FLAMEJET = 13; //Sound the flame jet makes when it activates
+ 
+ffc script FlameJet{
+    void run(int dir, int silentduration, int flameanimduration, int activeduration, int damage, int offset){
+        int timer; int x; int y;
+        //Delay the script by offset frames to desync flame jets
+        Waitframes(offset);
+        int state;
+		if(Screen->State[ST_SECRET])
+			Quit();
+        while(true){
+            //Wait while the flame jet is inactive
+            Waitframes(silentduration);
+            //Play the sound when the flame jet activates
+            Game->PlaySound(SFX_FLAMEJET);
+            timer = 0;
+            //Play the activation animation
+            while(timer<flameanimduration){
+                timer++;
+                //Set flame state based on timer
+                state = Clamp(Floor(timer/(flameanimduration/3)), 0, 2);
+                FlameJet_DrawFlame(this, dir, state, damage);
+                Waitframe();
+            }
+            timer = 0;
+            state = 2;
+            //Wait while the flamejet is active
+            while(timer<activeduration){
+                timer++;
+                FlameJet_DrawFlame(this, dir, state, damage);
+                Waitframe();
+            }
+            timer = 0;
+            //Play the activation animation backwards to deactivate the flame jet
+            while(timer<flameanimduration){
+                timer++;
+                //Set flame state based on timer
+                state = Clamp(Floor((flameanimduration-timer)/(flameanimduration/3)), 0, 2);
+                FlameJet_DrawFlame(this, dir, state, damage);
+                Waitframe();
+            }
+            state = 0;
+        }
+    }
+    //Function draws the flame and handles collision
+    void FlameJet_DrawFlame(ffc this, int dir, int state, int damage){
+        //Convert dir to an angle
+        int angle = 0;
+        if(dir==DIR_UP)
+            angle = -90;
+        else if(dir==DIR_DOWN)
+            angle = 90;
+        else if(dir==DIR_LEFT)
+            angle = 180;
+       
+        int x; int y;
+        //Adjust the center point based on direction
+        x = this->X+8+VectorX(32, angle);
+        y = this->Y+8+VectorY(32, angle);
+       
+        if(state==0){ //Smallest flame
+            DrawCombo(LAYER_FLAMEJET, x, y, CMB_FLAMEJET+2, 5, 1, CS_FLAMEJET, -1, -1, x, y, angle, -1, 0, true, 128);
+        }
+        else if(state==1){ //Medium flame
+            DrawCombo(LAYER_FLAMEJET, x, y, CMB_FLAMEJET+1, 5, 2, CS_FLAMEJET, -1, -1, x, y, angle, -1, 0, true, 128);
+        }
+        else if(state==2){ //Large flame
+            DrawCombo(LAYER_FLAMEJET, x, y, CMB_FLAMEJET, 5, 3, CS_FLAMEJET, -1, -1, x, y, angle, -1, 0, true, 128);
+       
+            //The large flame has hitboxes
+            FlameJet_Hitbox(this, angle, 16, 48, damage);
+            FlameJet_Hitbox(this, angle, 40, 32, damage);
+            FlameJet_Hitbox(this, angle, 64, 16, damage);
+        }
+    }
+    //Function checks one of the three hitboxes and deals damage to Link on collision
+    void FlameJet_Hitbox(ffc this, int angle, int dist, int width, int damage){
+        int x; int y;
+        //Place the center of the hitbox a distance from the FFC's center
+        x = this->X+8+VectorX(dist, angle);
+        y = this->Y+8+VectorY(dist, angle);
+       
+        //Set the two corners of the hitbox based on the width
+        int x1 = x-width/2;
+        int y1 = y-width/2;
+        int x2 = x+width/2;
+        int y2 = y+width/2;
+       
+        //Debug draw, uncomment to show hitboxes
+        //Screen->Rectangle(6, x1, y1, x2, y2, 0x01, 1, 0, 0, 0, true, 64);
+        //If Link collides with the hitbox, deal damage
+        if(RectCollision(x1, y1, x2, y2, Link->X+4, 
+						 Link->Y+4, Link->X+11, Link->Y+11)
+						 && Link->CollDetection){
+            Link->HP-=damage;
+			Link->Action= LA_GOTHURTLAND;
+        }
+    }
+}
