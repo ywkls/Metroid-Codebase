@@ -1,0 +1,64 @@
+const int SFX_ITEM_SELECT = 95;
+
+//Handles switching equipped items.
+
+void ItemSwitcher(){
+	if(PressItemSwitch() && SamusVars[I_SWITCH_COOL]<=0){
+		int Item_Now = SamusVars[EQUIPPED_ITEM];
+		if(SamusVars[EQUIPPED_ITEM]==I_BEAM){
+			if(Link->Item[I_MISSILES])
+				SamusVars[EQUIPPED_ITEM]=I_MISSILES;
+			else if(Link->Item[I_SUPERMISSILE])
+				SamusVars[EQUIPPED_ITEM]=I_SUPERMISSILE;
+			else if(Link->Item[I_POWER_BOMB])
+				SamusVars[EQUIPPED_ITEM]=I_POWER_BOMB;
+			else if(Link->Item[I_GRAPPLE])
+				SamusVars[EQUIPPED_ITEM]= I_GRAPPLE;
+			else if(Link->Item[I_X_RAY])
+				SamusVars[EQUIPPED_ITEM]= I_X_RAY;
+		}
+		else if(SamusVars[EQUIPPED_ITEM]==I_MISSILES){
+			if(Link->Item[I_SUPERMISSILE])
+				SamusVars[EQUIPPED_ITEM]=I_SUPERMISSILE;
+			else if(Link->Item[I_POWER_BOMB])
+				SamusVars[EQUIPPED_ITEM]=I_POWER_BOMB;
+			else if(Link->Item[I_GRAPPLE])
+				SamusVars[EQUIPPED_ITEM]= I_GRAPPLE;
+			else if(Link->Item[I_X_RAY])
+				SamusVars[EQUIPPED_ITEM]= I_X_RAY;
+			else
+				SamusVars[EQUIPPED_ITEM]= I_BEAM;		
+		}
+		else if(SamusVars[EQUIPPED_ITEM]==I_SUPERMISSILE){
+			if(Link->Item[I_POWER_BOMB])
+				SamusVars[EQUIPPED_ITEM]=I_POWER_BOMB;
+			else if(Link->Item[I_GRAPPLE])
+				SamusVars[EQUIPPED_ITEM]= I_GRAPPLE;
+			else if(Link->Item[I_X_RAY])
+				SamusVars[EQUIPPED_ITEM]= I_X_RAY;
+			else
+				SamusVars[EQUIPPED_ITEM]= I_BEAM;		
+		}
+		else if(SamusVars[EQUIPPED_ITEM]==I_POWER_BOMB){
+			if(Link->Item[I_GRAPPLE])
+				SamusVars[EQUIPPED_ITEM]= I_GRAPPLE;
+			else if(Link->Item[I_X_RAY])
+				SamusVars[EQUIPPED_ITEM]= I_X_RAY;
+			else
+				SamusVars[EQUIPPED_ITEM]= I_BEAM;	
+		}
+		else if(SamusVars[EQUIPPED_ITEM]==I_GRAPPLE){
+			if(Link->Item[I_X_RAY])
+				SamusVars[EQUIPPED_ITEM]= I_X_RAY;
+			else
+				SamusVars[EQUIPPED_ITEM]= I_BEAM;
+		}
+		else if(SamusVars[EQUIPPED_ITEM]==I_X_RAY)
+			SamusVars[EQUIPPED_ITEM]=I_BEAM;
+		SamusVars[I_SWITCH_COOL]=30;
+		if(SamusVars[EQUIPPED_ITEM]!=Item_Now)
+			Game->PlaySound(SFX_ITEM_SELECT);
+	}	
+	if(SamusVars[I_SWITCH_COOL]>0)
+		SamusVars[I_SWITCH_COOL]--;
+}
