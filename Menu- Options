@@ -7,6 +7,14 @@ void ChoiceMenu(){
 		Tango_LoadString(WINDOW_SLOT_2, Yes);
 	else if(SamusVars[HEART_BEEP_OFF])
 		Tango_LoadString(WINDOW_SLOT_2, Nope);
+	if(!SamusVars[HARD_ENEMIES])
+		Tango_AppendString(WINDOW_SLOT_2, Nope);
+	else if(SamusVars[HARD_ENEMIES])
+		Tango_AppendString(WINDOW_SLOT_2, Yes);
+	if(!SamusVars[DAMAGE_SPIKE])
+		Tango_AppendString(WINDOW_SLOT_2, Nope);
+	else if(SamusVars[DAMAGE_SPIKE])
+		Tango_AppendString(WINDOW_SLOT_2, Yes);
 	Tango_ActivateSlot(WINDOW_SLOT_2);
 }
 
@@ -14,11 +22,15 @@ void ChoiceMenu(){
 int Option_Menu() {
 	int lineBreak[]="@26";
 	int Beep[]= "@choice(1)Heart Beep@26";
-	int Done[]= "@choice(2)Done@26";
+	int Hard_Foes[]= "@choice(2)Enemy HP Up@26";
+	int Damage_Spike[]= "@choice(3)2 X Damage@26";
+	int Done[]= "@choice(4)Done@26";
 	int initmenu[]="@domenu(1)@suspend()";
 	SetUpWindow(WINDOW_SLOT_1, WINDOW_STYLE_1, 16, 16, SIZE_TALL);
 	Tango_LoadString(WINDOW_SLOT_1, Beep);
-	Tango_AppendString(WINDOW_SLOT_1, Done);
+	Tango_AppendString(WINDOW_SLOT_1,Hard_Foes);
+	Tango_AppendString(WINDOW_SLOT_1,Damage_Spike);
+	Tango_AppendString(WINDOW_SLOT_1,Done);
 	Tango_AppendString(WINDOW_SLOT_1, initmenu);
 	Tango_ActivateSlot(WINDOW_SLOT_1);
 	ChoiceMenu();
@@ -49,7 +61,7 @@ int Option_Menu() {
 		}
         
 		choice = Tango_GetLastMenuChoice();
-		if ( choice == 2)
+		if ( choice == 4)
 			done = -999;
 		
 		else if ( choice == 1){//Cancel
@@ -57,6 +69,22 @@ int Option_Menu() {
 				SamusVars[HEART_BEEP_OFF]=1;
 			else if(SamusVars[HEART_BEEP_OFF])
 				SamusVars[HEART_BEEP_OFF]=0;
+			Tango_ClearSlot(WINDOW_SLOT_2);
+			ChoiceMenu();
+		}
+		else if ( choice == 2){//Cancel
+			if(!SamusVars[HARD_ENEMIES])
+				SamusVars[HARD_ENEMIES]=1;
+			else if(SamusVars[HARD_ENEMIES])
+				SamusVars[HARD_ENEMIES]=0;
+			Tango_ClearSlot(WINDOW_SLOT_2);
+			ChoiceMenu();
+		}
+		else if ( choice == 3){//Cancel
+			if(!SamusVars[DAMAGE_SPIKE])
+				SamusVars[DAMAGE_SPIKE]=1;
+			else if(SamusVars[DAMAGE_SPIKE])
+				SamusVars[DAMAGE_SPIKE]=0;
 			Tango_ClearSlot(WINDOW_SLOT_2);
 			ChoiceMenu();
 		}
