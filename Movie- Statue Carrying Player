@@ -1,0 +1,42 @@
+const int STATUE_WALK_COMBO = 939;
+
+ffc script StatueWalking{
+	void run(){
+		int XPos;
+		int YPos;
+		int timer;
+		while(timer<912){
+			Screen->DrawCombo(3,this->X-16,this->Y,STATUE_WALK_COMBO,5,5,10,-1, -1, 0, 0, 0, -1, 0, true, 128);
+			Screen->DrawLayer(0, 64,14, 0, XPos,YPos,0,128);
+			Screen->DrawLayer(1, 64,14, 1, XPos,YPos,0,64);
+			Screen->DrawLayer(2, 64,14, 2, XPos,YPos,0,128);
+			Screen->DrawLayer(0, 64,13, 0, XPos-256,YPos,0,128);
+			Screen->DrawLayer(1, 64,13, 1, XPos-256,YPos,0,64);
+			Screen->DrawLayer(2, 64,13, 2, XPos-256,YPos,0,128);
+			Screen->DrawLayer(0, 64,12, 0, XPos-512,YPos,0,128);
+			Screen->DrawLayer(1, 64,12, 1, XPos-512,YPos,0,64);
+			Screen->DrawLayer(2, 64,12, 2, XPos-512,YPos,0,128);
+			Screen->DrawLayer(0, 64,11, 0, XPos-768,YPos,0,128);
+			Screen->DrawLayer(1, 64,11, 1, XPos-768,YPos,0,64);
+			Screen->DrawLayer(2, 64,11, 2, XPos-768,YPos,0,128);
+			Screen->DrawLayer(0, 64,27, 0, XPos-768,YPos+176,0,128);
+			Screen->DrawLayer(1, 64,27, 1, XPos-768,YPos+176,0,64);
+			Screen->DrawLayer(2, 64,27, 2, XPos-768,YPos+176,0,128);
+			Screen->DrawLayer(0, 64,28, 0, XPos-512,YPos+176,0,128);
+			Screen->DrawLayer(1, 64,28, 1, XPos-512,YPos+176,0,64);
+			Screen->DrawLayer(2, 64,28, 2, XPos-512,YPos+176,0,128);
+			Screen->DrawLayer(0, 64,29, 0, XPos-256,YPos+176,0,128);
+			Screen->DrawLayer(1, 64,29, 1, XPos-256,YPos+176,0,64);
+			Screen->DrawLayer(2, 64,29, 2, XPos-256,YPos+176,0,128);
+			Screen->DrawLayer(0, 64,30, 0, XPos,YPos+176,0,128);
+			Screen->DrawLayer(1, 64,30, 1, XPos,YPos+176,0,64);
+			Screen->DrawLayer(2, 64,30, 2, XPos,YPos+176,0,128);
+			if(timer>=48 && timer<=96)YPos--;
+			else if(timer>=704 && timer<=832)YPos--;
+			XPos++;
+			timer++;
+			Waitframe();
+		}
+		this->Data = CM_AUTOWARPD;
+	}
+}
