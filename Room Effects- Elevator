@@ -1,0 +1,114 @@
+//Section 78. Elevator
+
+ffc script Elevator{
+   //This detects if Link is performing an action that should prevent him from moving while on a platform
+   bool LinkBusy(){
+      return !(Link->Action<LA_ATTACKING||Link->Action==LA_CHARGING||Link->Action==LA_GOTHURTLAND);
+   }
+   //This detects if Link is using the hookshot, an item that bugs out horribly if Link is moved while using it
+   bool Hookshotting(){
+      for(int i=1; i<=Screen->NumLWeapons(); i++){
+         lweapon l=Screen->LoadLWeapon(i);
+         if(l->ID==LW_HOOKSHOT)return true;
+      }
+      return false;
+   }
+   void run(int direction){
+	  bool Moving = false;
+	  bool OnPlatform = false;
+      while(true){ 
+		 while(!Moving){
+			if(direction==1 && Between(Link->X,this->X,this->X+(this->TileWidth*16))
+				&& Link->InputUp){
+				Link->PressUp = false;
+				Link->InputUp = false;
+				Moving = true;
+				this->Vy = -1;
+			}
+			else if(direction==2 && Between(Link->X,this->X,this->X+(this->TileWidth*16))
+				&& Link->InputDown){
+				Link->PressDown = false;
+				Link->InputDown = false;
+				Moving = true;
+				this->Vy = 1;
+			}
+			if(Between(Link->X,this->X,this->X+(this->TileWidth*16))){
+				Link->Y = this->Y-16;
+				Link->Jump = 0;
+				SamusVars[ON_GROUND_OVERRIDE]=1;
+			}
+			else
+				SamusVars[ON_GROUND_OVERRIDE]=0;
+			Waitframe();
+		 }
+		 Link->Y = this->Y-16;
+		 Link->Jump = 0;
+		 while(Moving){
+			//This detects when Link gets on the platform
+			 if(OnPlatform(this,false,this->Script)){
+				if (!OnPlatform){
+					OnPlatform = true;
+					SamusVars[ON_GROUND_OVERRIDE]=1;
+					Link->Y = this->Y-16;
+				}
+				//This snaps Link to the platform when he isn't hookshotting
+				if(!Hookshotting()){
+					Link->Jump = 0;
+					if(!(Link->PressLeft||Link->InputLeft||Link->InputRight||Link->PressRight))Link->X = this->X+(((this->TileWidth-1)*16)/2);
+				}
+				//if(LinkBusy())NoAction();
+				if(!SamusVars[IS_MORPHED]){
+					if(PressJump())
+						Link->Y-=8;
+				}
+				else{
+					if(PressFire()){
+						if(SamusVars[EQUIPPED_ITEM]!=I_POWER_BOMB && Link->Item[I_BOMB])
+							Link->Y-=8;
+					}
+					if(Link->Item[I_SPRING_BALL] && PressJump())
+						Link->Y-=8;
+				}
+				while(OnPlatform){
+					if(!SamusVars[IS_MORPHED]){
+						if(PressJump()){
+							Link->Y-=8;
+							OnPlatform = false;
+						}
+						else
+							Link->Y = this->Y-16;
+					}
+					else{
+						if(PressFire() && Link->Item[I_BOMB] && SamusVars[EQUIPPED_ITEM]!=I_POWER_BOMB){
+							Link->Y-=8;
+							OnPlatform = false;
+						}
+						else if(Link->Item[I_SPRING_BALL] && PressJump()){
+							Link->Y-=8;
+							OnPlatform = false;
+						}
+						else
+							Link->Y = this->Y-16;
+					}
+					if (!OnPlatform(this, false,this->Script)){
+						SamusVars[ON_GROUND_OVERRIDE]=0;
+						OnPlatform = false;
+					}
+					if(!(Link->PressLeft||Link->InputLeft
+						||Link->InputRight||Link->PressRight))
+						Link->X = this->X+(((this->TileWidth-1)*16)/2);
+					Waitframe();
+				}
+			}
+			else if (OnPlatform && !OnPlatform(this, false,this->Script)){
+				OnPlatform = false;
+				if (!OnPlatform(this, true,this->Script))
+					SamusVars[ON_GROUND_OVERRIDE]=0;
+			}
+			Waitframe();
+		 }
+         Waitframe();
+      }
+	  SamusVars[ON_GROUND_OVERRIDE]=0;
+   }
+}
