@@ -12,3 +12,8 @@ void TraceMap(){
 	TraceS(SourceY);
 	Trace(SamusVars[MAP_SOURCE_Y]);
 }
+
+void TraceMiniMap(){
+	Trace(SamusVars[MINIMAP_DRAW_X]);
+	Trace(SamusVars[MINIMAP_DRAW_Y]);
+}
