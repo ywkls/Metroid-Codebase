@@ -1,0 +1,38 @@
+ffc script Ship_Depart2{
+	void run(int Combo, int Message){
+		int XScale = 1;
+		int YScale = 1;
+		int Timer = 120;
+		float angle = 225;
+		int MessageBuffer[256];
+		GetMessage(Message,MessageBuffer);
+		SamusVars[IS_INVISIBLE]=1;
+		SamusVars[IS_FROZEN]=1;
+		Link->CollDetection = false;
+		while(Timer>0){
+			Screen->Rectangle(1, 0, 0, 511,511, 0x01, -1, 0,0,0, true, 128);
+			Screen->DrawCombo(3,this->X-XScale/2,this->Y-YScale/2,Combo,
+										12,5,9,XScale, YScale, this->X-XScale/2,this->Y-YScale/2, 
+										angle, 48, 0, true, 128);
+			Timer--;
+			XScale+=2;
+			YScale++;
+			angle = (angle-2)%360;
+			NoAction();
+			Waitframe();
+		}
+		SetUpWindow(WINDOW_SLOT_1, WINDOW_STYLE_1, 48, 32,SIZE_SMALL);
+		Tango_LoadString(WINDOW_SLOT_1, MessageBuffer);
+		Tango_ActivateSlot(WINDOW_SLOT_1);
+		while(Tango_SlotIsActive(WINDOW_SLOT_1)){
+			Screen->Rectangle(1, 0, 0, 511,511, 0x01, -1, 0,0,0, true, 128);
+			Screen->DrawCombo(3,this->X-XScale/2,this->Y-YScale/2,Combo,
+								12,5,9,XScale, YScale, this->X-XScale/2,this->Y-YScale/2, 
+								angle, 48, 0, true, 128);
+			Waitframe();
+		}
+		Link->CollDetection = true;
+		Tango_ClearSlot(WINDOW_SLOT_1);
+		this->Data= CM_AUTOWARPD;
+	}
+}
