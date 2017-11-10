@@ -1,0 +1,68 @@
+// D0 :Flag to look for.
+// D1 : Screen->D register to save in.
+
+ffc script SecurityDoor{
+	void run(int flag, int perm){
+		bool isHit = false;
+		if(Screen->D[perm]!=0)
+			isHit = true;
+		int i;
+		while ( !isHit ) {
+			if(Screen->D[perm]){
+				isHit = true;
+				break;
+			}
+			Waitframe(); //Main while loop. 
+		}
+		for(i =0;i<=175;i++){
+			if(ComboFI(i,flag))
+				Game->SetComboData(Game->GetCurMap(),Game->GetCurScreen(),i,GH_INVISIBLE_COMBO);
+			if(Game->GetComboFlag(Screen->LayerMap(2),Screen->LayerScreen(2),i)==flag)
+				Game->SetComboData(Screen->LayerMap(2),Screen->LayerScreen(2),i,GH_INVISIBLE_COMBO);
+		}
+	}
+}
+
+ // D0 : Message to Show
+// D1 : Screen door is on.
+// D2 : Screen->D register to save in.
+
+ffc script SecurityAccess{
+     void run(int Message, int screen, int perm){
+		bool isHit = false;
+		if( Screen->D[perm]!=0)
+			isHit = true;
+		bool pressed= false;
+		int MessageBuffer[256];
+		GetMessage(Message,MessageBuffer);
+		while ( !isHit ) {
+			while ( ( !pressed && !Tango_MenuIsActive() ) ) {
+				if ( DistX(this, 16) && DistY(this, 32)){
+					Screen->DrawCombo(7, 165, -53, SCAN_COMBO, 1, 1, SCAN_CSET, -1, -1, 0, 0, 0, -1, 0, true, 128);
+					if	( PressExamine()) { 
+						pressed = true; 
+						DampInput(BUTTON_EX3);
+					}	
+				}
+				Waitframe();
+			}
+			if ( pressed ) {
+				pressed = false;
+				//Set coordinates for this station:
+				SetUpWindow(WINDOW_SLOT_1, WINDOW_STYLE_1, 48, 32,SIZE_SMALL);
+				Tango_LoadString(WINDOW_SLOT_1, MessageBuffer);
+				Tango_ActivateSlot(WINDOW_SLOT_1);
+				while(Tango_SlotIsActive(WINDOW_SLOT_1)){
+					Game->PlaySound(SFX_WHIRR);
+					Waitframe();
+				}
+				Screen->D[perm]=1;
+				isHit = true;
+				break;				
+			}
+			Waitframe(); //Main while loop. 
+		}
+		Tango_ClearSlot(WINDOW_SLOT_1);
+		Game->SetDMapScreenD(33,screen,perm,1);
+     }
+}
