@@ -1,0 +1,32 @@
+//Section 91. Mini Kraid
+
+ffc script Mini_Kraid{
+	void run(int enemyID){
+		npc ghost = Ghost_InitAutoGhost(this, enemyID);
+		Ghost_SetFlag(GHF_NO_FALL);
+		Ghost_SetFlag(GHF_REDUCED_KNOCKBACK);
+		int Combo = ghost->Attributes[10];
+		Ghost_SetSize(this,ghost,4,4);
+		Ghost_SetHitOffsets(ghost,2,0,0,10);
+		eweapon thorn;
+		int ThornTimer = Rand(100,200);
+		int Sprite = ghost->Attributes[0];
+		int Sfx = ghost->Attributes[1];
+		while(true){
+			Ghost_ForceDir(DIR_LEFT);
+			if(ThornTimer<0){
+				Ghost_Data = Combo+1;
+				for(int i=0;i<=2;i++){
+					thorn = FireEWeapon(ghost->Weapon, Ghost_X,Ghost_Y+Choose(20,32,48), 
+											DegtoRad(180), 300, ghost->WeaponDamage, Sprite, Sfx, EWF_ROTATE_360);
+					Gen_Explode_Waitframes(this,ghost,5);
+				}
+				Gen_Explode_Waitframes(this,ghost,15);
+				Ghost_Data = Combo;
+				ThornTimer = Rand(100,200);
+			}
+			ThornTimer--;
+			Gen_Explode_Waitframe(this,ghost);
+		}
+	}
+}
