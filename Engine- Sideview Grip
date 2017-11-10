@@ -1,0 +1,273 @@
+//Section 29. Sideview Grip
+
+const int I_GRIP_ONE = 19;//Item id for normal grip.
+const int I_GRIP_TWO = 56;//Item id for hyper grip.
+const int CT_SVGRIP= 143;//Combo type for grip. CT_SCRIPT2.
+
+//Test if combo is a Sideview grip.
+bool isSVGrip(int x, int y){
+   int loc = ComboAt(x,y);
+   return( Screen->ComboT[loc] == CT_SVGRIP && ComboFI(loc, CF_BEAM_NX) );
+}
+
+//Sideview Grip
+
+void Sideview_Grip(){
+	//You have the first grip.
+	if(Link->Item[I_GRIP_ONE] && !Link->Item[I_GRIP_TWO]){
+		//The combo above you is a sideview grip.
+		if( isSVGrip(Link->X+8, Link->Y-24)){
+			if(!SamusVars[SIDEVIEW_GRIP_ON]){
+				SamusVars[SIDEVIEW_GRIP_ON]=1;
+				SamusVars[SAMUS_ACTION] = SAMUS_ACTION_HANGING_UP;//Run special draw command.
+			}
+			// Link is on SV Grip
+			if(Link->Jump < 0) Link->Jump=0;
+			//Face down.
+			if(Link->InputDown){
+				Link->Dir = DIR_DOWN;
+				Link->InputDown = false;
+			}
+			//Move left or right.
+			else if(Link->InputLeft){
+				if( !Screen->isSolid(Link->X-1, Link->Y-17) && !Screen->isSolid(Link->X-8, Link->Y-17) && !Screen->isSolid(Link->X-14, Link->Y-17))
+					Link->X--;
+			}	
+			else if(Link->InputRight){
+				if( !Screen->isSolid(Link->X+1, Link->Y-17) && !Screen->isSolid(Link->X+8, Link->Y-17) && !Screen->isSolid(Link->X+14, Link->Y-17))
+					Link->X++;
+			}
+			//Jump off.
+			if(PressJump() && SamusVars[SIDEVIEW_GRIP_ON]){
+				Game->PlaySound(SFX_JUMP);
+				Link->Y+=8;
+				SamusVars[SIDEVIEW_GRIP_ON]=0;
+				SamusVars[SAMUS_ACTION] = SAMUS_ACTION_NONE;//Run special draw command.
+		    }
+		 }
+		 //Right combo is sideview grip.
+		 else if(isSVGrip(Link->X+16,Link->Y-8)){
+			if(!SamusVars[SIDEVIEW_GRIP_ON]){
+				SamusVars[SIDEVIEW_GRIP_ON]=1;
+				SamusVars[SAMUS_ACTION] = SAMUS_ACTION_HANGING_RIGHT;
+			}
+			// Link is on SV Grip
+			if(Link->Jump < 0) Link->Jump=0;
+			//Climb or descend.
+			if(Link->InputUp){
+			   if( !Screen->isSolid(Link->X+1, Link->Y-17) && !Screen->isSolid(Link->X+8, Link->Y-17) && !Screen->isSolid(Link->X+14, Link->Y-17))
+				  Link->Y--;
+			}
+			else if(Link->InputDown){
+			   if( !Screen->isSolid(Link->X+1, Link->Y+16) && !Screen->isSolid(Link->X+8, Link->Y+16) && !Screen->isSolid(Link->X+14, Link->Y+16))
+				  Link->Y++;
+			}
+			//Face left.
+			else if(Link->InputLeft && !PressJump()){
+				Link->InputLeft = false;
+				Link->Dir = DIR_LEFT;
+			}
+			//Jump left.
+			else if(Link->InputLeft && PressJump() && SamusVars[SIDEVIEW_GRIP_ON]){
+				Game->PlaySound(SFX_JUMP);
+				Link->Jump=(JUMP_HEIGHT_NORMAL+2)*0.8;
+				Link->X-=8;
+				SamusVars[IS_JUMPING]=1;
+				SamusVars[SIDEVIEW_GRIP_ON]=0;
+				SamusVars[SAMUS_ACTION]= SAMUS_ACTION_NONE;
+			}
+			//Jump up.
+			else if(PressJump() && SamusVars[SIDEVIEW_GRIP_ON]){
+				if(!Screen->isSolid(Link->X+1, Link->Y-17) && !Screen->isSolid(Link->X+8, Link->Y-17) && !Screen->isSolid(Link->X+14, Link->Y-17)){
+					Game->PlaySound(SFX_JUMP);
+					Link->Jump=(JUMP_HEIGHT_NORMAL+2)*0.8;
+					SamusVars[IS_JUMPING]=1;
+					SamusVars[SIDEVIEW_GRIP_ON]=0;
+					SamusVars[SAMUS_ACTION]= SAMUS_ACTION_NONE;
+				}
+			}
+			else if(!PressJump() && SamusVars[SIDEVIEW_GRIP_ON])
+				SamusVars[IS_JUMPING]=0;
+		 }
+		 //Left combo is Sideview grip.
+		 else if(isSVGrip(Link->X-1,Link->Y-8)){
+			if(!SamusVars[SIDEVIEW_GRIP_ON]){
+				SamusVars[SIDEVIEW_GRIP_ON]=1;
+				SamusVars[SAMUS_ACTION] = SAMUS_ACTION_HANGING_LEFT;
+			}
+			// Link is on SV Grip
+			if(Link->Jump < 0) Link->Jump=0;
+			//Climb or descend.
+			if(Link->InputUp){
+			   if( !Screen->isSolid(Link->X+1, Link->Y-17) && !Screen->isSolid(Link->X+8, Link->Y-17) && !Screen->isSolid(Link->X+14, Link->Y-17))
+				  Link->Y--;
+			}
+			else if(Link->InputDown){
+			   if( !Screen->isSolid(Link->X+1, Link->Y+16) && !Screen->isSolid(Link->X+8, Link->Y+16) && !Screen->isSolid(Link->X+14, Link->Y+16))
+				  Link->Y++;
+			}
+			//Face right.
+			else if(Link->InputRight && !PressJump()){
+				Link->Dir = DIR_RIGHT;
+				Link->InputRight = false;
+			}
+			//Jump right.
+			else if(Link->InputRight && PressJump()){
+				Game->PlaySound(SFX_JUMP);
+				Link->Jump=(JUMP_HEIGHT_NORMAL+2)*0.8;
+				Link->X+=8;
+				SamusVars[IS_JUMPING]=1;
+				SamusVars[SIDEVIEW_GRIP_ON]=0;
+				SamusVars[SAMUS_ACTION] = SAMUS_ACTION_NONE;
+			}
+			//Jump up.
+			else if(PressJump() && SamusVars[SIDEVIEW_GRIP_ON]){
+				if( !Screen->isSolid(Link->X+1, Link->Y-17) && !Screen->isSolid(Link->X+8, Link->Y-17) && !Screen->isSolid(Link->X+14, Link->Y-17)){
+					Game->PlaySound(SFX_JUMP);
+					Link->Jump =(JUMP_HEIGHT_NORMAL+2)*0.8;
+					SamusVars[IS_JUMPING]=1;
+					SamusVars[SIDEVIEW_GRIP_ON]=0;
+					SamusVars[SAMUS_ACTION] = SAMUS_ACTION_NONE;
+				}
+			}
+			else if(!PressJump() && SamusVars[SIDEVIEW_GRIP_ON])
+				SamusVars[IS_JUMPING]=0;
+		 }
+		 else{
+			if(SamusVars[SIDEVIEW_GRIP_ON]){
+				SamusVars[SIDEVIEW_GRIP_ON]= 0;
+				SamusVars[SAMUS_ACTION] = SAMUS_ACTION_NONE;
+			}
+		 }
+	}
+	//You have hyper grip.
+	else if(Link->Item[I_GRIP_TWO] && !SamusVars[IS_SPEED_BOOSTING] && !SamusVars[IS_SHINE_SPARK]){
+		if( isSVGrip(Link->X+8, Link->Y-24)){
+			if(!SamusVars[SIDEVIEW_GRIP_ON]){
+				SamusVars[SIDEVIEW_GRIP_ON]=1;
+				SamusVars[SAMUS_ACTION] = SAMUS_ACTION_HANGING_UP;//Run special draw command.
+			}
+			if(SamusVars[SIDEVIEW_GRIP_ON]){
+				// Link is on SV Grip
+				if(Link->Jump < 0)Link->Jump=0;
+				//Face down.
+				if(Link->InputUp){
+					Link->Dir = DIR_UP;
+				   if( !Screen->isSolid(Link->X+1, Link->Y-17) && !Screen->isSolid(Link->X+8, Link->Y-17) && !Screen->isSolid(Link->X+14, Link->Y-17))
+					  Link->Y--;
+				}
+				else if(Link->InputDown){
+					Link->Dir = DIR_DOWN;
+				   if( !Screen->isSolid(Link->X+1, Link->Y+16) && !Screen->isSolid(Link->X+8, Link->Y+16) && !Screen->isSolid(Link->X+14, Link->Y+16))
+					  Link->Y++;
+				}
+				//Move left or right.
+				else if(Link->InputLeft){
+					if( !Screen->isSolid(Link->X-1, Link->Y-17) && !Screen->isSolid(Link->X-8, Link->Y-17) && !Screen->isSolid(Link->X-14, Link->Y-17))
+						Link->X--;
+				}	
+				else if(Link->InputRight){
+					if( !Screen->isSolid(Link->X+1, Link->Y-17) && !Screen->isSolid(Link->X+8, Link->Y-17) && !Screen->isSolid(Link->X+14, Link->Y-17))
+						Link->X++;
+				}
+				//Jump off.
+				if(PressJump() && SamusVars[SIDEVIEW_GRIP_ON]){
+					Game->PlaySound(SFX_JUMP);
+					Link->Y+=8;
+					SamusVars[SIDEVIEW_GRIP_ON]=0;
+					SamusVars[SAMUS_ACTION] = SAMUS_ACTION_NONE;//Run special draw command.
+				}
+			}
+		 }
+		//The combo left or right of you is solid and the combo above and below you are not.
+		else if(Xor(Screen->isSolid(Link->X+16,Link->Y-8),Screen->isSolid(Link->X-1,Link->Y-8))
+				&& !Screen->isSolid(Link->X+1, Link->Y-17) && !Screen->isSolid(Link->X+8, Link->Y-17) 
+				&& !Screen->isSolid(Link->X+14, Link->Y-17) && Screen->ComboT[ComboAt(Link->X+16,Link->Y-8)]!=CT_STEP 
+				&& Screen->ComboT[ComboAt(Link->X-1,Link->Y-8)]!=CT_STEP
+				&& SamusVars[H_GRIP_ON]){
+			if(!SamusVars[SIDEVIEW_GRIP_ON]){
+				if(isSVGrip(Link->X+16,Link->Y-8)){
+					SamusVars[SIDEVIEW_GRIP_ON]=1;
+					SamusVars[SAMUS_ACTION] = SAMUS_ACTION_HANGING_RIGHT;
+				}
+				else if(isSVGrip(Link->X-1,Link->Y-8)){
+					SamusVars[SIDEVIEW_GRIP_ON]=1;
+					SamusVars[SAMUS_ACTION] = SAMUS_ACTION_HANGING_LEFT;
+				}
+				else{
+					SamusVars[SIDEVIEW_GRIP_ON]=1;
+					if(Screen->isSolid(Link->X-1,Link->Y-8))
+						SamusVars[SAMUS_ACTION] = SAMUS_ACTION_HANGING_LEFT;
+					else 
+						SamusVars[SAMUS_ACTION] = SAMUS_ACTION_HANGING_RIGHT;
+				}
+			}
+			else{
+				// Link is on SV Grip
+				if(Link->Jump < 0)Link->Jump=0;
+				SamusVars[ON_GROUND_OVERRIDE]=1;
+				//Face direction of input if not jumping.
+				if(Link->InputLeft && !PressJump()){
+					Link->InputLeft = false;
+					Link->Dir = DIR_LEFT;
+				}
+				else if(Link->InputDown){
+					Link->Dir = DIR_DOWN;
+					Link->InputDown = false;
+				}
+				else if(Link->InputRight && !PressJump()){
+					Link->Dir = DIR_RIGHT;
+					Link->InputRight = false;
+				}
+				else if(Link->InputUp){
+					Link->Dir = DIR_UP;
+					Link->InputUp = false;
+				}
+				//Jump in direction of input.
+				else if(Link->InputLeft && PressJump() && SamusVars[SIDEVIEW_GRIP_ON]){
+					Link->X-=8;
+					//SamusVars[IS_JUMPING]=1;
+					//SamusVars[SIDEVIEW_GRIP_ON] = 0;
+					SamusVars[SAMUS_ACTION] = SAMUS_ACTION_NONE;
+					Jump_Routine();
+					//SamusVars[ON_GROUND_OVERRIDE] = 0;
+				}
+				else if(Link->InputRight && PressJump() && SamusVars[SIDEVIEW_GRIP_ON]){
+					Link->X+=8;
+					//SamusVars[IS_JUMPING]=1;
+					//SamusVars[SIDEVIEW_GRIP_ON] = 0;
+					SamusVars[SAMUS_ACTION] = SAMUS_ACTION_NONE;
+					Jump_Routine();
+					//SamusVars[ON_GROUND_OVERRIDE] = 0;
+				}
+				//Jump up.
+				else if(PressJump() && SamusVars[SIDEVIEW_GRIP_ON]){
+					if( !Screen->isSolid(Link->X+1, Link->Y-17) && !Screen->isSolid(Link->X+8, Link->Y-17) 
+						&& !Screen->isSolid(Link->X+14, Link->Y-17)){
+						//SamusVars[IS_JUMPING]=1;
+						//SamusVars[SIDEVIEW_GRIP_ON]=0;
+						SamusVars[SAMUS_ACTION] = SAMUS_ACTION_NONE;
+						Jump_Routine();
+						//SamusVars[ON_GROUND_OVERRIDE] = 0;
+					}
+				}
+				else if(!PressJump() && SamusVars[SIDEVIEW_GRIP_ON]){
+					SamusVars[IS_JUMPING]=0;
+					if(SamusVars[ON_GROUND_OVERRIDE])
+						Link->Jump=0;
+					//if(!Screen->isSolid(Link->X+1,Link->Y+17)
+						//&& !Screen->isSolid(Link->X+8,Link->Y+17)
+						//&& !Screen->isSolid(Link->X+15,Link->Y+17))
+						//Link->Y++;
+				}
+			}
+		}
+		else{
+			if(SamusVars[SIDEVIEW_GRIP_ON]){
+				SamusVars[SIDEVIEW_GRIP_ON]= 0;
+				SamusVars[SAMUS_ACTION] = SAMUS_ACTION_NONE;
+				SamusVars[ON_GROUND_OVERRIDE] = 0;
+			}
+		 }
+	}
+}//end run
