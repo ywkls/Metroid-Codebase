@@ -1,0 +1,12 @@
+ffc script Power_Bomb_Effect{
+	void run(int delay){
+		float radius;
+		Waitframes(delay);
+		Game->PlaySound(SFX_POWER_BOMB);
+		while(true){
+			Screen->Circle(2, this->X+8, this->Y+8,radius, ((radius/10)%16), 1, 0, 0, 0, true, 64);
+			radius+=4;
+			Waitframe();
+		}
+	}
+}
