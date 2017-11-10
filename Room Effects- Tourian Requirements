@@ -1,0 +1,41 @@
+//Section 96. Tourian Requirements.
+
+ffc script Tourian_Switch{
+	void run(int Boss_ID, int perm, int Combo, int Sfx){
+		bool Triggered = false;
+		if(Screen->D[perm]!=0)
+			Triggered = true;
+		while(!Triggered){
+			while(!SamusVars[Boss_ID]){
+				Waitframe();
+			}
+			this->Data = Combo;
+			Waitframes(60);
+			Game->PlaySound(Sfx);
+			Screen->D[perm]=1;
+			Triggered = true;
+			SamusVars[TOURIAN_SWITCH]++;
+		}
+		this->Data = 0;
+		Quit();
+	}
+}
+
+ffc script Open_Tourian{
+	void run(int Script_Num, int perm){
+		bool Triggered = false;
+		if(Screen->D[perm]!=0)
+			Triggered = true;
+		while(!Triggered){
+			while(SamusVars[TOURIAN_SWITCH]<=3){
+				Waitframe();
+			}
+			Screen->State[ST_SECRET]= true;
+			Screen->TriggerSecrets();
+			Screen->D[perm]= 1;
+			Triggered = true;
+			this->Data = CM_AUTOWARPD;
+			break;
+		}
+	}
+}
