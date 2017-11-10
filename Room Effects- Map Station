@@ -30,6 +30,14 @@ ffc script MetroidMapStation{
 						SamusVars[BRINSTAR_MAP]=1;
 					else if(map==WRECKED_SHIP)
 						SamusVars[WRECKED_MAP]= 1;
+					else if(map==DORSAL_AREA)
+						SamusVars[DORSAL_MAP_OBTAINED]=1;
+					else if(map==CENTRAL_AREA)
+						SamusVars[CENTRAL_MAP_OBTAINED]=1;
+					else if(map==VENTRAL_AREA)
+						SamusVars[VENTRAL_MAP_OBTAINED]=1;
+					else if(map==DARK_SIDE)
+						SamusVars[DARK_MAP_OBTAINED]= 1;
 					SetUpWindow(WINDOW_SLOT_1, WINDOW_STYLE_1, 48, 32,SIZE_SMALL);
 					Tango_LoadString(WINDOW_SLOT_1, MapObtained);
 					Tango_ActivateSlot(WINDOW_SLOT_1);
