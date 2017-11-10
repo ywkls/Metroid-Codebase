@@ -1,0 +1,20 @@
+//Area constants.
+const int CRATERIA 			=6;
+const int CERES 			=1;
+const int BRINSTAR			=2;
+const int WRECKED_SHIP		=3;
+const int MARIDIA			=4;
+const int NORFAIR			=5;
+const int TOURIAN			=7;
+const int CRATERIA_EAST		=8;
+
+//Map Constants
+const int MAP_TILE 			= 15340;
+const int MAP_TILE_CSET 	= 0;
+const int SFX_MAP 			= 5;
+const int MAP_SAMUS_COMBO	= 3523;
+const int MAP_SAMUS_CSET	= 2;
+
+//Subscreen Constants
+const int SUBSCREEN_SAMUS 	= 0;
+const int SUBSCREEN_MAP		= 1;
