@@ -1,0 +1,215 @@
+//Section 50. Serris
+
+const int SERRIS_BODY = 231;//Body enemy id.
+const int SERRIS_BODY_LEFT_TILE = 9206;//Tile of body going left.
+const int SERRIS_BODY_RIGHT_TILE= 9208;//Tile of body going right.
+const int SERRIS_BODY_VERTICAL_TILE= 9210;//Tile of body going down.
+const int SERRIS_TAIL_LEFT_TILE =9246;//Tile of tail going left.
+const int SERRIS_TAIL_RIGHT_TILE=9248;//Tile of tail going right.
+const int SERRIS_HEAD_LEFT_COMBO=2864;//Combo of head going left.
+const int SERRIS_HEAD_RIGHT_COMBO=2865;//Combo of head going right.
+
+ffc script Serris{
+    void run(int enemyID){
+        int timerSegment = 101;
+        int timerChangeAngle = 60;
+        int timerReflection = 0;
+ 
+        float angle;
+        float step = 4;
+        float turn_choice = 0;
+       
+        bool turn_left = false;
+        bool turn_right = false;
+       
+        int HeadPositionX[500];
+        int HeadPositionY[500];
+        int position_index;
+        int segment_lag = 8;
+        int movement_pattern = 1;
+        npc segments[6];
+       
+        npc ghost = Ghost_InitAutoGhost(this, enemyID);
+		Ghost_SetSize(this,ghost,2,3);
+		int MaxHP = Ghost_HP;
+        for(int i = 0;i<=5;i++){
+			segments[i] = Screen->CreateNPC(SERRIS_BODY);
+			EnemyResize(segments[i],2,2);
+			SetEnemyHitbox(segments[i],32,28,0,0);
+		}
+        // Ensures the head is drawn over all the other segments.
+        this->Flags[FFCF_OVERLAY] = true;
+       
+        Ghost_Waitframe(this, ghost, false, false);
+        //Set flags.
+		Ghost_SetFlag(GHF_IGNORE_ALL_TERRAIN);
+		Ghost_SetFlag(GHF_IGNORE_NO_ENEMY);
+		Ghost_SetFlag(GHF_NO_FALL);
+		Ghost_SetHitOffsets(ghost,5,8,0,0);
+		Ghost_Y= Rand(32,144);
+		Ghost_X = 32;
+		Ghost_Data =  SERRIS_HEAD_RIGHT_COMBO;
+		for(int i = 0;i<=5;i++){
+			segments[i]->Y = Ghost_Y;
+			segments[i]->OriginalTile = SERRIS_BODY_RIGHT_TILE;
+			segments[i]->X = Ghost_X-((i+1)*28);
+		}
+		int FireTimer = Rand(90,210);
+        for (int i = 0; true; i = (i + 1) % 500)
+        {
+            // Turning and normal movement happen here.
+            if (turn_left && !turn_right)
+            {
+                if (Ghost_HP <= (MaxHP / 5))
+                    angle -= 4;
+                else
+                    angle -= 2;
+            }
+            if (!turn_left && turn_right)
+            {
+                if (Ghost_HP <= (MaxHP / 5))
+                    angle += 4;
+                else
+                    angle += 2;
+            }                
+            Ghost_MoveAtAngle(angle, step, 2);
+           
+            // Stores the head movement in a large array which the segments use to trace its path.
+            HeadPositionX[i] = Ghost_X;
+            HeadPositionY[i] = Ghost_Y;
+            for (int j = 0; j <=5; j++)
+            {
+                if (timerSegment <= 100 - (20 * (j + 1)))
+                {
+                    position_index = i - (segment_lag * (j + 1));
+                    if (position_index < 0)
+                        position_index += 500;
+                    segments[j]->X = HeadPositionX[position_index];
+                    segments[j]->Y = HeadPositionY[position_index];
+					if(!CanMove(segments[j],DIR_LEFT,0))
+						segments[j]->OriginalTile= SERRIS_BODY_RIGHT_TILE;
+					if(!CanMove(segments[j],DIR_RIGHT,0))
+						segments[j]->OriginalTile= SERRIS_BODY_LEFT_TILE;	
+                }
+            }
+            if (Ghost_HP <= (MaxHP/2)){
+                step = 8;
+				segment_lag =4;
+           }
+            // The random movement of a Merderm.
+            if (timerChangeAngle <= 0)
+            {
+                movement_pattern = Rand(1, 100);
+                turn_left = false;
+                turn_right = false;
+                if (Distance(Link->X, Link->Y, segments[3]->X, segments[3]->Y) > 48 && !turn_left && !turn_right)
+                {
+                    if (movement_pattern >= 0 && movement_pattern <= 50)
+                    {
+                        turn_choice = Choose(1, 2);
+                         if (turn_choice == 1){
+                            turn_left = true;
+							if(Ghost_Data==SERRIS_HEAD_RIGHT_COMBO)Ghost_Data= SERRIS_HEAD_LEFT_COMBO;
+						}
+                        else{
+                            turn_right = true;
+							if(Ghost_Data==SERRIS_HEAD_LEFT_COMBO)Ghost_Data= SERRIS_HEAD_RIGHT_COMBO;
+						}
+                        timerChangeAngle = Rand(60, 100);
+                    }
+                    else if (movement_pattern > 50 && movement_pattern <= 60)
+                    {
+                        angle += Choose(-15, 15);
+                        timerChangeAngle = 15;
+                    }
+                    else if (movement_pattern > 60 && movement_pattern <= 70)
+                    {
+                        angle += Choose(-30, 30);
+                        timerChangeAngle = 15;
+                    }
+                    else if (movement_pattern > 70 && movement_pattern <= 90)
+                    {
+                        // Don't change direction.
+                        timerChangeAngle = Rand(30, 60);
+                    }
+                    else if (movement_pattern > 90)
+                    {
+                        angle = WrapDegrees(angle + 180);
+                        timerChangeAngle = 40;
+						if(Ghost_Data==SERRIS_HEAD_RIGHT_COMBO)Ghost_Data= SERRIS_HEAD_LEFT_COMBO;
+						else if(Ghost_Data==SERRIS_HEAD_LEFT_COMBO)Ghost_Data= SERRIS_HEAD_RIGHT_COMBO;
+                    }
+                }
+                else if (Distance(Link->X, Link->Y, segments[3]->X, segments[3]->Y) <= 48 && !turn_left && !turn_right)
+                {
+                    if (movement_pattern >= 0 && movement_pattern <= 50)
+                    {
+                        turn_choice = Choose(1, 2);
+                        if (turn_choice == 1){
+                            turn_left = true;
+							if(Ghost_Data==SERRIS_HEAD_RIGHT_COMBO)Ghost_Data= SERRIS_HEAD_LEFT_COMBO;
+						}
+                        else{
+                            turn_right = true;
+							if(Ghost_Data==SERRIS_HEAD_LEFT_COMBO)Ghost_Data= SERRIS_HEAD_RIGHT_COMBO;
+						}
+                        timerChangeAngle = 60;
+                    }
+                    else if (movement_pattern > 50 && movement_pattern <= 70)
+                    {
+                        angle += Choose(-45, 45);
+                        timerChangeAngle = 10;
+                    }
+                    else if (movement_pattern > 70 && movement_pattern <= 80)
+                    {
+                        angle = WrapDegrees(angle + 180);
+                        timerChangeAngle = 60;
+						if(Ghost_Data==SERRIS_HEAD_RIGHT_COMBO)Ghost_Data= SERRIS_HEAD_LEFT_COMBO;
+						else if(Ghost_Data==SERRIS_HEAD_LEFT_COMBO)Ghost_Data= SERRIS_HEAD_RIGHT_COMBO;
+                    }
+                    else if (movement_pattern > 90)
+                        // Don't change direction.
+                        timerChangeAngle = 10;
+                }
+            }
+           
+            // Bouncing off walls.
+            if (!Ghost_CanMove(DIR_UP, 3, 2) && timerReflection <= 0)
+            {
+                angle *= -1;
+                timerReflection = 10;
+            }
+            else if (!Ghost_CanMove(DIR_DOWN, 3, 2) && timerReflection <= 0)
+            {
+                angle *= -1;
+                timerReflection = 10;
+            }
+             else if (!Ghost_CanMove(DIR_LEFT, 3, 2) && timerReflection <= 0)
+            {
+                angle = WrapDegrees(angle - (2 * (angle - 90)));
+                timerReflection = 10;
+				Ghost_Data = SERRIS_HEAD_RIGHT_COMBO;
+            }
+            else if (!Ghost_CanMove(DIR_RIGHT, 3, 2) && timerReflection <= 0)
+            {
+                angle = WrapDegrees(angle - (2 * (angle - 90)));
+                timerReflection = 10;
+				Ghost_Data = SERRIS_HEAD_LEFT_COMBO;
+            }
+            if (timerSegment > 0)
+                timerSegment--;
+            timerChangeAngle--;
+            timerReflection--;
+			FireTimer--;
+			if(FireTimer<0){
+				for(int j=0;j<=5;j++){
+					eweapon flame = FireEWeapon(ghost->Weapon, Ghost_X+24, Ghost_Y+16, DegtoRad(Rand(0,359)), 300, ghost->WeaponDamage,-1, -1, 0);
+					SetEWeaponLifespan(flame,EWL_TIMER, 120); 
+					SetEWeaponDeathEffect(flame,EWD_VANISH, 0);
+				}
+				FireTimer = Rand(90,210);
+			}
+           Gen_Leader_Waitframe(this,ghost);
+        }
+    }
+}
