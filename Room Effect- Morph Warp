@@ -1,0 +1,26 @@
+//Section 88. Morph Warp
+
+ffc script Morph_Warp{
+	void run(bool Once, int Perm, bool Secrets){
+		bool Triggered = false;
+		if(Screen->D[Perm]!=0)Triggered = true;
+		while(!Triggered){
+			if(Between(Link->X+8,this->X,this->X+16)
+				&& Between(Link->Y+8,this->Y,this->Y+16)
+				&& SamusVars[IS_MORPHED]){
+				if(Once)
+					Screen->D[Perm]=1;
+				if(Secrets){
+					Screen->TriggerSecrets();
+					Screen->State[ST_SECRET]=true;
+				}
+				this->Data = CM_AUTOWARPD;
+			}
+			Waitframe();
+		}
+		if(Secrets){
+			Screen->TriggerSecrets();
+			Screen->State[ST_SECRET]=true;
+		}
+	}
+}
