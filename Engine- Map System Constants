@@ -8,6 +8,12 @@ const int NORFAIR			=5;
 const int TOURIAN			=7;
 const int CRATERIA_EAST		=8;
 
+//Area constants.
+const int DORSAL_AREA = -1;
+const int CENTRAL_AREA = -2;
+const int VENTRAL_AREA = -3;
+const int DARK_SIDE		=-4;
+
 //Map Constants
 const int MAP_TILE 			= 15340;
 const int MAP_TILE_CSET 	= 0;

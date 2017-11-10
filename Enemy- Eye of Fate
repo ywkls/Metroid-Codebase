@@ -1,0 +1,141 @@
+ffc script EyeOfFate{
+	void run(int enemyID){
+		npc ghost = Ghost_InitAutoGhost(this, enemyID);
+		this->Flags[FFCF_OVERLAY]= true;
+		int combo = ghost->Attributes[10];
+		int sprite = ghost->Attributes[0];
+		int sfx = ghost->Attributes[1];
+		Ghost_SetFlag(GHF_NO_FALL);
+		Ghost_SetSize(this,ghost,3,2);
+		Ghost_AddCombo(combo+4,0,-64,3,4);
+		Ghost_AddCombo(combo+5,-32,-64,2,6);
+		Ghost_AddCombo(combo+6,48,-64,2,6);
+		Ghost_AddCombo(combo+7,-16,32,5,1);
+		int Mode;
+		int ModeTimer = Rand(60,180);
+		float angle= Rand(0,359);
+		float fireangle;
+		int i;
+		int j;
+		int k = Choose(-1,1);
+		eweapon shot;
+		int Defenses[18];
+		Ghost_StoreDefenses(ghost,Defenses);
+		Ghost_X = 100;
+		Ghost_Y = 50;
+		while(true){
+			if(Mode!=1){
+				if(Between(angle,0,44)){
+					if(Screen->isSolid(Ghost_X+64,Ghost_Y+16))
+						angle =Rand(136,180);
+					if(Screen->isSolid(Ghost_X+24,Ghost_Y+48))
+						angle = Rand(316,359);	
+				}
+				else if(Between(angle,45,90)){
+					if(Screen->isSolid(Ghost_X+64,Ghost_Y+16))
+						angle =Rand(91,135);
+					if(Screen->isSolid(Ghost_X+24,Ghost_Y+48))
+						angle = Rand(271,315);	
+				}
+				else if(Between(angle,91,135)){
+					if(Screen->isSolid(Ghost_X-32,Ghost_Y+16))
+						angle =Rand(45,90);
+					if(Screen->isSolid(Ghost_X+24,Ghost_Y+48))
+						angle = Rand(226,270);	
+				}
+				else if(Between(angle,136,180)){
+					if(Screen->isSolid(Ghost_X-32,Ghost_Y+16))
+						angle =Rand(0,44);
+					if(Screen->isSolid(Ghost_X+24,Ghost_Y+48))
+						angle = Rand(181,225);	
+				}
+				else if(Between(angle,181,225)){
+					if(Screen->isSolid(Ghost_X-32,Ghost_Y+16))
+						angle =Rand(271,315);
+					if(Screen->isSolid(Ghost_X+24,Ghost_Y-48))
+						angle = Rand(136,180);	
+				}
+				else if(Between(angle,226,270)){
+					if(Screen->isSolid(Ghost_X-32,Ghost_Y+16))
+						angle =Rand(316,359);
+					if(Screen->isSolid(Ghost_X+24,Ghost_Y-48))
+						angle = Rand(91,135);	
+				}
+				else if(Between(angle,271,315)){
+					if(Screen->isSolid(Ghost_X+64,Ghost_Y+16))
+						angle =Rand(226,270);
+					if(Screen->isSolid(Ghost_X+24,Ghost_Y-48))
+						angle = Rand(45,90);	
+				}
+				else if(Between(angle,316,359)){
+					if(Screen->isSolid(Ghost_X+64,Ghost_Y+16))
+						angle =Rand(181,225);
+					if(Screen->isSolid(Ghost_X+24,Ghost_Y-48))
+						angle = Rand(0,44);	
+				}
+			}
+			else if(Mode==1){
+				fireangle = Angle(Ghost_X+24, Ghost_Y+16, CenterLinkX(), CenterLinkY())-45*k;
+				for(i=0; i<3; i++){
+					for(j=-4; j<=4; j+=2){
+						shot = FireEWeapon(ghost->Weapon, Ghost_X+16, Ghost_Y+8, 
+											DegtoRad(fireangle+16*j), 150, 
+											ghost->WeaponDamage, sprite, sfx, EWF_ROTATE_360);
+					}
+					Gen_Explode_Waitframes(this,ghost,16);
+					for(j=-5; j<=5; j+=2){
+						shot = FireEWeapon(ghost->Weapon, Ghost_X+16, Ghost_Y+8, 
+											DegtoRad(fireangle+16*j), 150, 
+											ghost->WeaponDamage, sprite, sfx, EWF_ROTATE_360);
+					}
+					Gen_Explode_Waitframes(this,ghost,24);
+				}
+				ModeTimer = 0;
+			}
+			if(ModeTimer<=0){
+				if(Mode ==0){
+					Mode =Choose(1,2);
+					if(Mode==1)
+						k = Choose(-1,1);
+					else if(Mode==2){
+						Ghost_SetAllDefenses(ghost,NPCDT_BLOCK);
+						Ghost_Data = combo+1;
+						Gen_Explode_Waitframes(this,ghost,15);
+						Ghost_Data = combo+2;
+					}
+				}
+				else if(Mode==1){
+					Mode = Choose(0,2);
+					if(Mode ==0){
+						angle= Rand(0,359);
+						Ghost_Data = combo+3;
+						Gen_Explode_Waitframes(this,ghost,15);
+						Ghost_SetDefenses(ghost,Defenses);
+						Ghost_Data = combo;
+					}
+					else if(Mode==2){
+						Ghost_SetAllDefenses(ghost,NPCDT_BLOCK);
+						Ghost_Data = combo+1;
+						Gen_Explode_Waitframes(this,ghost,15);
+						Ghost_Data = combo+2;
+					}
+				}
+				else if(Mode==2){
+					Mode = Choose(0,1);
+					if(Mode ==0)
+						angle= Rand(0,359);
+					else if(Mode==1)
+						k = Choose(-1,1);
+					Ghost_Data = combo+3;
+					Gen_Explode_Waitframes(this,ghost,15);
+					Ghost_SetDefenses(ghost,Defenses);
+					Ghost_Data = combo;
+				}
+				ModeTimer = Rand(60,180);
+			}
+			Ghost_MoveAtAngle(angle,ghost->Step/100,3);
+			ModeTimer--;
+			Gen_Explode_Waitframe(this,ghost);
+		}
+	}
+}

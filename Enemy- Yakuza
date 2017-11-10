@@ -1,0 +1,210 @@
+//Section 40. Yakuza
+
+const int SPIDER_LEFT_LEGS = 212;//Left legs enemy ID.
+const int SPIDER_RIGHT_LEGS = 228;//Right legs enemy ID.
+const int SPIDER_LEFT_LEGS_NORMAL_TILE = 12490;//Left legs normal tile.
+const int SPIDER_LEFT_LEGS_DOWN_TILE = 12570;//Left legs tile when down.
+const int SPIDER_RIGHT_LEGS_NORMAL_TILE = 12493;//Right legs normal tile.
+const int SPIDER_RIGHT_LEGS_DOWN_TILE = 12573;//Right legs when down.
+const int SPIDER_HEAD_NORMAL_COMBO = 2358;//Normal head combo.
+const int SPIDER_HEAD_OPEN_COMBO = 2359;//Head is open combo.
+const int SPIDER_NORMAL_CSET = 11;//Normal Cset.
+const int SPIDER_HURT_CSET = 6;//Hurt Cset.
+const int SPIDER_FLAME_SPRITE = 98;//Sprite of flame attack.
+
+ffc script Yakuza{
+	void run(int enemyID){
+		npc ghost = Ghost_InitAutoGhost(this, enemyID);
+		npc LeftLeg = Screen->CreateNPC(SPIDER_LEFT_LEGS);
+		npc RightLeg = Screen->CreateNPC(SPIDER_RIGHT_LEGS);
+		Ghost_X = 104;
+		Ghost_Y = 32;
+		LeftLeg->X = Ghost_X-24;
+		LeftLeg->Y = Ghost_Y+8;
+		RightLeg->X = Ghost_X+20;
+		RightLeg->Y = LeftLeg->Y;
+		LeftLeg->Extend = 3;
+		LeftLeg->TileWidth = 3;
+		LeftLeg->TileHeight = 4;
+		LeftLeg->HitWidth = 48;
+		LeftLeg->HitHeight = 64;
+		RightLeg->Extend = 3;
+		RightLeg->TileWidth = 3;
+		RightLeg->TileHeight = 4;
+		RightLeg->HitWidth = 48;
+		RightLeg->HitHeight = 64;
+		float angle = Choose(45,135,225,315);
+		int Mode;
+		eweapon flame[3];
+		int ModeTimer = Rand(150,210);
+		Ghost_SetSize(this,ghost,3,4);
+		//Set flags.
+		Ghost_SetFlag(GHF_NO_FALL);
+		int GrabChance;
+		int angle_change;
+		float speed = ghost->Step * 0.01;
+        float step = speed;
+		int GrabCoolDown;
+		int GrabTimer;
+		int FireTimer;
+		int FireChance;
+		bool Firing = false;
+		int i;
+		int AnimationChange;
+		float TargetX;
+		float TargetY;
+		float TargetAngle;
+		bool Grabbed = false;
+		while(true){
+			angle_change = (angle_change + 1) % 240;
+			LeftLeg->X = Ghost_X-24;
+			LeftLeg->Y = Ghost_Y+8;
+			RightLeg->X = Ghost_X+20;
+			RightLeg->Y = LeftLeg->Y;
+			Ghost_Dir = DIR_DOWN;
+			AnimationChange = (AnimationChange+1)%8;
+			if(AnimationChange == 0){
+				if(LeftLeg->OriginalTile == SPIDER_LEFT_LEGS_NORMAL_TILE && RightLeg->OriginalTile == SPIDER_RIGHT_LEGS_NORMAL_TILE)
+					LeftLeg->OriginalTile = SPIDER_LEFT_LEGS_DOWN_TILE;
+				else if(LeftLeg->OriginalTile == SPIDER_LEFT_LEGS_DOWN_TILE && RightLeg->OriginalTile == SPIDER_RIGHT_LEGS_NORMAL_TILE){
+					LeftLeg->OriginalTile = SPIDER_LEFT_LEGS_NORMAL_TILE;
+					RightLeg->OriginalTile= SPIDER_RIGHT_LEGS_DOWN_TILE;
+				}
+				else if(LeftLeg->OriginalTile == SPIDER_LEFT_LEGS_NORMAL_TILE && RightLeg->OriginalTile == SPIDER_RIGHT_LEGS_DOWN_TILE)
+					RightLeg->OriginalTile= SPIDER_RIGHT_LEGS_NORMAL_TILE;
+			}
+			if(Mode == 0 && ModeTimer>=0){
+				Ghost_Data = SPIDER_HEAD_NORMAL_COMBO;
+				Ghost_SetAllDefenses(ghost,NPCDT_BLOCK);
+				//Every 5 seconds, change from current angle to one of 3 others.
+				if (angle_change == 0 && angle == 45)angle = Choose(135,225,315);
+				else if(angle_change == 0 && angle == 135)angle = Choose(45, 225,315);
+				else if(angle_change == 0 && angle == 225)angle = Choose(45,135,315);
+				else if(angle_change == 0 && angle == 315)angle = Choose(45,135,225);
+				if(!Ghost_CanMove(DIR_UP, 1, 16))
+					angle = Choose(45,135);
+				else if(!Ghost_CanMove(DIR_DOWN, 1, 16))
+					angle = Choose(225,315);		
+				else if(!Ghost_CanMove(DIR_LEFT, 1, 16))
+					angle = Choose(45,315);
+				else if(!Ghost_CanMove(DIR_RIGHT,1,16))
+					angle = Choose(135,225);
+				Ghost_MoveAtAngle(angle,ghost->Step/100,3);	
+			}
+			else if(Mode ==1 && ModeTimer>=0){
+				if(!Firing){
+					FireChance = Rand(30,60);
+					Firing = true;
+				}
+				if(Firing){
+					Ghost_Data = SPIDER_HEAD_OPEN_COMBO;
+					if((SamusVars[BEAMS_EQUIPPED]&EQ_SPAZER)!=0)
+						ghost->Defense[NPCD_BEAM]=NPCDT_HALFDAMAGE;
+					else
+						ghost->Defense[NPCD_BEAM]= NPCDT_BLOCK;
+					FireTimer = (FireTimer+1)%FireChance;
+					if(FireTimer == 0){
+						for(i=0;i<=2;i++){
+							flame[i] = FireBigEWeapon(EW_SCRIPT1, Ghost_X+24, Ghost_Y+64, DegtoRad(Rand(45,135)), 300, ghost->WeaponDamage,SPIDER_FLAME_SPRITE, 40, 0,2,3);
+							SetEWeaponLifespan(flame[i],EWL_TIMER, 200);
+							SetEWeaponDeathEffect(flame[i],EWD_VANISH, 0);
+						}
+						Firing = false;
+						Ghost_Data = SPIDER_HEAD_NORMAL_COMBO;
+					}
+				}
+				//Every 5 seconds, change from current angle to one of 3 others.
+				if (angle_change == 0 && angle == 45)angle = Choose(135,225,315);
+				else if(angle_change == 0 && angle == 135)angle = Choose(45, 225,315);
+				else if(angle_change == 0 && angle == 225)angle = Choose(45,135,315);
+				else if(angle_change == 0 && angle == 315)angle = Choose(45,135,225);
+				if(!Ghost_CanMove(DIR_UP, 1, 16))
+					angle = Choose(45,135);
+				else if(!Ghost_CanMove(DIR_DOWN, 1, 16))
+					angle = Choose(225,315);		
+				else if(!Ghost_CanMove(DIR_LEFT, 1, 16))
+					angle = Choose(45,315);
+				else if(!Ghost_CanMove(DIR_RIGHT,1,16))
+					angle = Choose(135,225);
+				Ghost_MoveAtAngle(angle,ghost->Step/100,3);
+			}
+			//If you get too close it will grab you.
+			if(GrabCoolDown ==0){
+				//If you haven't been grabbed recently.
+				GrabChance = Rand(0,100);
+				//If you've been grabbed.
+				if(GrabChance>=50 && !Screen->isSolid(Ghost_X+16,Ghost_Y+64) 
+					&& Ghost_X<=200 && Ghost_X>=48){
+					GrabTimer = 180;
+					TargetX = Link->X+8;
+					TargetY = Link->Y;
+				}
+				//Grab stuff.
+				while(GrabTimer>0){
+					LeftLeg->X = Ghost_X-24;
+					LeftLeg->Y = Ghost_Y+8;
+					RightLeg->X = Ghost_X+20;
+					RightLeg->Y = LeftLeg->Y;
+					//Hold Link in the air.
+					if(!Grabbed){
+						if(Distance(Ghost_X+16,Ghost_Y+64,TargetX,TargetY)>8)
+							Ghost_MoveAtAngle(TargetAngle,ghost->Step/100,3);
+						if(Distance(Ghost_X+16,Ghost_Y+64,Link->X+8,Link->Y)<=16)
+							Grabbed = true;
+					}
+					else if(Grabbed){
+						if(Ghost_Y>4)Ghost_Y--;
+						if(GrabTimer>=5){
+							Link->X = Ghost_X+16;
+							Link->Y = Ghost_Y+64;
+							Link->Jump = 0;
+						}
+						else{
+							Grabbed = false;
+							break;
+						}
+					}
+					//Reduce timer.
+					GrabTimer--;
+					Spider_Waitframe(this,ghost,LeftLeg,RightLeg);
+				}
+				//Set grab cooldown timer.
+				GrabCoolDown = 180;
+			}
+			//Grab cooldown timer exists, so reduce it.
+			if(GrabCoolDown>0)GrabCoolDown--;
+			else GrabCoolDown = 0;//Otherwise set it to zero.
+			ModeTimer--;
+			if(ModeTimer<0){
+				if(Mode == 0)Mode = 1;
+				else if(Mode ==1)Mode = 0;
+				ModeTimer = Rand(150,210);
+			}
+			Spider_Waitframe(this,ghost,LeftLeg,RightLeg);
+		}
+	}
+	void Spider_Waitframe(ffc this, npc ghost,npc LeftLeg, npc RightLeg){
+		ghost->Jump = 0;
+		//if hurt, change appearance.
+		if(Ghost_GotHit()){
+			Ghost_CSet = SPIDER_HURT_CSET;
+			LeftLeg->CSet = SPIDER_HURT_CSET;
+			RightLeg->CSet = SPIDER_HURT_CSET;
+			Ghost_Waitframes(this,ghost,false,false,5);
+		}
+		//Otherwise, go back to normal.
+		else{
+			Ghost_CSet = SPIDER_NORMAL_CSET;
+			LeftLeg->CSet = SPIDER_NORMAL_CSET;
+			RightLeg->CSet = SPIDER_NORMAL_CSET;
+		}
+		//The boss is dead.
+		if(!Ghost_Waitframe(this,ghost, false, false)){
+			Ghost_DeathAnimation(this,ghost,2);
+			LeftLeg->HP = 0;
+			RightLeg->HP = 0;
+			this->Data = 0;
+			Quit();
+		}
+	}
+}

@@ -116,16 +116,23 @@ void DrawHyper(){
 	Screen->DrawString(7, BEAM_BOX_X+8, BEAM_BOX_Y+8,  FONT_SUBSCREEN3 ,0x0f,-1,TF_NORMAL, Hyper, 128 );
 }
 
+const int I_HYPER_SUIT	= 61;//Hyper suit item id.
+
 void DrawSuitNames(){
 	int Varia[]= "Varia Suit";
 	int Gravity[]= "Gravity Suit";
 	int Power[]= "Power Suit";
-	if(Link->Item[I_VARIA_SUIT])
-		Screen->DrawString( 7, RT_MENU_X+8, SUIT_BOX_Y,  FONT_SUBSCREEN3 ,0x0f,-1,TF_NORMAL, Varia, 128 );
+	int Hyper[]= "Hyper Suit";
+	if(!Link->Item[I_HYPER_SUIT]){
+		if(Link->Item[I_VARIA_SUIT])
+			Screen->DrawString( 7, RT_MENU_X+8, SUIT_BOX_Y,  FONT_SUBSCREEN3 ,0x0f,-1,TF_NORMAL, Varia, 128 );
+		else
+			Screen->DrawString( 7, RT_MENU_X+8, SUIT_BOX_Y,  FONT_SUBSCREEN3 ,0x0f,-1,TF_NORMAL, Power, 128 );
+		if(Link->Item[I_GRAVITY_SUIT])
+			Screen->DrawString( 7, RT_MENU_X+8, SUIT_BOX_Y+8,  FONT_SUBSCREEN3 ,0x0f,-1,TF_NORMAL, Gravity, 128 );
+	}
 	else
-		Screen->DrawString( 7, RT_MENU_X+8, SUIT_BOX_Y,  FONT_SUBSCREEN3 ,0x0f,-1,TF_NORMAL, Power, 128 );
-	if(Link->Item[I_GRAVITY_SUIT])
-		Screen->DrawString( 7, RT_MENU_X+8, SUIT_BOX_Y+8,  FONT_SUBSCREEN3 ,0x0f,-1,TF_NORMAL, Gravity, 128 );
+		Screen->DrawString( 7, RT_MENU_X+8, SUIT_BOX_Y,  FONT_SUBSCREEN3 ,0x0f,-1,TF_NORMAL, Hyper, 128 );
 }
 
 void DrawMiscNames(){
@@ -133,6 +140,7 @@ void DrawMiscNames(){
 	int Bomb[]= "Bombs";
 	int Spring[]= "Spring Ball";
 	int Screw_Attack[]= "Screw Attack";
+	int Regenerator[]= "Regenerator";
 	if(Link->Item[I_MORPH_BALL])
 		Screen->DrawString( 7, RT_MENU_X+8, MISC_BOX_Y,  FONT_SUBSCREEN3 ,0x0f,-1,TF_NORMAL, Morph, 128 );
 	if(Link->Item[I_BOMB])
@@ -141,6 +149,8 @@ void DrawMiscNames(){
 		Screen->DrawString( 7, RT_MENU_X+8, MISC_BOX_Y+16,  FONT_SUBSCREEN3 ,0x0f,-1,TF_NORMAL, Spring, 128 );	
 	if(Link->Item[I_SCREWATTACK])
 		Screen->DrawString( 7, RT_MENU_X+8, MISC_BOX_Y+24,  FONT_SUBSCREEN3 ,0x0f,-1,TF_NORMAL, Screw_Attack, 128 );
+	if(Link->Item[I_HP_REGEN])
+		Screen->DrawString( 7, RT_MENU_X+8, MISC_BOX_Y+32,  FONT_SUBSCREEN3 ,0x0f,-1,TF_NORMAL, Regenerator, 128 );
 }
 
 void DrawBootNames(){
@@ -153,6 +163,36 @@ void DrawBootNames(){
 		Screen->DrawString( 7, RT_MENU_X+8, BOOT_BOX_Y+8,  FONT_SUBSCREEN3 ,0x0f,-1,TF_NORMAL, Space, 128 );	
 	if(Link->Item[I_SPEED_BOOST])
 		Screen->DrawString( 7, RT_MENU_X+8, BOOT_BOX_Y+16,  FONT_SUBSCREEN3 ,0x0f,-1,TF_NORMAL, Speed, 128 );	
+}
+
+const int I_RELIC = 17;//Item id for warp stone.
+
+void DrawXenoNames(){
+	int Phase[]= "Phase Nexus";
+	int P_Grip[]= "Power Grip";
+	int H_Grip[]= "Hyper Grip";
+	int Relic[]= "Quantum Key";
+	if(Link->Item[I_PHASE_MODULATOR])
+		Screen->DrawString( 7, BEAM_BOX_X-12,BEAM_BOX_Y+58,  FONT_SUBSCREEN3 ,0x0f,-1,TF_NORMAL, Phase, 128 );	
+	if(Link->Item[I_RELIC])
+		Screen->DrawString( 7, BEAM_BOX_X-12,BEAM_BOX_Y+66,  FONT_SUBSCREEN3 ,0x0f,-1,TF_NORMAL, Relic, 128 );	
+	if(Link->Item[I_GRIP_ONE] && !Link->Item[I_GRIP_TWO])
+		Screen->DrawString( 7, BEAM_BOX_X-12,BEAM_BOX_Y+50,  FONT_SUBSCREEN3 ,0x0f,-1,TF_NORMAL, P_Grip, 128 );	
+	else if(Link->Item[I_GRIP_ONE] && Link->Item[I_GRIP_TWO]){
+		if(SamusVars[H_GRIP_ON])
+			Screen->DrawString( 7, BEAM_BOX_X-12, BEAM_BOX_Y+50,  FONT_SUBSCREEN3 ,0x0f,-1,TF_NORMAL, H_Grip, 128 );	
+		else
+			Screen->DrawString( 7, BEAM_BOX_X-12, BEAM_BOX_Y+50,  FONT_SUBSCREEN3 ,0x01,-1,TF_NORMAL, H_Grip, 128 );
+	}
+}
+
+void DrawPercent(){
+	int Items[]= "Items Obtained";
+	int Slash[]= "/";
+	Screen->DrawString(7, 92, 126,  FONT_SUBSCREEN3 ,0x01,-1,TF_NORMAL, Items, 128 );
+	Screen->DrawInteger(7, 112, 136, FONT_SUBSCREEN3,0x01, -1,-1, -1, Game->Counter[SECRET_COUNTER], 0,128);
+	Screen->DrawString(7, 126, 136,  FONT_Z1,0x01,-1,TF_NORMAL, Slash, 128 );
+	Screen->DrawInteger(7, 132, 136, FONT_SUBSCREEN3,0x01, -1,-1, -1, 120, 0,128);
 }
 
 //Custom Mouse-Subscreen Interface
@@ -234,18 +274,18 @@ void Subscreen_Loop(){
 	int MapSamusX = SamusVars[MAP_SAMUS_X];
 	int MapSamusY = SamusVars[MAP_SAMUS_Y];
 	while ( true ) {
+		if(AreaName!=0)
+			Screen->DrawString(7,139,-8,FONT_SUBSCREEN3,1,0x0F,TF_NORMAL,AreaName,128);
 		Waitdraw();
 		DrawIcons();
 		DrawMiniMap();
 		if(SamusVars[CURR_SUBSCREEN]==SUBSCREEN_SAMUS){
 			DrawSubscreen();
-			if((SamusVars[BEAMS_EQUIPPED]&EQ_HYPER)==0)
-				DrawBeamNames();
-			else
-				DrawHyper();
+			DrawBeamNames();
 			DrawSuitNames();
 			DrawMiscNames();
 			DrawBootNames();
+			DrawXenoNames();
 			Screen->FastCombo(7,Link->InputMouseX, Link->InputMouseY,MOUSE_COMBO, MOUSE_CSET, 128);
 			if(!OldMouseB)MouseInput();
 			Link->Jump = 0;
@@ -258,10 +298,12 @@ void Subscreen_Loop(){
 			}
 			if(Link->PressL)
 				SamusVars[CURR_SUBSCREEN]=SUBSCREEN_MAP;
+		    
 			OldMouseB= InputLeftClick();
 		}
 		else if(SamusVars[CURR_SUBSCREEN]==SUBSCREEN_MAP){
 			DrawMap();
+			DrawPercent();
 			//If this station is active...
 			if(Link->PressEx4){
 				Link->PressEx4= false;

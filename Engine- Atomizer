@@ -1,0 +1,29 @@
+//Section 60. Atomic Disintegrator
+
+const int ATOMIC_SPRITE = 25;//Sprite for atomic disintegrator.
+
+void RunAtomic_Disintegrator(){
+	if(!SamusVars[IS_MORPHED] && SamusVars[BEAM_FIRING_TIMER]==0 
+		&& !SamusTeleporting() && SamusVars[SAMUS_ACTION]!=SAMUS_ACTION_SHINE_SPARK_LEFT
+		&& SamusVars[SAMUS_ACTION]!=SAMUS_ACTION_SHINE_SPARK_RIGHT
+		&& SamusVars[SAMUS_ACTION]!=SAMUS_ACTION_SHINE_SPARK_UP){
+		SamusVars[BEAM_FIRING_TIMER]=20;
+		lweapon beam;//Lweapon created by charge.
+		//Create and position Lweapon.
+		if(Link->Dir!=DIR_DOWN && SamusVars[SAMUS_ACTION]!=SAMUS_ACTION_CROUCH)
+			beam = FireScriptedLWeapon(LW_SCRIPT4, Link->X+FixedInFrontX(Link->Dir,2), (Link->Y-8)+FixedInFrontY(Link->Dir,2), 
+											ATOMIC_SPRITE, BEAM_SPEED, 4,LWF_ZERO_G|LWF_STUNS_ENEMIES);
+		else if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_CROUCH && Link->Dir==DIR_DOWN)
+			beam = FireScriptedLWeapon(LW_SCRIPT4, Link->X+FixedInFrontX(Link->Dir,2), (Link->Y-8)+FixedInFrontY(Link->Dir,2), 
+										ATOMIC_SPRITE, BEAM_SPEED, 4,LWF_ZERO_G|LWF_STUNS_ENEMIES);
+		else if(Link->Dir!=DIR_DOWN && SamusVars[SAMUS_ACTION]==SAMUS_ACTION_CROUCH)
+			beam = FireScriptedLWeapon(LW_SCRIPT4, Link->X+FixedInFrontX(Link->Dir,2), (Link->Y)+FixedInFrontY(Link->Dir,2), 
+										ATOMIC_SPRITE, BEAM_SPEED, 4,LWF_ZERO_G|LWF_STUNS_ENEMIES);
+		else
+			beam = FireScriptedLWeapon(LW_SCRIPT4, Link->X+FixedInFrontX(Link->Dir,2), (Link->Y-8)+FixedInFrontY(Link->Dir,2), 
+										ATOMIC_SPRITE, BEAM_SPEED, 4,LWF_ZERO_G|LWF_STUNS_ENEMIES);
+		SetLWeaponSFX(beam,SFX_BRANG,30);
+		beam->Misc[LW_ZH_I_FLAGS_2]|=LWF_LEVEL_1;
+		Game->PlaySound(SFX_BRANG);
+		SamusVars[LINK_ACTION]= LA_ATTACKING;
+	}

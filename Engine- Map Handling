@@ -78,4 +78,12 @@ bool GotMap(int Area){
 		return SamusVars[WRECKED_MAP];
 	else if(Area==CERES||Area==TOURIAN)
 		return true;
+	else if(Area==DORSAL_AREA)
+		return SamusVars[DORSAL_MAP_OBTAINED];
+	else if(Area==CENTRAL_AREA)
+		return SamusVars[CENTRAL_MAP_OBTAINED];
+	else if(Area==VENTRAL_AREA)
+		return SamusVars[VENTRAL_MAP_OBTAINED];
+	else if(Area==DARK_SIDE)
+		return SamusVars[DARK_MAP_OBTAINED];	
 }

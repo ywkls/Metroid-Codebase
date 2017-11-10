@@ -1,0 +1,175 @@
+//Section 41. Gravity Nightmare
+
+const int NIGHTMARE_BODY = 230;//Enemy ID of body.
+const int NIGHTMARE_NORMAL_TILE = 11969;//Normal body tile.
+const int NIGHTMARE_HURT_TILE = 12232;//Hurt body tile.
+const int NIGHTMARE_NORMAL_CSET = 2;//Normal Cset.
+const int NIGHTMARE_HURT_CSET = 7;//Hurt Cset.
+
+ffc script Gravity_Nightmare{
+	void run(int enemyID){
+		npc ghost = Ghost_InitAutoGhost(this, enemyID);
+		npc body = Screen->CreateNPC(NIGHTMARE_BODY);
+		Ghost_X = 32;
+		Ghost_Y = 80;
+		body->X = 0;
+		body->Y = 0;
+		body->Extend = 3;
+		body->TileWidth = 8;
+		body->TileHeight = 9;
+		body->HitWidth = 128;
+		body->HitHeight = 144;
+		int Mode= -1;
+		int FireTimer = Rand(120,240);
+		int MaxHP = Ghost_HP;
+		int wait;
+		int color;
+		Ghost_SetSize(this,ghost,2,2);
+		bool GravityOn;
+		bool SizeSet = false;
+		int i;
+		int StartX = 64;
+		int StartY = 60;
+		int Misc1 = ghost->Attributes[1];//Half width of horizontal movement
+		int Misc2 = ghost->Attributes[2];//X speed
+		int Misc3 = ghost->Attributes[3];//Half Height of vertical movement
+		int Misc4 = ghost->Attributes[4];//Y speed
+		int T1 = 0;
+		int T2 = 0;
+		eweapon laser[6];
+		Ghost_Data = GH_INVISIBLE_COMBO;
+		bool MovingDown = true;
+		ghost->Misc[4]= MaxHP;
+		while(true){
+			Ghost_ForceDir(DIR_RIGHT);
+			if(Mode ==0){
+				T1+=Misc2;
+				WrapDegrees(T1);
+				T2+=Misc4;
+				WrapDegrees(T2);
+				Ghost_X = StartX+Misc1*Cos(T1);
+				Ghost_Y = StartY+Misc3*Sin(2*T2);
+				if(FireTimer ==0){
+					wait = 120;//Set up timer.
+					while(wait>0){
+						//Move the enemy.
+						T1+=Misc2;
+						WrapDegrees(T1);
+						T2+=Misc4;
+						WrapDegrees(T2);
+						Ghost_X = StartX+Misc1*Cos(T1);
+						Ghost_Y = StartY+Misc3*Sin(2*T2);
+						Ghost_ForceDir(DIR_RIGHT);
+						//Controls the laser.
+						color= (color +1)%60;
+						Laser(0, Ghost_X+32, Ghost_Y+16, 8, 0, ghost->WeaponDamage, color);
+						//Reduce timers.
+						wait--;
+						Gravity_Nightmare_Waitframe(this,ghost,body);
+					}
+				}
+			}
+			else if(Mode == 1){
+				if(GravityOn){
+					for(i = 1;i<=Screen->NumLWeapons();i++){
+						lweapon w = Screen->LoadLWeapon(i);
+						if((w->Misc[GEN_MISC_FLAGS]&LWF_GRAV_UP)==0)
+							w->Misc[GEN_MISC_FLAGS]|=LWF_GRAV_UP;
+						if((w->Misc[GEN_MISC_FLAGS]&LWF_GRAV_UP)!=0)w->Y++;
+					}
+				}
+				T1+=Misc2;
+				WrapDegrees(T1);
+				T2+=Misc4;
+				WrapDegrees(T2);
+				Ghost_X = StartX+Misc1*Cos(T1);
+				Ghost_Y = StartY+Misc3*Sin(2*T2);
+				if(FireTimer ==0){
+					if(GravityOn)GravityOn = false;
+					else if(!GravityOn){
+						Screen->Wavy = 6;
+						GravityOn = true;
+					}
+					wait = 30;//Set up timer.
+					while(wait>0){
+						T1+=Misc2;
+						WrapDegrees(T1);
+						T2+=Misc4;
+						WrapDegrees(T2);
+						Ghost_X = StartX+Misc1*Cos(T1);
+						Ghost_Y = StartY+Misc3*Sin(2*T2);
+						Ghost_ForceDir(DIR_RIGHT);
+						Screen->Wavy = 6;
+						//Controls the laser.
+						laser[0] = FireBigEWeapon(ghost->Weapon, body->X+32, body->Y+80, DegtoRad(0), 300, ghost->WeaponDamage, MOTHER_BRAIN_LASER_SPRITE, LASER_SFX, 0,2,1);
+						laser[1] = FireBigEWeapon(ghost->Weapon, body->X+24, body->Y+96, DegtoRad(0), 300, ghost->WeaponDamage, MOTHER_BRAIN_LASER_SPRITE, LASER_SFX, 0,2,1);
+						laser[2] = FireBigEWeapon(ghost->Weapon, body->X+32, body->Y+112, DegtoRad(0), 300, ghost->WeaponDamage, MOTHER_BRAIN_LASER_SPRITE, LASER_SFX, 0,2,1);
+						laser[3] = FireBigEWeapon(ghost->Weapon, body->X+96, body->Y+96, DegtoRad(0), 300, ghost->WeaponDamage, MOTHER_BRAIN_LASER_SPRITE, LASER_SFX, 0,2,1);
+						laser[4] = FireBigEWeapon(ghost->Weapon, body->X+96, body->Y+112, DegtoRad(0), 300, ghost->WeaponDamage, MOTHER_BRAIN_LASER_SPRITE, LASER_SFX, 0,2,1);
+						laser[5] = FireBigEWeapon(ghost->Weapon,body->X+96, body->Y+128, DegtoRad(0), 300, ghost->WeaponDamage, MOTHER_BRAIN_LASER_SPRITE, LASER_SFX, 0,2,1);
+						for(i=0;i<=5;i++){
+							SetEWeaponLifespan(laser[i],EWL_TIMER, 200);
+							SetEWeaponDeathEffect(laser[i],EWD_VANISH, 0);
+						}
+						for(i = 1;i<=Screen->NumLWeapons();i++){
+							lweapon w = Screen->LoadLWeapon(i);
+							if((w->Misc[GEN_MISC_FLAGS]&LWF_GRAV_UP)==0)
+								w->Misc[GEN_MISC_FLAGS]|=LWF_GRAV_UP;
+							if((w->Misc[GEN_MISC_FLAGS]&LWF_GRAV_UP)!=0)w->Y++;
+						}
+						wait--;
+						Gravity_Nightmare_Waitframe(this,ghost,body);
+					}
+				}
+			}
+			if(Ghost_HP<=(MaxHP/2) && Mode ==0){
+				Ghost_X = 64;
+				Ghost_Y = 32;
+				Mode = 1;
+				if(!SizeSet){
+					Ghost_SetSize(this,ghost,3,3);
+					SizeSet = true;
+				}
+				body->OriginalTile = NIGHTMARE_HURT_TILE;
+			}
+			else if(Mode ==-1){
+				Ghost_X = 32;
+				Ghost_Y = 80;
+				Mode = 0;
+				body->OriginalTile = NIGHTMARE_NORMAL_TILE;
+			}
+			FireTimer--;
+			if(FireTimer <0)FireTimer = Rand(120,240);
+			Gravity_Nightmare_Waitframe(this,ghost,body);
+		}
+	}
+	void Gravity_Nightmare_Waitframe(ffc this, npc ghost, npc body){
+		ghost->Jump = 0;
+		if(Ghost_HP<=(ghost->Misc[4]/2)){
+			body->X = Ghost_X-64;
+			body->Y = Ghost_Y-32;
+		}
+		else{
+			body->X = Ghost_X-32;
+			body->Y = Ghost_Y-80;
+		}
+		//if hurt, change appearance.
+		if(Ghost_GotHit()){
+			Ghost_CSet = NIGHTMARE_HURT_CSET;
+			body->CSet = NIGHTMARE_HURT_CSET;
+			Ghost_Waitframes(this,ghost,false,false,5);
+		}
+		//Otherwise, go back to normal.
+		else{
+			Ghost_CSet = NIGHTMARE_NORMAL_CSET;
+			body->CSet =NIGHTMARE_NORMAL_CSET;
+		}
+		//The boss is dead.
+		if(!Ghost_Waitframe(this,ghost, false, false)){
+			Ghost_DeathAnimation(this,ghost,2);
+			body->HP = 0;
+			this->Data = 0;
+			Quit();
+		}
+	}
+}

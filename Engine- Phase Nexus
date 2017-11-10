@@ -1,0 +1,35 @@
+//Section 30. Phase Modulator
+
+const int I_PHASE_MODULATOR = 27;//Item id for Phase Modulator
+const int PHASE_ANIMATION_COMBO = 2101;//Combo to draw while phasing.
+const int PHASE_ANIMATION_CSET = 9;//Cset of phasing combo.
+
+//Determine if you can phase through this block.
+bool isPhase(int x, int y){
+	int loc= ComboAt(x,y);
+	return( Screen->ComboT[loc] == CT_SVGRIP && ComboFI(loc, CF_DASH));
+}
+
+void Phase_Modulator(){
+	//You have the item.
+	if(Link->Item[I_PHASE_MODULATOR]){
+		//The right block can be phased through.
+		//You press R and right.
+		if(isPhase(Link->X+16,Link->Y-8) 
+			&& isPhase(Link->X+16,Link->Y+8)
+			&& InputDash() && Link->InputRight){
+			DampInput(DASH_BUTTON);
+			Screen->DrawCombo(4, Link->X, Link->Y-16, PHASE_ANIMATION_COMBO, 1, 2, PHASE_ANIMATION_CSET, -1, -1, 0, 0, 0, -1, 0, true, 64);
+			Link->X+=2;
+		}
+		//The left block can be phased through.
+		//You press R and left.
+		else if(isPhase(Link->X-1,Link->Y+8) 
+				&& isPhase(Link->X-1,Link->Y-8)
+				&& InputDash() && Link->InputLeft){
+			DampInput(DASH_BUTTON);
+			Screen->DrawCombo(4, Link->X, Link->Y-16, PHASE_ANIMATION_COMBO, 1, 2, PHASE_ANIMATION_CSET, -1, -1, 0, 0, 0, -1, 0, true, 64);
+			Link->X-=2;
+		}
+	}
+}

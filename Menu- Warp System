@@ -1,0 +1,138 @@
+//Warp menu, called by MetroidSaveStationMenu(), or by other functions/scripts. 
+int WarpMenu(){
+
+	int lineBreak[]="@26";
+	
+	//Three springs per destination pair. We'll check if they are active, and only display those that are actie. 
+    int line1_both[]="@choice(1)Alpha@tab(72)@choice(2)Beta@26";
+	int line1_first[]="@choice(1)Alpha@26";
+    int line1_second[]="   @tab(72)@choice(2)Beta@26";
+	
+	int line2_both[]="@choice(3)Gamma@tab(72)@choice(4)Delta@26";
+	int line2_first[]="@choice(3)Gamma@26";
+    int line2_second[]="   @tab(72)@choice(4)Delta@26";
+	
+	int line3_both[]="@choice(5)Kappa@tab(72)@choice(6)Lambda@26";
+	int line3_first[]="@choice(5)Kappa@26";
+    int line3_second[]="   @tab(72)@choice(6)Lambda@26";
+	
+	int line4_both[]="@choice(7)Ship@tab(72)@choice(8)Sigma@26";
+	int line4_first[]="@choice(7)Ship@26";
+    int line4_second[]="   @tab(72)@choice(8)Sigma@26";
+	
+	int line5_both[]="@choice(9)Spectre@tab(72)@choice(10)Arachne@26";
+	int line5_first[]="@choice(9)Spectre@26";
+    int line5_second[]="   @tab(72)@choice(10)Arachne@26";
+	
+	int line6_both[]="@choice(11)Infernus@tab(72)@choice(12)Dominus@26";
+	int line6_first[]="@choice(11)Infernus@26";
+    int line6_second[]="   @tab(72)@choice(12)Dominus@26";
+	
+	int line7_both[]="@choice(13)Gravitas@tab(72)@choice(14)Omega@26";
+	int line7_first[]="@choice(13)Gravitas@26";
+    int line7_second[]="   @tab(72)@choice(14)Omega@26";
+	
+	//int line8_both[]="@choice(15)Veritas@tab(56)@choice(16)Base Camp@26";
+	int line8_first[]="@choice(15)Veritas@26";
+    //int line8_second[]="@tab(56)@choice(16)Base Camp@26";
+	
+	//int line9_both[]="@choice(17)Sickbay@tab(56)@choice(18)Go 18@26";
+	//int line9_first[]="@choice(17)Sickbay@26";
+    //int line9_second[]="   @tab(56)@choice(18)Go 18@26";
+	
+	int line10_both[]="@choice(19)Go 19@tab(56)@choice(20)Go 20@26";
+	int line10_first[]="@choice(19)Go 19@26";
+    int line10_second[]="   @tab(56)@choice(20)Go 20@26";
+	
+	int initmenu[]="@domenu(1)@suspend()";
+	
+	//We can change '10' to cancel if needed. 
+	
+	SetUpWindow(WINDOW_SLOT_2, WINDOW_STYLE_3, 32, 16, SIZE_EX_LARGE);
+	
+	if ( WarpPointActive(1) && WarpPointActive(2) ) Tango_LoadString(WINDOW_SLOT_2, line1_both);
+	if ( WarpPointActive(1) && !WarpPointActive(2) ) Tango_LoadString(WINDOW_SLOT_2, line1_first);
+	if ( !WarpPointActive(1) && WarpPointActive(2) ) Tango_LoadString(WINDOW_SLOT_2, line1_second);
+	
+	if ( WarpPointActive(3) && WarpPointActive(4) ) Tango_AppendString(WINDOW_SLOT_2, line2_both);
+	if ( WarpPointActive(3) && !WarpPointActive(4) ) Tango_AppendString(WINDOW_SLOT_2, line2_first);
+	if ( !WarpPointActive(3) && WarpPointActive(4) ) Tango_AppendString(WINDOW_SLOT_2, line2_second);
+	
+	if ( WarpPointActive(5) && WarpPointActive(6) ) Tango_AppendString(WINDOW_SLOT_2, line3_both);
+	if ( WarpPointActive(5) && !WarpPointActive(6) ) Tango_AppendString(WINDOW_SLOT_2, line3_first);
+	if ( !WarpPointActive(5) && WarpPointActive(6) ) Tango_AppendString(WINDOW_SLOT_2, line3_second);
+	
+	if ( WarpPointActive(7) && WarpPointActive(8) ) Tango_AppendString(WINDOW_SLOT_2, line4_both);
+	if ( WarpPointActive(7) && !WarpPointActive(8) ) Tango_AppendString(WINDOW_SLOT_2, line4_first);
+	if ( !WarpPointActive(7) && WarpPointActive(8) ) Tango_AppendString(WINDOW_SLOT_2, line4_second);
+	
+	if ( WarpPointActive(9) && WarpPointActive(10) ) Tango_AppendString(WINDOW_SLOT_2, line5_both);
+	if ( WarpPointActive(9) && !WarpPointActive(10) ) Tango_AppendString(WINDOW_SLOT_2, line5_first);
+	if ( !WarpPointActive(9) && WarpPointActive(10) ) Tango_AppendString(WINDOW_SLOT_2, line5_second);
+	
+	if ( WarpPointActive(11) && WarpPointActive(12) ) Tango_AppendString(WINDOW_SLOT_2, line6_both);
+	if ( WarpPointActive(11) && !WarpPointActive(12) ) Tango_AppendString(WINDOW_SLOT_2, line6_first);
+	if ( !WarpPointActive(11) && WarpPointActive(12) ) Tango_AppendString(WINDOW_SLOT_2, line6_second);
+	
+	if ( WarpPointActive(13) && WarpPointActive(14) ) Tango_AppendString(WINDOW_SLOT_2, line7_both);
+	if ( WarpPointActive(13) && !WarpPointActive(14) ) Tango_AppendString(WINDOW_SLOT_2, line7_first);
+	if ( !WarpPointActive(13) && WarpPointActive(14) ) Tango_AppendString(WINDOW_SLOT_2, line7_second);
+	
+	//if ( WarpPointActive(15) && WarpPointActive(16) ) Tango_AppendString(WINDOW_SLOT_2, line8_both);
+	if ( WarpPointActive(15) && !WarpPointActive(16) ) Tango_AppendString(WINDOW_SLOT_2, line8_first);
+	//if ( WarpPointActive(15) && WarpPointActive(16) ) Tango_AppendString(WINDOW_SLOT_2, line8_second);
+	
+	//if ( WarpPointActive(17) && WarpPointActive(18) ) Tango_AppendString(WINDOW_SLOT_2, line9_both);
+	//if ( WarpPointActive(17) && !WarpPointActive(18) ) Tango_AppendString(WINDOW_SLOT_2, line9_first);
+	//if ( WarpPointActive(17) && WarpPointActive(18) ) Tango_AppendString(WINDOW_SLOT_2, line9_second);
+	
+	if ( WarpPointActive(19) && WarpPointActive(20) ) Tango_AppendString(WINDOW_SLOT_2, line10_both);
+	if ( WarpPointActive(19) && !WarpPointActive(20) ) Tango_AppendString(WINDOW_SLOT_2, line10_first);
+	if ( WarpPointActive(19) && WarpPointActive(20) ) Tango_AppendString(WINDOW_SLOT_2, line10_second);
+	
+	Tango_AppendString(WINDOW_SLOT_2, initmenu);
+	
+    Tango_ActivateSlot(WINDOW_SLOT_2);
+    
+	while(!Tango_MenuIsActive()){
+        
+		Waitframe();
+	}
+    
+	// Save the state again...
+	int slotState[278];
+	int menuState[960];
+	int cursorPos;
+	Tango_SaveSlotState(WINDOW_SLOT_2, slotState);
+	Tango_SaveMenuState(menuState);
+    
+	int done = 0;
+	int choice;
+	while(true){
+    
+		while( Tango_MenuIsActive() ) {
+			cursorPos=Tango_GetMenuCursorPosition();
+			Waitframe();
+		}	
+		
+		choice = Tango_GetLastMenuChoice();
+		
+		if ( choice ) {
+			Tango_ClearSlot(WINDOW_SLOT_2);
+			done = choice * -1; 
+		}
+		
+		if ( done ) 
+			break;
+		//	return choice;
+		else {
+			Tango_RestoreSlotState(WINDOW_SLOT_2, slotState);
+			Tango_RestoreMenuState(menuState);
+			Tango_SetMenuCursorPosition(cursorPos);
+		}
+	}
+    
+	Tango_ClearSlot(WINDOW_SLOT_2);
+	//if ( DEBUG_MENUS ) DebugWarpChoice(done);
+	return done;
+}

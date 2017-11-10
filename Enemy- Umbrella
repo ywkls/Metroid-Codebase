@@ -1,0 +1,137 @@
+//Umbrella
+
+//Floats about room
+//Jumps into the air offscreen and tries to land on you
+//Shoots out bubbles?
+//Lightning attack!
+
+ffc script Umbrella{
+	void run(int enemyID){
+		npc ghost = Ghost_InitAutoGhost(this, enemyID);
+		this->Flags[FFCF_OVERLAY]= true;
+		int combo = ghost->Attributes[10];
+		int sprite = ghost->Attributes[0];
+		int sfx = ghost->Attributes[1];
+		Ghost_SetFlag(GHF_NO_FALL);
+		Ghost_SetSize(this,ghost,3,3);
+		Ghost_AddCombo(combo+1,-32,0,2,3);
+		Ghost_AddCombo(combo+2,48,0,2,3);
+		int Mode;
+		eweapon shot;
+		Ghost_X = 96;
+		Ghost_Y = 64;
+		int ModeTimer = Rand(80,160);
+		int i;
+		float angle;
+		bool MovingLeft = ChooseBool();
+		bool MovingUp = ChooseBool();
+		float step = ghost->Step/100;
+		float speed = step;
+		float targetX;
+		float targetY;
+		int StartX = Ghost_X;
+		int StartY = Ghost_Y;
+		int FireCount;
+		int MaxHP = Ghost_HP;
+		while(true){
+			Ghost_ForceDir(DIR_DOWN);
+			if(Mode==0){
+				if(MovingLeft && Ghost_CanMove(DIR_LEFT,1,0))
+					Ghost_X-=speed;
+				else if(MovingLeft && !Ghost_CanMove(DIR_LEFT,1,0))
+					MovingLeft= false;
+				else if(!MovingLeft && Ghost_CanMove(DIR_RIGHT,1,0))
+					Ghost_X+=speed;
+				else if(!MovingLeft && !Ghost_CanMove(DIR_RIGHT,1,0))
+					MovingLeft= false;
+				if(MovingUp && Ghost_CanMove(DIR_UP,1,0))
+					Ghost_Y-=speed;
+				else if(MovingUp && !Ghost_CanMove(DIR_UP,1,0))
+					MovingUp = false;
+				else if(!MovingUp && Ghost_CanMove(DIR_DOWN,1,0))
+					Ghost_Y+=speed;
+				else if(!MovingUp && !Ghost_CanMove(DIR_DOWN,1,0))
+					MovingUp = true;		
+			}
+			else if(Mode==1){
+				targetX= Link->X+8;
+				targetY= Link->Y-16;
+				if((Ghost_X+24) >targetX)Ghost_X--;
+				else Ghost_X++;
+				if((Ghost_Y+32)>targetY)Ghost_Y--;
+				else Ghost_Y++;
+				if(Abs(Distance(Ghost_X+24,Ghost_Y+32,Link->X+8,Link->Y-16))<=32){
+					Ghost_ClearCombos();
+					Ghost_Data = combo+6;
+					Ghost_AddCombo(combo+7,-32,0,2,4);
+					Ghost_AddCombo(combo+8,48,0,2,4);
+				}
+				Ghost_ClearCombos();
+				Ghost_Data = combo+3;
+				Ghost_AddCombo(combo+4,-16,0,1,4);
+				Ghost_AddCombo(combo+5,48,0,2,4);
+			}
+			else if(Mode==2){
+				if(Ghost_X<StartX)
+					Ghost_X+=speed;
+				else if(Ghost_X>StartX)
+					Ghost_X-=speed;
+				if(Ghost_Y<StartY)
+					Ghost_Y+=speed;
+				else if(Ghost_Y>StartY)
+					Ghost_Y-=speed;
+				if(Abs(Distance(Ghost_X,Ghost_Y,StartX,StartY))<=16
+					&& FireCount<3){
+					angle = Rand(45,90);
+					Gen_Explode_Waitframes(this,ghost,30);
+					for(i=0;i<=360;i+=angle){
+						shot =  FireEWeapon(ghost->Weapon,Ghost_X+24, Ghost_Y+24, 
+												DegtoRad(i), 100, ghost->WeaponDamage, 
+												sprite, sfx, 0);
+						SetEWeaponLifespan(shot,EWL_TIMER, 120);
+						SetEWeaponDeathEffect(shot,EWD_VANISH,0);
+						Gen_Explode_Waitframes(this,ghost,5);
+					}
+					FireCount++;
+				}
+			}
+			ModeTimer--;
+			if(ModeTimer<=0){
+				if(Mode==0){
+					Mode= Choose(1,2);
+					if(Mode==1){
+						Ghost_ClearCombos();
+						Ghost_Data = combo+3;
+						Ghost_SetSize(this,ghost,3,4);
+						Ghost_AddCombo(combo+4,-16,0,1,4);
+						Ghost_AddCombo(combo+5,48,0,2,4);
+					}
+				}
+				else if(Mode==1){
+					Mode= Choose(0,2);
+					Ghost_ClearCombos();
+					Ghost_Data = combo;
+					Ghost_AddCombo(combo+1,-32,0,2,3);
+					Ghost_AddCombo(combo+2,48,0,2,3);
+				}
+				else if(Mode==2){
+					Mode= Choose(1,0);
+					if(Mode==1){
+						Ghost_ClearCombos();
+						Ghost_Data = combo+3;
+						Ghost_SetSize(this,ghost,3,4);
+						Ghost_AddCombo(combo+4,-16,0,1,4);
+						Ghost_AddCombo(combo+5,48,0,2,4);
+					}
+				}
+				if(Mode==2)
+					FireCount=0;
+				ModeTimer = Rand(80,160);
+			}
+			if(Ghost_HP<=(MaxHP/2))
+				step = ghost->Step/50;
+			speed= step;
+			Gen_Explode_Waitframe(this,ghost);
+		}
+	}
+}

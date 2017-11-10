@@ -1,0 +1,101 @@
+ffc script GreatWall{
+	void run(int enemyID){
+		npc ghost = Ghost_InitAutoGhost(this, enemyID);
+		this->Flags[FFCF_OVERLAY]= true;
+		int combo = ghost->Attributes[10];
+		int sprite = ghost->Attributes[0];
+		int sfx = ghost->Attributes[1];
+		Ghost_SetFlag(GHF_NO_FALL);
+		Ghost_SetSize(this,ghost,4,3);
+		int Mode;
+		eweapon shot;
+		Ghost_X = 96;
+		Ghost_Y = 64;
+		int ModeTimer = Rand(80,160);
+		int FireTimer = Rand(100,200);
+		Ghost_Data = GH_INVISIBLE_COMBO;
+		ghost->CollDetection = false;
+		int ShotX;
+		int ShotY;
+		int i;
+		int ShotCount= Rand(1,7);
+		float angle;
+		while(true){
+			if(FireTimer<=0){
+				if(Mode==0){
+					for(i=0;i<=ShotCount;i++){
+						ShotX = Choose(40,72,168,200);
+						ShotY = Choose(44,116);
+						angle = Angle(ShotX+8, ShotY+8, CenterLinkX(), CenterLinkY());
+						shot = FireEWeapon(ghost->Weapon, ShotX, ShotY, 
+											DegtoRad(angle), 150, 
+											ghost->WeaponDamage, sprite, sfx, EWF_ROTATE_360);
+						Gen_Explode_Waitframes(this,ghost,10);
+					}
+					ShotCount= Rand(1,7);
+				}
+				else if(Mode==1){
+					angle = Angle(Ghost_X+32, Ghost_Y+24, CenterLinkX(), CenterLinkY());
+					for(i=0; i<24; i++){
+						shot = FireEWeapon(ghost->Weapon, Ghost_X+24, Ghost_Y+16, 
+											DegtoRad(angle+Rand(-30, 30)), 250, 
+											ghost->WeaponDamage, sprite, sfx, EWF_ROTATE_360);
+						Gen_Explode_Waitframes(this,ghost,4);
+					}
+				}
+				else if(Mode==2){
+					for(i=0; i<360; i+=30)
+						shot = FireEWeapon(ghost->Weapon, Ghost_X+24, Ghost_Y+16, 
+											DegtoRad(i), 250, 
+											ghost->WeaponDamage, sprite, sfx, EWF_ROTATE_360);
+				}
+				FireTimer = Rand(100,200);
+			}
+			if(ModeTimer<=0){
+				if(Mode==0){
+					Mode= Choose(1,2);
+					Ghost_Data = combo;
+					ghost->CollDetection = true;
+					if(Mode==1){
+						Ghost_CSet = 7;
+						ghost->Defense[NPCD_ARROW]= NPCDT_IGNORE;
+						ghost->Defense[NPCD_MAGIC]= NPCDT_HALFDAMAGE;
+					}
+					else if(Mode==2){
+						Ghost_CSet = 8;
+						ghost->Defense[NPCD_ARROW]= NPCDT_QUARTERDAMAGE;
+						ghost->Defense[NPCD_MAGIC]= NPCDT_IGNORE;
+					}
+				}
+				else if(Mode==1){
+					Mode= Choose(0,2);
+					if(Mode==0){
+						Ghost_Data = GH_INVISIBLE_COMBO;
+						ghost->CollDetection = false;
+					}
+					else if(Mode==2){
+						Ghost_CSet = 8;
+						ghost->Defense[NPCD_ARROW]= NPCDT_QUARTERDAMAGE;
+						ghost->Defense[NPCD_MAGIC]= NPCDT_IGNORE;
+					}
+				}
+				else if(Mode==2){
+					Mode= Choose(0,1);
+					if(Mode==0){
+						Ghost_Data = GH_INVISIBLE_COMBO;
+						ghost->CollDetection = false;
+					}
+					else if(Mode==1){
+						Ghost_CSet = 7;
+						ghost->Defense[NPCD_ARROW]= NPCDT_IGNORE;
+						ghost->Defense[NPCD_MAGIC]= NPCDT_HALFDAMAGE;
+					}
+				}
+				ModeTimer = Rand(80,160);
+			}
+			FireTimer--;
+			ModeTimer--;
+			Gen_Explode_Waitframe(this,ghost);
+		}
+	}
+}

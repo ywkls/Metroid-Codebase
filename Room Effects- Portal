@@ -1,0 +1,346 @@
+//Warp APERTURE Animation FFC
+//for ywkls, by ZoriaRPG
+//14th May, 201
+//v0.2
+ 
+const int SCREEN_CENTRE_X = 128;
+const int SCREEN_CENTRE_Y = 88;
+const int CUBE_TEXT_TIMER_DUR = 200;
+ 
+//General Warp APERTURE Settings
+const int APERTURE_LAYER = 6;
+const int APERTURE_TILE_WIDTH = 6;
+const int APERTURE_TILE_HEIGHT = 7;
+const float APERTURE_DEFAULT_OPEN_RATE = 0.3;
+ 
+//Left Warp APERTURE
+const int APERTURE_LEFT_X = 0;
+const int APERTURE_LEFT_Y = 0;
+const int APERTURE_LEFT_BASE_TILE = 15860;
+const int APERTURE_LEFT_CSET = 10;
+const int APERTURE_LEFT_XSCALE = -1;
+const int APERTURE_LEFT_YSCALE = -1;
+const int APERTURE_LEFT_RX = 0;
+const int APERTURE_LEFT_RY = 0;
+const int APERTURE_LEFT_RANGLE = 0;
+const int APERTURE_LEFT_FLIP = 0;
+const int APERTURE_LEFT_OPACITY = 128;
+ 
+//Right Warp APERTURE
+ 
+const int APERTURE_RIGHT_X = 96;
+const int APERTURE_RIGHT_Y = 0;
+const int APERTURE_RIGHT_BASE_TILE = 15866;
+const int APERTURE_RIGHT_CSET = 10;
+const int APERTURE_RIGHT_XSCALE = -1;
+const int APERTURE_RIGHT_YSCALE = -1;
+const int APERTURE_RIGHT_RX = 0;
+const int APERTURE_RIGHT_RY = 0;
+const int APERTURE_RIGHT_RANGLE = 0;
+const int APERTURE_RIGHT_FLIP = 0;
+const int APERTURE_RIGHT_OPACITY = 128;
+ 
+//Cube animation 2x2 tile textures (tile page 61)
+const int CUBE_TEX_1 = 16020;
+const int CUBE_TEX_2 = 16022;
+const int CUBE_TEX_3 = 16024;
+const int CUBE_TEX_4 = 16026;
+const int CUBE_TEX_5 = 16028;
+ 
+const int CUBE_ROTATION_X_DEGREES = 1; //one degree of rotation per 'modulus' frames?
+ 
+const int SFX_WARP_APERTURE_ACTIVATE = 27;
+const int SFX_WARP_APERTURE_OPEN = 37;
+const int APERTURE_OPENING_TIMER_DUR = 100;
+ 
+const int I_APERTURE = 17; //Require this item.
+
+const int CUBE_COMBO = 3364;
+ 
+ffc script portal{
+    //degrees of rotation per 'modulus' frames
+    //time for cube rotational effect
+    //modulus value for 'ror_x'
+    //texture change timer
+    //pixels per frame that the aperture opens (this is a decimal value with a default of 0.3).
+    void run(int PortalX, int PortalY,int reg){
+        //Warp Gate Aperture Values Array
+        int aperture_pos[18];   //0,1: left x, y;
+                    //2,3: right x,y,
+                    //4,5: left xscale, yscale;
+                    //6,7: right xscale, yscale
+                    //8,9,  left rx, ry
+                    //10, 11: right rx, ry
+                    //12, 13: left rangle, flip
+                    //14, 15: right rangle, flip
+        aperture_pos[16] = 64; //Base value.
+		aperture_pos[17] = 64; //Base value.
+		int pitch;
+		int yaw;
+		int roll;
+		int loc;
+		for(int i=0;i<=175;i++){
+			if(ComboFI(i,103))loc=i;
+		}
+		int x = ComboX(loc);
+		int y = ComboY(loc);
+        int open_rate = APERTURE_DEFAULT_OPEN_RATE; 
+       
+        int active_sound = SFX_WARP_APERTURE_ACTIVATE; 
+        int open_sound  = SFX_WARP_APERTURE_OPEN; 
+             
+        int tex[6]={CUBE_TEX_1,CUBE_TEX_2,CUBE_TEX_3,CUBE_TEX_4,CUBE_TEX_5,CUBE_TEX_1,CUBE_TEX_2,CUBE_TEX_3,CUBE_TEX_4,CUBE_TEX_5}; //Holds textures.
+       
+        int aperture_left_x; int aperture_right_x;
+        int aperture_timer = APERTURE_OPENING_TIMER_DUR;
+        
+        //Cannot interact
+        while(!Link->Item[I_APERTURE]) { //if a lockout item is required, check for it
+            //DrawTile(left side)
+                //Move it left to open it
+            Screen->DrawTile(APERTURE_LAYER, ((PortalX+96+aperture_pos[2])<<0), ((PortalY+aperture_pos[3])<<0),
+                APERTURE_RIGHT_BASE_TILE, APERTURE_TILE_WIDTH, APERTURE_TILE_HEIGHT,
+                APERTURE_RIGHT_CSET, ((APERTURE_RIGHT_XSCALE+aperture_pos[6])<<0), ((APERTURE_RIGHT_YSCALE+aperture_pos[7])<<0),
+                ((APERTURE_RIGHT_RX+aperture_pos[10])), ((APERTURE_RIGHT_RY+aperture_pos[11])), ((APERTURE_RIGHT_RANGLE+aperture_pos[14])),
+                ((APERTURE_RIGHT_FLIP+aperture_pos[15])<<0),
+                true, ((APERTURE_RIGHT_OPACITY+aperture_pos[17])<<0));
+           
+            //DrawTile(right side)
+                //move it right to open it
+            Screen->DrawTile(APERTURE_LAYER, ((PortalX+aperture_pos[0])<<0), ((PortalY+aperture_pos[1])<<0),
+                APERTURE_LEFT_BASE_TILE, APERTURE_TILE_WIDTH, APERTURE_TILE_HEIGHT,
+                APERTURE_LEFT_CSET, ((APERTURE_LEFT_XSCALE+aperture_pos[4])<<0), ((APERTURE_LEFT_YSCALE+aperture_pos[5])<<0),
+                ((APERTURE_LEFT_RX+aperture_pos[8])), ((APERTURE_LEFT_RY+aperture_pos[9])), ((APERTURE_LEFT_RANGLE+aperture_pos[12])),
+                ((APERTURE_LEFT_FLIP+aperture_pos[13])<<0),
+                true, ((APERTURE_LEFT_OPACITY+aperture_pos[16])<<0));
+            Waitframe();
+        }
+       
+        //Can interact, but has not activated.
+       
+        while(!Screen->D[reg]) {
+            //DrawTile(left side)
+                //Move it left to open it
+            Screen->DrawTile(APERTURE_LAYER, ((PortalX+96+aperture_pos[2])<<0), ((PortalY+aperture_pos[3])<<0),
+                APERTURE_RIGHT_BASE_TILE, APERTURE_TILE_WIDTH, APERTURE_TILE_HEIGHT,
+                APERTURE_RIGHT_CSET, ((APERTURE_RIGHT_XSCALE+aperture_pos[6])<<0), ((APERTURE_RIGHT_YSCALE+aperture_pos[7])<<0),
+                ((APERTURE_RIGHT_RX+aperture_pos[10])), ((APERTURE_RIGHT_RY+aperture_pos[11])), ((APERTURE_RIGHT_RANGLE+aperture_pos[14])),
+                ((APERTURE_RIGHT_FLIP+aperture_pos[15])<<0),
+                true, ((APERTURE_RIGHT_OPACITY+aperture_pos[17])<<0));
+           
+            //DrawTile(right side)
+                //move it right to open it
+            Screen->DrawTile(APERTURE_LAYER, ((PortalX+aperture_pos[0])<<0), ((PortalY+aperture_pos[1])<<0),
+                APERTURE_LEFT_BASE_TILE, APERTURE_TILE_WIDTH, APERTURE_TILE_HEIGHT,
+                APERTURE_LEFT_CSET, ((APERTURE_LEFT_XSCALE+aperture_pos[4])<<0), ((APERTURE_LEFT_YSCALE+aperture_pos[5])<<0),
+                ((APERTURE_LEFT_RX+aperture_pos[8])), ((APERTURE_LEFT_RY+aperture_pos[9])), ((APERTURE_LEFT_RANGLE+aperture_pos[12])),
+                ((APERTURE_LEFT_FLIP+aperture_pos[13])<<0),
+                true, ((APERTURE_LEFT_OPACITY+aperture_pos[16])<<0));
+           
+            if ( DistX(this, 32)&& DistY(this, 32)){
+				if(Screen->D[reg]!= 1){
+					Screen->DrawCombo(7, 165, -53, SCAN_COMBO, 1, 1, SCAN_CSET, 
+										-1, -1, 0, 0, 0, -1, 0, true, 128);
+					if(PressExamine()){
+						Game->PlaySound(active_sound);
+						Screen->D[reg] = 1;
+						break;
+					}
+				}
+			}
+            Waitframe();
+        }
+       
+        if ( open_sound ) Game->PlaySound(open_sound); //Play the aperture slide-open sound.
+       
+        //Start the aperture opening animation.
+        while(aperture_timer--){
+           
+            //Draw the aperture...
+           
+            //Left side...updating the positions every frame. Floored as we increment in decimals.
+            //Truncation here, is to avoid any glitch potential.
+           
+            //DrawTile(left side)
+                //Move it left to open it
+            Screen->DrawTile(APERTURE_LAYER, ((PortalX+96+aperture_pos[2])<<0), ((PortalY+aperture_pos[3])<<0),
+                APERTURE_RIGHT_BASE_TILE, APERTURE_TILE_WIDTH, APERTURE_TILE_HEIGHT,
+                APERTURE_RIGHT_CSET, ((APERTURE_RIGHT_XSCALE+aperture_pos[6])<<0), ((APERTURE_RIGHT_YSCALE+aperture_pos[7])<<0),
+                ((APERTURE_RIGHT_RX+aperture_pos[10])), ((APERTURE_RIGHT_RY+aperture_pos[11])), ((APERTURE_RIGHT_RANGLE+aperture_pos[14])),
+                ((APERTURE_RIGHT_FLIP+aperture_pos[15])<<0),
+                true, ((APERTURE_RIGHT_OPACITY+aperture_pos[17])<<0));
+           
+            //DrawTile(right side)
+                //move it right to open it
+            Screen->DrawTile(APERTURE_LAYER, ((PortalX+aperture_pos[0])<<0), ((PortalY+aperture_pos[1])<<0),
+                APERTURE_LEFT_BASE_TILE, APERTURE_TILE_WIDTH, APERTURE_TILE_HEIGHT,
+                APERTURE_LEFT_CSET, ((APERTURE_LEFT_XSCALE+aperture_pos[4])<<0), ((APERTURE_LEFT_YSCALE+aperture_pos[5])<<0),
+                ((APERTURE_LEFT_RX+aperture_pos[8])), ((APERTURE_LEFT_RY+aperture_pos[9])), ((APERTURE_LEFT_RANGLE+aperture_pos[12])),
+                ((APERTURE_LEFT_FLIP+aperture_pos[13])<<0),
+                true, ((APERTURE_LEFT_OPACITY+aperture_pos[16])<<0));
+           
+           
+            //Every frame, increase the aperture opening. This is a decimal increase, trhat is truncated, so that it opens in whole pixels.
+            //The decimal + truncation approach allows more freedom in timing.
+            openWarpAperture(aperture_pos, open_rate); //array, and opening rate in pixels per frame. Default is '0.3'.
+           
+            Waitframe();
+           
+        }
+       
+        //The aperture animation cycle is over, draw the cube...
+        while(aperture_timer <= 0 ){         
+           
+            //Draw both halves of the aperture in an open state.
+           
+            //DrawTile(left side)
+                //Move it left to open it
+            Screen->DrawTile(APERTURE_LAYER, ((PortalX+96+aperture_pos[2])<<0), ((PortalY+aperture_pos[3])<<0),
+                APERTURE_RIGHT_BASE_TILE, APERTURE_TILE_WIDTH, APERTURE_TILE_HEIGHT,
+                APERTURE_RIGHT_CSET, ((APERTURE_RIGHT_XSCALE+aperture_pos[6])<<0), ((APERTURE_RIGHT_YSCALE+aperture_pos[7])<<0),
+                ((APERTURE_RIGHT_RX+aperture_pos[10])), ((APERTURE_RIGHT_RY+aperture_pos[11])), ((APERTURE_RIGHT_RANGLE+aperture_pos[14])),
+                ((APERTURE_RIGHT_FLIP+aperture_pos[15])<<0),
+                true, ((APERTURE_RIGHT_OPACITY+aperture_pos[17])<<0));
+           
+            //DrawTile(right side)
+                //move it right to open it
+            Screen->DrawTile(APERTURE_LAYER, ((PortalX+aperture_pos[0])<<0), ((PortalY+aperture_pos[1])<<0),
+                APERTURE_LEFT_BASE_TILE, APERTURE_TILE_WIDTH, APERTURE_TILE_HEIGHT,
+                APERTURE_LEFT_CSET, ((APERTURE_LEFT_XSCALE+aperture_pos[4])<<0), ((APERTURE_LEFT_YSCALE+aperture_pos[5])<<0),
+                ((APERTURE_LEFT_RX+aperture_pos[8])), ((APERTURE_LEFT_RY+aperture_pos[9])), ((APERTURE_LEFT_RANGLE+aperture_pos[12])),
+                ((APERTURE_LEFT_FLIP+aperture_pos[13])<<0),
+                true, ((APERTURE_LEFT_OPACITY+aperture_pos[16])<<0));
+            //Handle texture change timer.
+           
+            //Decide if we rotate the cube:
+			pitch = WrapDegrees(pitch+1.5);
+			yaw = WrapDegrees(yaw+1.5);
+			roll = WrapDegrees(roll+1.5);
+			DrawCube(2, x,y, 16, yaw, pitch, roll, tex, 1, 7);  //Do rotational effect to cube[]          
+			//! Do we do anything fancy for warping on collision with the cube??
+            //! If som i=t goes here.
+            Screen->ComboD[ComboAt(x,y)]= SENS_WARP_A;
+			Screen->ComboD[ComboAt(x-16,y)]= SENS_WARP_A;
+			Screen->ComboD[ComboAt(x,y+16)]= SENS_WARP_A;
+			Screen->ComboD[ComboAt(x-16,y+16)]= SENS_WARP_A;
+            Waitframe();
+           
+        }
+    }
+    //'amount' should be positive to open, negative to close.
+    void openWarpAperture(int aperture_pos, int amount){
+        aperture_pos[0]-=amount;
+        aperture_pos[2]+= amount;
+    }
+}
+
+const int SENS_WARP_A = 1146;
+
+void DrawCube(int layer, int x, int y, int scale, int yaw, int pitch, int roll, int tex, int texwidth, int cs){
+    int cx[8];
+    int cy[8];
+    int cz[8];
+    //Initialize all 8 points in the default position
+    for(int i=0; i<4; i++){
+        cx[i] = VectorX3D(scale, -45+90*i, -45);
+        cy[i] = VectorY3D(scale, -45+90*i, -45);
+        cz[i] = scale/2;
+       
+        cx[i+4] = VectorX3D(scale, -45+90*i, 90+45);
+        cy[i+4] = VectorY3D(scale, -45+90*i, 90+45);
+        cz[i+4] = -scale/2;
+    }
+   
+    //Rotate from the default position to the desired rotation
+    RotateX3D(yaw, cx, cy, cz);
+    RotateY3D(pitch, cx, cy, cz);
+    RotateZ3D(roll, cx, cy, cz);
+   
+    //Draw all six faces of the cube
+    DrawCubeFace(layer, x, y, 0, 1, 2, 3, tex[0], texwidth, cs, cx, cy, cz);
+    DrawCubeFace(layer, x, y, 4, 5, 6, 7, tex[1], texwidth, cs, cx, cy, cz);
+   
+    DrawCubeFace(layer, x, y, 1, 2, 4, 7, tex[2], texwidth, cs, cx, cy, cz);
+    DrawCubeFace(layer, x, y, 3, 0, 6, 5, tex[3], texwidth, cs, cx, cy, cz);
+   
+    DrawCubeFace(layer, x, y, 0, 1, 7, 6, tex[4], texwidth, cs, cx, cy, cz);
+    DrawCubeFace(layer, x, y, 2, 3, 5, 4, tex[5], texwidth, cs, cx, cy, cz);
+}
+ 
+void DrawCubeFace(int layer, int x, int y, int p1, int p2, int p3, int p4, int tex, int texwidth, int cs, int cx, int cy, int cz){
+    //Mask out back sides
+    if(CubeCenterZ(p1, p2, p3, p4, cz)>=0){
+        //Assign points from cube arrays to quad array
+        int pos[12];
+       
+        pos[0] = x+cx[p1];
+        pos[1] = y+cy[p1];
+        pos[2] = cy[p1];
+       
+        pos[3] = x+cx[p2];
+        pos[4] = y+cy[p2];
+        pos[5] = cy[p2];
+       
+        pos[6] = x+cx[p3];
+        pos[7] = y+cy[p3];
+        pos[8] = cy[p3];
+       
+        pos[9] = x+cx[p4];
+        pos[10] = y+cy[p4];
+        pos[11] = cy[p4];
+       
+        //Some more garbage
+        int w = texwidth*16-1;
+        int uv[8] = {0,0,  0,w,  w,w,  w,0};
+        int csets[4] = {cs, cs, cs, cs};
+        int size[2] = {texwidth, texwidth};
+       
+        Screen->Quad3D(6, pos, uv, csets, size, 0, tex, PT_MASKTEXTURE);
+    }      
+}
+ 
+int CubeCenterZ(int p1, int p2, int p3, int p4, int cz){
+    return (cz[p1]+cz[p2]+cz[p3]+cz[p4])/4;
+}
+ 
+void RotateX3D(int angle, int cx, int cy, int cz){
+    for(int i=0; i<SizeOfArray(cx); i++){
+        int y = cy[i];
+        int z = cz[i];
+       
+        cy[i] = y * Cos(angle) - z * Sin(angle);
+        cz[i] = z * Cos(angle) + y * Sin(angle);
+    }
+}
+
+void RotateY3D(int angle, int cx, int cy, int cz){
+    for(int i=0; i<SizeOfArray(cx); i++){
+        int x = cx[i];
+        int z = cz[i];
+       
+        cx[i] = x * Cos(angle) - z * Sin(angle);
+        cz[i] = z * Cos(angle) + x * Sin(angle);
+    }
+}
+ 
+void RotateZ3D(int angle, int cx, int cy, int cz){
+    for(int i=0; i<SizeOfArray(cx); i++){
+        int x = cx[i];
+        int y = cy[i];
+       
+        cx[i] = x * Cos(angle) - y * Sin(angle);
+        cy[i] = y * Cos(angle) + x * Sin(angle);
+    }
+}
+ 
+int VectorX3D(int distance, int yaw, int pitch){
+    return distance*Sin(pitch)*Cos(yaw);
+}
+ 
+int VectorY3D(int distance, int yaw, int pitch){
+    return distance*Sin(pitch)*Sin(yaw);
+}
+ 
+int VectorZ3D(int distance, int yaw, int pitch){
+    return distance*Cos(pitch);
+}
