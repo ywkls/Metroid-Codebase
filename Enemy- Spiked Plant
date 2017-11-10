@@ -1,0 +1,107 @@
+//Section 89. Spike Plant
+
+ffc script Spike_Plant{
+	void run(int enemyID){
+		npc ghost = Ghost_InitAutoGhost(this, enemyID);
+		int Ceiling = ghost->Attributes[2];
+		Ghost_SetFlag(GHF_NO_FALL);
+		int Combo = ghost->Attributes[10];
+		Ghost_SetSize(this,ghost,2,2);
+		if(!Ceiling)
+			Ghost_SetHitOffsets(ghost,8,0,9,0);
+		else
+			Ghost_SetHitOffsets(ghost,0,8,9,0);
+		int Sprite = ghost->Attributes[0];
+		int Sfx = ghost->Attributes[1];
+		eweapon thorn[5];
+		int ThornTimer = Rand(100,200);
+		bool MovingLeft = ChooseBool();
+		int Step = ghost->Step/100;
+		while(true){
+			if(!Ceiling){
+				if(MovingLeft && Ghost_CanMove(DIR_LEFT,1,0)
+					&& Screen->isSolid(Ghost_X,Ghost_Y+33))
+					Ghost_Move(DIR_LEFT,Step,1);
+				else if(MovingLeft && (!Ghost_CanMove(DIR_LEFT,1,0)
+						|| !Screen->isSolid(Ghost_X,Ghost_Y+33)))
+					MovingLeft = false;
+				else if(!MovingLeft && Ghost_CanMove(DIR_RIGHT,1,0)
+					&& Screen->isSolid(Ghost_X+32,Ghost_Y+33))
+					Ghost_Move(DIR_RIGHT,1,0);
+				else if(!MovingLeft && (!Ghost_CanMove(DIR_RIGHT,1,0)
+					|| !Screen->isSolid(Ghost_X+32,Ghost_Y+33)))
+					MovingLeft = true;
+				if(ThornTimer<0){
+					Ghost_Data = Combo+1;
+					Ghost_SetSize(this,ghost,2,3);
+					if(!Ceiling)
+						Ghost_SetHitOffsets(ghost,6,10,6,5);
+					else
+						Ghost_SetHitOffsets(ghost,10,6,6,5);
+					Ghost_Waitframes(this,ghost,true,true,30);
+					thorn[0]= FireEWeapon(ghost->Weapon, Ghost_X,Ghost_Y+16, 
+												DegtoRad(180), 300, ghost->WeaponDamage, Sprite, Sfx, EWF_ROTATE_360);
+					thorn[1]= FireEWeapon(ghost->Weapon, Ghost_X+8,Ghost_Y+8, 
+												DegtoRad(225), 300, ghost->WeaponDamage, Sprite, Sfx, EWF_ROTATE_360);
+					thorn[2]= FireEWeapon(ghost->Weapon, Ghost_X+16,Ghost_Y, 
+												DegtoRad(270), 300, ghost->WeaponDamage, Sprite, Sfx, EWF_ROTATE_360);
+					thorn[3]= FireEWeapon(ghost->Weapon, Ghost_X+24,Ghost_Y+8, 
+												DegtoRad(315), 300, ghost->WeaponDamage, Sprite, Sfx, EWF_ROTATE_360);
+					thorn[4]= FireEWeapon(ghost->Weapon, Ghost_X+32,Ghost_Y+16, 
+												DegtoRad(0), 300, ghost->WeaponDamage, Sprite, Sfx, EWF_ROTATE_360);							
+					ThornTimer = Rand(100,200);
+					Ghost_Waitframes(this,ghost,true,true,30);
+					Ghost_Data = Combo;
+					Ghost_SetSize(this,ghost,2,2);
+					if(!Ceiling)
+						Ghost_SetHitOffsets(ghost,8,0,9,0);
+					else
+						Ghost_SetHitOffsets(ghost,0,8,9,0);
+				}
+			}
+			else{
+				if(MovingLeft && Ghost_CanMove(DIR_LEFT,1,0)
+					&& Screen->isSolid(Ghost_X,Ghost_Y-1))
+					Ghost_Move(DIR_LEFT,Step,1);
+				else if(MovingLeft && (!Ghost_CanMove(DIR_LEFT,1,0)
+						|| !Screen->isSolid(Ghost_X,Ghost_Y-1)))
+					MovingLeft = false;
+				else if(!MovingLeft && Ghost_CanMove(DIR_RIGHT,1,0)
+					&& Screen->isSolid(Ghost_X+32,Ghost_Y-1))
+					Ghost_Move(DIR_RIGHT,1,0);
+				else if(!MovingLeft && (!Ghost_CanMove(DIR_RIGHT,1,0)
+					|| !Screen->isSolid(Ghost_X+32,Ghost_Y-1)))
+					MovingLeft = true;
+				if(ThornTimer<0){
+					Ghost_Data = Combo+1;
+					Ghost_SetSize(this,ghost,2,3);
+					if(!Ceiling)
+						Ghost_SetHitOffsets(ghost,6,10,6,5);
+					else
+						Ghost_SetHitOffsets(ghost,10,6,6,5);
+					Ghost_Waitframes(this,ghost,true,true,30);
+					thorn[0]= FireEWeapon(ghost->Weapon, Ghost_X,Ghost_Y+16, 
+												DegtoRad(0), 300, ghost->WeaponDamage, Sprite, Sfx, EWF_ROTATE_360);
+					thorn[1]= FireEWeapon(ghost->Weapon, Ghost_X+8,Ghost_Y+8, 
+												DegtoRad(45), 300, ghost->WeaponDamage, Sprite, Sfx, EWF_ROTATE_360);
+					thorn[2]= FireEWeapon(ghost->Weapon, Ghost_X+16,Ghost_Y, 
+												DegtoRad(90), 300, ghost->WeaponDamage, Sprite, Sfx, EWF_ROTATE_360);
+					thorn[3]= FireEWeapon(ghost->Weapon, Ghost_X+24,Ghost_Y+8, 
+												DegtoRad(135), 300, ghost->WeaponDamage, Sprite, Sfx, EWF_ROTATE_360);
+					thorn[4]= FireEWeapon(ghost->Weapon, Ghost_X+32,Ghost_Y+16, 
+												DegtoRad(180), 300, ghost->WeaponDamage, Sprite, Sfx, EWF_ROTATE_360);							
+					ThornTimer = Rand(100,200);
+					Ghost_Waitframes(this,ghost,true,true,30);
+					Ghost_Data = Combo;
+					Ghost_SetSize(this,ghost,2,2);
+					if(!Ceiling)
+						Ghost_SetHitOffsets(ghost,8,0,9,0);
+					else
+						Ghost_SetHitOffsets(ghost,0,8,9,0);
+				}
+			}
+			ThornTimer--;
+			Ghost_Waitframe(this,ghost,true,true);
+		}
+	}
+}
