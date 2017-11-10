@@ -1,0 +1,5 @@
+ffc script IndexReset{
+	void run(int index){
+		SamusVars[index]=0;
+	}
+}
