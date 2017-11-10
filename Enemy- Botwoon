@@ -1,0 +1,317 @@
+//Section 97. Botwoon
+
+const int LANMOLA_MIN_RANGE = 2; //The minimum distance the lanmola will look to submerge from the point it emerges.
+const int LANMOLA_MAX_RANGE = 5; //The maximum distance the lanmola will look to submerge from the point it emerges.
+
+//Attributes:
+//A1: The ID of the NPC used for the tail
+//A2: The number of segments
+
+//Unlike most autoghosted enemies, this uses the enemy's tiles for graphics instead of combos. Attribute 11 should be an invisible combo.
+//Head tiles: Invisible, up, down, left, right, left-up, right-up, left-down, right-down
+//Tail tiles: Biggest, medium, smallest
+
+ffc script Botwoon{
+	bool AboveGround(npc Segment){
+		for(int i=0; i<9; i++){
+			if(Segment[i]->isValid()){
+				if(Segment[i]->X>-16)
+					return true;
+			}
+		}
+		return false;
+	}
+	void Lanmola_Waitframe(ffc this, npc ghost, npc Segment, int SegmentX, int SegmentY, int SegmentZ){
+		SegmentX[0] = Ghost_X;
+		SegmentY[0] = Ghost_Y-Ghost_Z;
+		SegmentZ[0] = Ghost_Z;
+		int SegmentDist = Round(16/(ghost->Step/100));
+		for(int i=159; i>0; i--){
+			SegmentX[i] = SegmentX[i-1];
+			SegmentY[i] = SegmentY[i-1];
+			SegmentZ[i] = SegmentZ[i-1];
+		}
+		for(int i=0; i<9; i++){
+			if(Segment[i]->isValid()){
+				Segment[i]->X = SegmentX[SegmentDist+i*SegmentDist];
+				Segment[i]->Y = SegmentY[SegmentDist+i*SegmentDist];
+				Segment[i]->CSet = this->CSet;
+				
+				if(SegmentZ[SegmentDist+i*SegmentDist]>0&&!(GH_SHADOW_FLICKER!=0 && (__ghzhData[__GHI_GLOBAL_FLAGS]&__GHGF_FLICKER)!=0)){
+					int x;
+					int y;
+					int tile;
+					x=Segment[i]->X;
+					y=Segment[i]->Y+SegmentZ[SegmentDist+i*SegmentDist];
+					if(Ghost_FlagIsSet(GHF_STATIC_SHADOW))
+						tile=GH_SHADOW_TILE;
+					else
+						tile=GH_SHADOW_TILE+__ghzhData[__GHI_SHADOW_FRAME];
+						
+					if(GH_SHADOW_TRANSLUCENT>0)
+						Screen->DrawTile(1, x, y, tile, 1, 1, GH_SHADOW_CSET,
+										 -1, -1, 0, 0, 0, 0, true, OP_TRANS);
+					else
+						Screen->DrawTile(1, x, y, tile, 1, 1, GH_SHADOW_CSET,
+										 -1, -1, 0, 0, 0, 0, true, OP_OPAQUE);
+				}
+			}
+		}
+		if(!Ghost_Waitframe(this, ghost, false, false)){
+			for(int i=0; i<9; i++){
+				if(Segment[i]->isValid()){
+					if(ghost->HP<1)
+						Segment[i]->HP = 0;
+				}
+			}
+			this->Data=0;
+			Ghost_Data=0;
+			Quit();
+		}
+	}
+	void Lanmola_Waitframes(ffc this, npc ghost, npc Segment, 
+							int SegmentX, int SegmentY, int SegmentZ, int frames){
+		for(;frames>0;frames--)
+			Lanmola_Waitframe(this, ghost, Segment, SegmentX, SegmentY, SegmentZ);
+	}
+	void run(int enemyid){
+		npc ghost = Ghost_InitAutoGhost(this, enemyid);
+		int MaxHP = Ghost_HP;
+		Ghost_SetFlag(GHF_NO_FALL);
+		float angle;
+		int SegmentID = ghost->Attributes[0];
+		int NumSegments = Max(8, ghost->Attributes[1]);
+        int timerChangeAngle = 60;
+        int timerReflection = 0;
+		int movement_pattern = 1;
+		float turn_choice = 0;
+		float step = ghost->Step/100;
+		bool turn_left = false;
+        bool turn_right = false;
+		int RandomTimer;
+		npc Segment[9];
+		int SegmentX[160];
+		int SegmentY[160];
+		int SegmentZ[160];
+		eweapon fireball;
+		int FireChance;
+		for(int i=0; i<160; i++){
+			SegmentX[i] = -16;
+			SegmentY[i] = -16;
+			SegmentZ[i] = 0;
+		}
+		Ghost_X = -16;
+		Ghost_Y = -16;
+		ghost->X = -16;
+		ghost->Y = -16;
+		int Combo = ghost->Attributes[10];
+		Ghost_Data = GH_INVISIBLE_COMBO;
+		for(int i=0; i<NumSegments; i++){
+			Segment[i] = CreateNPCAt(SegmentID, Ghost_X, Ghost_Y);
+			if(i==NumSegments-1){
+				Segment[i]->OriginalTile += 2;
+				Segment[i]->Tile += 2;
+			}
+			else if(i==NumSegments-2){
+				Segment[i]->OriginalTile += 1;
+				Segment[i]->Tile += 1;
+			}
+			Ghost_SetAllDefenses(Segment[i], NPCDT_BLOCK);
+		}
+		while(true){
+			for(int i=0; i<90; i++){
+				Lanmola_Waitframe(this, ghost, Segment, SegmentX, SegmentY, SegmentZ);
+			}
+			int StartCombo = FindSpawnPoint(true, false, false, false);
+			int MinX = ComboX(StartCombo)/16-LANMOLA_MAX_RANGE;
+			int MaxX = ComboX(StartCombo)/16+LANMOLA_MAX_RANGE;
+			int MinY = ComboY(StartCombo)/16-LANMOLA_MAX_RANGE;
+			int MaxY = ComboY(StartCombo)/16+LANMOLA_MAX_RANGE;
+			int EndCombo;
+			for(int i=0; i<120; i++){
+				int X = Rand(MinX, MaxX)*16;
+				int Y = Rand(MinY, MaxY)*16;
+				EndCombo = ComboAt(X+8, Y+8);
+				if(Screen->ComboT[EndCombo]==CT_NONE && Screen->ComboS[EndCombo]==0000b
+					&& EndCombo!=StartCombo &&Abs(X-ComboX(StartCombo))/16>=LANMOLA_MIN_RANGE
+					&& Abs(Y-ComboY(StartCombo))/16>=LANMOLA_MIN_RANGE
+					&& !ComboFI(EndCombo,CF_NOENEMY))
+					break;
+				else EndCombo = -1;
+			}
+			while(EndCombo<0){
+				int Combo = Rand(0, 175);
+				if(Screen->ComboT[Combo]==CT_NONE && Screen->ComboS[Combo]==0000b
+					&&Combo!=StartCombo && !ComboFI(Combo,CF_NOENEMY))
+					EndCombo = Combo;
+			}
+			Ghost_X = ComboX(StartCombo);
+			Ghost_Y = ComboY(StartCombo);
+			int SegmentDist = Round(8/(ghost->Step/100));
+			int FloatDistance = Distance(Ghost_X, Ghost_Y, ComboX(EndCombo), ComboY(EndCombo));
+			int FloatAngle = Angle(Ghost_X, Ghost_Y, ComboX(EndCombo), ComboY(EndCombo));
+			int FloatFrames = FloatDistance/(ghost->Step/100);
+			if(AngleDir8(FloatAngle)==DIR_UP||
+				AngleDir8(FloatAngle)==DIR_LEFTUP||
+				AngleDir8(FloatAngle)==DIR_LEFT||
+				AngleDir8(FloatAngle)==DIR_LEFTDOWN){
+				Ghost_Data = Combo;
+				Ghost_SetSize(this,ghost,2,1);
+			}
+			else if(AngleDir8(FloatAngle)==DIR_DOWN||
+				AngleDir8(FloatAngle)==DIR_RIGHTDOWN||
+				AngleDir8(FloatAngle)==DIR_RIGHT||
+				AngleDir8(FloatAngle)==DIR_RIGHTUP){
+				Ghost_Data = Combo+1;
+				Ghost_SetSize(this,ghost,2,1);
+			}
+			RandomTimer = Rand(240,300);
+			while(RandomTimer>0){
+				// Turning and normal movement happen here.
+				if (turn_left && !turn_right){
+					if (Ghost_HP <= (MaxHP / 5))
+						angle -= 4;
+					else
+						angle -= 2;
+				}
+				if (!turn_left && turn_right){
+					if (Ghost_HP <= (MaxHP / 5))
+						angle += 4;
+					else
+						angle += 2;
+				}
+				Ghost_MoveAtAngle(angle, step, 2);
+				// The random movement of a Merderm.
+				if (timerChangeAngle <= 0){
+					movement_pattern = Rand(1, 100);
+					turn_left = false;
+					turn_right = false;
+					if (Distance(Link->X, Link->Y, ghost->X, ghost->Y) > 48 
+						&& !turn_left && !turn_right){
+						if (movement_pattern >= 0 && movement_pattern <= 50){
+							turn_choice = Choose(1, 2);
+							if (turn_choice == 1){
+								turn_left = true;
+								if(Ghost_Data==Combo+1)Ghost_Data= Combo;
+							}
+							else{
+								turn_right = true;
+								if(Ghost_Data==Combo)Ghost_Data= Combo+1;
+							}
+							timerChangeAngle = Rand(60, 100);
+						}
+						else if (movement_pattern > 50 && movement_pattern <= 60){
+							angle += Choose(-15, 15);
+							timerChangeAngle = 15;
+						}
+						else if (movement_pattern > 60 && movement_pattern <= 70){
+							angle += Choose(-30, 30);
+							timerChangeAngle = 15;
+						}
+						else if (movement_pattern > 70 && movement_pattern <= 90)
+							// Don't change direction.
+							timerChangeAngle = Rand(30, 60);
+						else if (movement_pattern > 90){
+							angle = WrapDegrees(angle + 180);
+							timerChangeAngle = 40;
+							if(Ghost_Data==Combo+1)Ghost_Data= Combo;
+							else if(Ghost_Data==Combo)Ghost_Data= Combo+1;
+						}
+					}
+					else if (Distance(Link->X, Link->Y, ghost->X, ghost->Y) <= 48 
+							&& !turn_left && !turn_right){
+						if (movement_pattern >= 0 && movement_pattern <= 50){
+							turn_choice = Choose(1, 2);
+							 if (turn_choice == 1){
+								turn_left = true;
+								if(Ghost_Data==Combo+1)Ghost_Data= Combo;
+							}
+							else{
+								turn_right = true;
+								if(Ghost_Data==Combo)Ghost_Data= Combo+1;
+							}
+							timerChangeAngle = 60;
+						}
+						else if (movement_pattern > 50 && movement_pattern <= 70){
+							angle += Choose(-45, 45);
+							timerChangeAngle = 10;
+						}
+						else if (movement_pattern > 70 && movement_pattern <= 80){
+							angle = WrapDegrees(angle + 180);
+							timerChangeAngle = 60;
+							if(Ghost_Data==Combo+1)Ghost_Data= Combo;
+							else if(Ghost_Data==Combo)Ghost_Data= Combo+1;
+						}
+						else if (movement_pattern > 90)
+							// Don't change direction.
+							timerChangeAngle = 10;
+					}
+				}
+			   
+				// Bouncing off walls.
+				if (!Ghost_CanMove(DIR_UP, 3, 2) && timerReflection <= 0){
+					angle *= -1;
+					timerReflection = 10;
+				}
+				else if (!Ghost_CanMove(DIR_DOWN, 3, 2) && timerReflection <= 0){
+					angle *= -1;
+					timerReflection = 10;
+				}
+				 else if (!Ghost_CanMove(DIR_LEFT, 3, 2) && timerReflection <= 0){
+					angle = WrapDegrees(angle - (2 * (angle - 90)));
+					timerReflection = 10;
+					Ghost_Data = Combo+1;
+				}
+				else if (!Ghost_CanMove(DIR_RIGHT, 3, 2) && timerReflection <= 0){
+					angle = WrapDegrees(angle - (2 * (angle - 90)));
+					timerReflection = 10;
+					Ghost_Data = Combo;
+				}
+				timerChangeAngle--;
+				timerReflection--;
+				RandomTimer--;
+				Lanmola_Waitframe(this, ghost, Segment, SegmentX, SegmentY, SegmentZ);
+			}
+			for(int i=0; i<FloatFrames; i++){
+				int HalfA = 180/FloatFrames;
+				int FullA = 360/FloatFrames;
+				int Height = Clamp(FloatDistance/4, 8, 40);
+				if(FloatDistance<48)Ghost_Z = Height*Sin(i*HalfA);
+				else
+					Ghost_Z = Height*Sin(i*HalfA)+Floor(Height/6)*Sin(i*FullA*(Floor(FloatDistance/32)+0.5));	
+				Ghost_X += VectorX(ghost->Step/100, FloatAngle);
+				Ghost_Y += VectorY(ghost->Step/100, FloatAngle);
+				Lanmola_Waitframe(this, ghost, Segment, SegmentX, SegmentY, SegmentZ);
+			}
+			Ghost_X = -16;
+			Ghost_Y = -16;
+			Ghost_Data = GH_INVISIBLE_COMBO;
+			while(AboveGround(Segment)){
+				Lanmola_Waitframe(this, ghost, Segment, SegmentX, SegmentY, SegmentZ);
+			}
+			FireChance = Rand(0,100);
+			if(FireChance>=51){
+				StartCombo = FindSpawnPoint(true, false, false, false);
+				Ghost_X = ComboX(StartCombo);
+				Ghost_Y = ComboY(StartCombo);
+				if(Link->X<=Ghost_X)
+					Ghost_Data = Combo;
+				else
+					Ghost_Data = Combo+1;
+				Ghost_SetSize(this,ghost,2,1);
+				Lanmola_Waitframes(this, ghost, Segment, SegmentX, SegmentY, SegmentZ,30);
+				for(int i=0;i<=8;i++){
+					if(Link->X<=Ghost_X)
+						fireball = FireEWeapon(EW_SCRIPT1, Ghost_X, Ghost_Y, DegtoRad((i*22)+90), 300, ghost->WeaponDamage,-1, -1, 0);
+					else
+						fireball = FireEWeapon(EW_SCRIPT1, Ghost_X, Ghost_Y, DegtoRad((i*22)+270), 300, ghost->WeaponDamage,-1, -1, 0);
+					SetEWeaponLifespan(fireball,EWL_TIMER, 120); 
+					SetEWeaponDeathEffect(fireball,EWD_VANISH, 0);
+				}
+				Ghost_X = -16;
+				Ghost_Y = -16;
+				Ghost_Data = GH_INVISIBLE_COMBO;
+			}
+		}
+	}
+}
