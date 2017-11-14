@@ -1,0 +1,95 @@
+ffc script Starfish{
+	void run(int enemyID){
+		npc ghost = Ghost_InitAutoGhost(this, enemyID);
+		int combo = ghost->Attributes[10];
+		Ghost_SetFlag(GHF_NO_FALL);
+		Ghost_SetSize(this,ghost,1,2);
+		Ghost_AddCombo(combo+1,0,-32,2,2);
+		Ghost_AddCombo(combo+2,-32,0,2,2);
+		Ghost_AddCombo(combo+3,16,0,2,2);
+		Ghost_AddCombo(combo+4,-32,32,5,2);
+		eweapon shot1;
+		eweapon shot2;
+		Ghost_X= 80;
+		Ghost_Y= 80;
+		int firetimer = Rand(60,180);
+		bool MovingLeft = ChooseBool();
+		int i;
+		int count;
+		int sprite = ghost->Attributes[0];
+		int sfx = ghost->Attributes[1];
+		int speed = ghost->Step/100;
+		float angleChange;
+		while(true){
+			if(firetimer<=0){
+				count = Rand(4,8);
+				angleChange = Rand(-10,10);
+				for(i=0;i<=count;i++){
+					shot1 = FireEWeapon(ghost->Weapon,Ghost_X-32,
+										  Ghost_Y+12,DegtoRad(180+angleChange),100,
+										  ghost->WeaponDamage,sprite,sfx,0);
+					shot2 = FireEWeapon(ghost->Weapon,Ghost_X+32,
+										  Ghost_Y+12,DegtoRad(0+angleChange),100,
+										  ghost->WeaponDamage,sprite,sfx,0);
+					SetEWeaponLifespan(shot1,EWL_TIMER,180);
+					SetEWeaponLifespan(shot2,EWL_TIMER,180);
+					SetEWeaponDeathEffect(shot1,EWD_VANISH,0);
+					SetEWeaponDeathEffect(shot2,EWD_VANISH,0);
+					Starfish_Waitframes(this,ghost,10);
+				}
+				firetimer = Rand(60,180);
+			}
+			if(MovingLeft && Ghost_CanMove(DIR_LEFT,32,0))
+				Ghost_X-=speed;
+			else if(MovingLeft && !Ghost_CanMove(DIR_LEFT,32,0))
+				MovingLeft = false;
+			else if(!MovingLeft && Ghost_CanMove(DIR_RIGHT,32,0))
+				Ghost_X+=speed;
+			else if(!MovingLeft && !Ghost_CanMove(DIR_RIGHT,32,0))
+				MovingLeft = true;
+			firetimer--;
+			Starfish_Waitframe(this,ghost);
+		}
+	}
+	void Starfish_Waitframe(ffc this, npc ghost){
+		if(!Ghost_Waitframe(this, ghost, false, false)){
+			Ghost_DeathAnimation(this, ghost, 2);
+			Quit();
+		}
+		for(int i= Screen->NumEWeapons();i>0;i--){
+			eweapon shot = Screen->LoadEWeapon(i);
+			if(shot->isValid()){
+				if(Screen->isSolid(shot->X-1,shot->Y+8)){
+					if(Between(shot->Angle,DegtoRad(180),DegtoRad(270)))
+						shot->Angle = DegtoRad(Rand(271,359));
+					else if(Between(shot->Angle,DegtoRad(90),DegtoRad(179)))
+						shot->Angle = DegtoRad(Rand(0,89));
+				}
+				else if(Screen->isSolid(shot->X+17,shot->Y+8)){
+					if(shot->Angle<0)
+						shot->Angle=DegtoRad(360)+shot->Angle;
+					if(Between(shot->Angle,DegtoRad(270),DegtoRad(359)))
+						shot->Angle = DegtoRad(Rand(181,269));
+					else if(Between(shot->Angle,DegtoRad(0),DegtoRad(90)))
+						shot->Angle = DegtoRad(Rand(91,179));
+				}
+				else if(Screen->isSolid(shot->X+8,shot->Y-1)){
+					if(Between(shot->Angle,DegtoRad(180),DegtoRad(270)))
+						shot->Angle = DegtoRad(Rand(91,179));
+					else if(Between(shot->Angle,DegtoRad(271),DegtoRad(359)))
+						shot->Angle = DegtoRad(Rand(1,89));
+				}
+				else if(Screen->isSolid(shot->X+8,shot->Y+17)){
+					if(Between(shot->Angle,DegtoRad(0),DegtoRad(89)))
+						shot->Angle = DegtoRad(Rand(271,359));
+					else if(Between(shot->Angle,DegtoRad(91),DegtoRad(179)))
+						shot->Angle = DegtoRad(Rand(181,269));
+				}
+			}
+		}
+	}
+	void Starfish_Waitframes(ffc this, npc ghost, int frames){
+		for(;frames>0;frames--)
+			Starfish_Waitframe(this,ghost);
+	}
+}

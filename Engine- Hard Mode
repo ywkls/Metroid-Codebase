@@ -1,0 +1,30 @@
+//Hard Mode
+
+void Hard_Mode(){
+	int i;
+	if(SamusVars[HARD_ENEMIES]){
+		for(i= Screen->NumNPCs();i>0;i--){
+			npc n = Screen->LoadNPC(i);
+			if((n->Misc[GEN_MISC_FLAGS]&NPC_F_HARD)==0){
+				n->HP*=2;
+				n->Misc[GEN_MISC_FLAGS]|=NPC_F_HARD;
+			}
+		}
+	}
+	if(SamusVars[DAMAGE_SPIKE]){
+		for(i= Screen->NumNPCs();i>0;i--){
+			npc n = Screen->LoadNPC(i);
+			if((n->Misc[GEN_MISC_FLAGS]&GEN_F_DMG)==0){
+				n->Damage*=2;
+				n->Misc[GEN_MISC_FLAGS]|=GEN_F_DMG;
+			}
+		}
+		for(i= Screen->NumEWeapons();i>0;i--){
+			eweapon wpn = Screen->LoadEWeapon(i);
+			if((wpn->Misc[GEN_MISC_FLAGS]&GEN_F_DMG)==0){
+				wpn->Damage*=2;
+				wpn->Misc[GEN_MISC_FLAGS]|=GEN_F_DMG;
+			}
+		}
+	}
+}

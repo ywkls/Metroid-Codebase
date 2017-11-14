@@ -1,0 +1,25 @@
+//Section 48. HP Regen Item
+
+const int I_HP_REGEN = 16;//Item Id for HP regen
+const int HP_REGEN_TIME = 30;//How long it taks to regenerate.
+
+void HP_Regeneration(){
+	if(Link->Item[I_HP_REGEN]){
+		if(SamusVars[REGEN_TIMER]<=HP_REGEN_TIME)
+			SamusVars[REGEN_TIMER]++;
+		else{
+			SamusVars[REGEN_TIMER] = 0;
+			if((Game->Counter[HEALTH_COUNTER] + 1)>99 
+				&& SamusVars[CURR_FILLED_TANKS]<SamusVars[NUM_TANKS]){
+				Game->Counter[HEALTH_COUNTER]=0;
+				SamusVars[CURR_FILLED_TANKS]++;
+				Link->MP+=32;
+			}
+			else if((Game->Counter[HEALTH_COUNTER] + 1)>99 
+					&& SamusVars[CURR_FILLED_TANKS]==SamusVars[NUM_TANKS])
+				Game->Counter[HEALTH_COUNTER]= 99;
+			else
+				Game->Counter[HEALTH_COUNTER]++;
+		}
+	}
+}

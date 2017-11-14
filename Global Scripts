@@ -9,6 +9,7 @@ global script Init{
         Game->MCounter[CR_SBOMBS] = 0;
 		//Game->MCounter[SECRET_COUNTER] = 100;
 		Game->Counter[HEALTH_COUNTER] = 99;
+		Game->MCounter[METROID_HP_COUNTER] = 999;
 		SetCommonStyleData(WINDOW_STYLE_1);
         SetCommonStyleData(WINDOW_STYLE_2);
         SetCommonStyleData(WINDOW_STYLE_3);
@@ -21,6 +22,9 @@ global script Init{
 		SamusVars[BEAMS_EQUIPPED]|=EQ_POWER;
 		SamusVars[KRAID_HP]= 9999;
 		SetControls(SET_DEFAULT);
+		SamusVars[METROID_ICON]= 235;
+		SamusVars[METROID_CURR_HP]=99;
+		SamusVars[METROID_MAX_HP]= 99;
 	}
 }
 
@@ -101,6 +105,9 @@ global script globalscript{
 				Link->MP= Link->MaxMP;
 			}
 			Tango_Update1();
+			if(AreaName!=0)
+				Screen->DrawString(7,139,-8,FONT_SUBSCREEN3,1,0x0F,TF_NORMAL,AreaName,128);
+			Hard_Mode();
 			if(!SamusVars[IS_INVISIBLE] && !SamusVars[IS_FROZEN]){
 				UpdateLWZH1();
 				GrappleVelocity();
@@ -129,7 +136,16 @@ global script globalscript{
 					Aiming();//Allows diagonal aiming.
 					ItemUse();//Runs scripts to use items.
 					EWeaponItems();//Runs items dropped by shooting eweapons.
-					Grapple_Grip();//Handles sideview grapple to walls.	
+					if(!SamusVars[IS_MORPHED]){
+						Sideview_Grip();
+						Aux_Items();
+						Grapple_Grip();//Handles sideview grapple to walls.
+					}
+					Phase_Modulator();
+					if(SamusVars[MISSILE_CHARGING_TIME]>=90)
+						RunDiffusion();
+					if(SamusVars[USING_METROID])
+						RunMetroid();
 				}
 			}
 			

@@ -1,0 +1,87 @@
+ffc script Alpha_Skree{
+	void run(int enemyID){
+		npc ghost = Ghost_InitAutoGhost(this, enemyID);
+		int combo = ghost->Attributes[10];
+		Ghost_SetFlag(GHF_IGNORE_ALL_TERRAIN);
+		Ghost_SetFlag(GHF_IGNORE_NO_ENEMY);
+		Ghost_SetFlag(GHF_NO_FALL);
+		Ghost_SetSize(this,ghost,1,4);
+		Ghost_AddCombo(combo+1,-32,-48,6,3);
+		Ghost_AddCombo(combo+2,-48,0,3,4);
+		Ghost_AddCombo(combo+3,16,0,3,4);
+		Ghost_AddCombo(combo+4,0,64,1,2);
+		int Mode;
+		int ModeTimer = Rand(100,200);
+		bool MovingLeft = ChooseBool();
+		Ghost_X= 80;
+		Ghost_Y= 32;
+		int speed;
+		bool Falling = false;
+		int count;
+		int MaxHP= Ghost_HP;
+		eweapon shot;
+		int sprite= ghost->Attributes[0];
+		int sfx = ghost->Attributes[1];
+		while(true){
+			if((SamusVars[BEAMS_EQUIPPED]&EQ_CHARGE)!=0)
+				ghost->Defense[NPCD_BEAM]= NPCDT_NONE;
+			else
+				ghost->Defense[NPCD_BEAM]=NPCDT_BLOCK;
+			//Position parts.
+			Ghost_ForceDir(DIR_DOWN);
+			if(Mode==0){
+				if(MovingLeft && Ghost_X>32)
+					Ghost_X-=speed;
+				else if(MovingLeft && Ghost_X<=32)
+					MovingLeft = false;
+				else if(!MovingLeft && Ghost_X<200)
+					Ghost_X+=speed;
+				else if(!MovingLeft && Ghost_X>=200)
+					MovingLeft = true;	
+			}
+			else if(Mode==1){
+				if(Ghost_CanMove(DIR_DOWN,1,0) && Falling){
+					Ghost_UnsetFlag(GHF_NO_FALL);
+					Game->PlaySound(SFX_THWOMP_DROP);
+				}
+				else if(!Ghost_CanMove(DIR_DOWN,1,0) && Falling){
+					Ghost_SetFlag(GHF_NO_FALL);
+					Falling = false;
+					Game->PlaySound(SHINE_SPARK_IMPACT_SFX);
+				}
+				else if(Ghost_Y>32 && !Falling)
+					Ghost_Y-=speed;
+				else if(Ghost_Y<=32 && !Falling){
+					Falling = true;
+					ModeTimer=0;
+				}
+			}
+			else if(Mode==2){
+				count = Rand(5,10);
+				for(int i=0;i<=count;i++){
+					shot = FireEWeapon(ghost->Weapon,Rand(Ghost_X-48,Ghost_X+64),
+										Ghost_Y+32,DegtoRad(90),100,ghost->WeaponDamage,
+										sprite,sfx,0);
+					Gen_Explode_Waitframes(this,ghost,10);
+				}
+				ModeTimer=0;
+			}
+			if(ModeTimer<=0){
+				if(Mode==0)
+					Mode= Choose(1,2);
+				else if(Mode==1)
+					Mode= Choose(0,2);
+				else if(Mode==2)
+					Mode= Choose(0,1);
+				ModeTimer = Rand(100,200);
+			}
+			if(Ghost_HP>=(MaxHP/2))
+				speed = ghost->Step/100;
+			else
+				speed = ghost->Step/50;
+			if(Mode!=1)
+				ModeTimer--;
+			Gen_Explode_Waitframe(this,ghost);
+		}
+	}
+}

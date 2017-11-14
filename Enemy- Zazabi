@@ -1,0 +1,210 @@
+//Section 53. Zazabi
+
+//Zazabi
+
+//Core- 2 x 2- Vulnerable from below
+//Body Normal- 4 x 8- 10 up offset
+//Body Jump to Drain Mode- 5 x 7
+
+const int ZAZABI_BODY_COMBO = 2933;//Enemy Id for body
+const int ZAZABI_JUMP_COMBO = 2939;//Jumping Animation Tile
+const int ZAZABI_DRAIN_SFX = 78;//Sound to make when draining Link.
+const int ZAZABI_TENTACLE_COMBO = 2935;//Tentacles of Zazabi.
+
+ffc script Zazabi{
+	void run(int enemyID){
+		npc ghost = Ghost_InitAutoGhost(this, enemyID);
+		//npc body = Screen->CreateNPC(ZAZABI_BODY);//Create body.
+		//Position core.
+		Ghost_X = 32;
+		Ghost_Y = 0;
+		Ghost_Dir = DIR_DOWN;
+		//Timer for jumps
+		int JumpTimer = Rand(90,150);
+		//Timer for drain attack.
+		int DrainTimer = Rand(120,180);
+		//Is the enemy moving left?
+		bool MovingLeft = false;
+		//Make it invisible.
+		int combo = ghost->Attributes[10];
+		Ghost_AddCombo(ZAZABI_BODY_COMBO,-16,64,4,5);
+		Ghost_AddCombo(ZAZABI_TENTACLE_COMBO,-16,3,1,3);
+		Ghost_AddCombo(ZAZABI_TENTACLE_COMBO+1,32,3,1,3);
+		//Resize core.
+		Ghost_SetSize(this,ghost,2,4);
+		//Set flags.
+		Ghost_SetFlag(GHF_IGNORE_ALL_TERRAIN);
+		Ghost_SetFlag(GHF_IGNORE_NO_ENEMY);
+		Ghost_SetFlag(GHF_FAKE_Z);
+		Ghost_SetFlag(GHF_NO_FALL);
+		//Remember Max HP
+		int MaxHP = Ghost_HP;
+		//How often it can heal itself.
+		int HealInterval;
+		//Used by Jumping code.
+		int StartY;
+		int StartX;
+		int targetX;
+		int targetY;
+		int jump_speed;
+		float totalDist;
+		float currentDist;
+		//Save initial Y.
+		int SavedY = Ghost_Y;
+		int pct;
+		eweapon hurt;
+		while(true){
+			//Keep vulnerable side facing down.
+			Ghost_ForceDir(DIR_DOWN);
+			if(JumpTimer<=5){
+				//Not time to drain yet.
+				if(DrainTimer>=5){
+					//Going left.
+					if(Ghost_X==32){
+						targetX=Choose(112,176);
+						jump_speed = 2;
+						if(targetX==112)
+							targetY= 16;
+						else
+							targetY= -16;
+					}
+					else if(Ghost_X==112){
+						targetX=Choose(32,176);
+						if(targetX==32)
+							jump_speed = -2;
+						else
+							jump_speed = 2;
+						targetY= -16;
+					}		
+					else if(Ghost_X==176){
+						targetX=Choose(32,112);
+						if(targetX==112)
+							targetY= 16;
+						else
+							targetY= -16;
+						jump_speed = -2;
+					}
+					currentDist=Abs(Ghost_X-targetX);
+					StartX= Ghost_X;
+					StartY= Ghost_Y;
+					//Play sound.
+					Game->PlaySound(SFX_JUMP);
+					totalDist=Abs(StartX-targetX);
+					//I use a while loop since I'm unfamiliar with the methodology of do loops.
+					while(currentDist > 1){
+						//Keep core facing down.
+						Ghost_ForceDir(DIR_DOWN);
+						//Move enemy.
+						Ghost_X+=jump_speed;
+						//Constantly calculate these as we move.
+						currentDist=Abs(Ghost_X-targetX);
+						pct= currentDist/totalDist;
+						Ghost_Y= (1 - pct) * StartY + pct * targetY - 64 * Sin(pct * 180);
+						Gen_Explode_Waitframe(this,ghost);
+					}
+					//If not where you started, move there.
+					if(Ghost_X==112)
+						Ghost_Y= 16;
+					else
+						Ghost_Y = 0;
+					//Reset jump timer.
+					JumpTimer = Rand(90,150);
+				}
+				//Time to drain.
+				else{
+					//Change appearance and size.
+					Ghost_ClearCombos();
+					Ghost_Data = ZAZABI_JUMP_COMBO;
+					Ghost_SetSize(this,ghost,3,4);
+					Ghost_AddCombo(ZAZABI_BODY_COMBO+1,-16,64,4,3);
+					Ghost_AddCombo(ZAZABI_TENTACLE_COMBO+2,-16,14);
+					Ghost_AddCombo(ZAZABI_TENTACLE_COMBO+3,32,1,2,3);
+					//Going left.
+					if(Ghost_X==32){
+						targetX=Choose(112,176);
+						jump_speed = 2;
+					}
+					else if(Ghost_X==112){
+						targetX=Choose(32,176);
+						if(targetX==32)
+							jump_speed = -2;
+						else
+							jump_speed = 2;
+					}		
+					else if(Ghost_X==176){
+						targetX=Choose(32,112);
+						jump_speed = -2;
+					}
+					//Set up jump.
+					targetY = Ghost_Y-Rand(48,80);
+					currentDist=Abs(Ghost_X-targetX);
+					StartX= Ghost_X;
+					StartY= Ghost_Y;
+					Game->PlaySound(SFX_JUMP);
+					totalDist=Abs(StartX-targetX);
+					//I use a while loop since I'm unfamiliar with the methodology of do loops.
+					while(currentDist > 1){
+						Ghost_ForceDir(DIR_DOWN);
+						//Move enemy.
+						Ghost_X+=jump_speed;
+						//Constantly calculate these as we move.
+						currentDist=Abs(Ghost_X-targetX);
+						pct= currentDist/totalDist;
+						Ghost_Y= (1 - pct) * StartY + pct * targetY - 64 * Sin(pct * 180);
+						//totalDist/2-64*Sin(currentDist/totalDist*180);
+						if(Between(Link->X,Ghost_X,Ghost_X+32) && Between(Link->Y-16,Ghost_Y,Ghost_Y+112) && HealInterval == 0){
+							if(Ghost_HP<=MaxHP){
+								Ghost_HP+=ghost->Damage;
+								HealInterval = 48;
+								Game->PlaySound(ZAZABI_DRAIN_SFX);
+								hurt = FireEWeapon(EW_FIREBALL, Link->X, Link->Y, DegtoRad(0),0,ghost->Damage, SPRITE_NULL,0, EWF_UNBLOCKABLE);
+								SetEWeaponLifespan(hurt,EWL_TIMER, 1);
+								SetEWeaponDeathEffect(hurt,EWD_VANISH, 0);
+							}
+						}
+						Gen_Explode_Waitframe(this,ghost);
+					}
+					//Not on ground yet.
+					while(Ghost_CanMove(DIR_DOWN,64,0)){
+						//If Link is in spot, drain his HP to refill boss'.
+						if(Between(Link->X,Ghost_X,Ghost_X+32) && Between(Link->Y-16,Ghost_Y,Ghost_Y+112) && HealInterval == 0){
+							if(Ghost_HP<=MaxHP){
+								Ghost_HP+=ghost->Damage;
+								HealInterval = 48;
+								Game->PlaySound(ZAZABI_DRAIN_SFX);
+							}
+						}
+						//Fall.
+						Ghost_UnsetFlag(GHF_NO_FALL);
+						//Wait a bit.
+						Gen_Explode_Waitframes(this,ghost,10);
+						//Stop falling.
+						Ghost_SetFlag(GHF_NO_FALL);
+						if(HealInterval>0)HealInterval--;
+						else HealInterval = 0;
+					}
+					//Make sure we've stopped falling.
+					Ghost_SetFlag(GHF_NO_FALL);
+					//Move to right position.
+					Ghost_ClearCombos();
+					Ghost_Data= combo;
+					Ghost_SetSize(this,ghost,2,4);
+					Ghost_AddCombo(ZAZABI_BODY_COMBO,-16,64,4,5);
+					Ghost_AddCombo(ZAZABI_TENTACLE_COMBO,-16,3,1,3);
+					Ghost_AddCombo(ZAZABI_TENTACLE_COMBO+1,32,3,1,3);
+					if(Ghost_X==112)
+						Ghost_Y= 16;
+					else
+						Ghost_Y= 0;
+					//body->Y = Ghost_Y-32;
+					//Reset timer.
+					DrainTimer = Rand(120,180);
+				}
+			}
+			//Reduce timers.
+			JumpTimer--;
+			DrainTimer--;
+			Gen_Explode_Waitframe(this,ghost);
+		}
+	}
+}

@@ -1,0 +1,14 @@
+//Section 85. Boss Name
+
+//D0- String to play. At least one enemy must be onscreen for it to play.
+
+ffc script BossString{
+	void run (int m){
+		int Baddies;
+		Waitframes(4);
+
+		Baddies = Screen->NumNPCs();
+		if (Baddies >= 1)Screen->Message(m);
+		else Quit();
+	}
+}

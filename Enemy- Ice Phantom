@@ -1,0 +1,119 @@
+ffc script IcePhantom{
+	void run(int enemyID){
+		npc ghost = Ghost_InitAutoGhost(this, enemyID);
+		int combo = ghost->Attributes[10];
+		int sprite = ghost->Attributes[0];
+		int sfx = ghost->Attributes[1];
+		int warpsfx = ghost->Attributes[2];
+		Ghost_SetFlag(GHF_NO_FALL);
+		Ghost_SetSize(this,ghost,1,4);
+		Ghost_AddCombo(combo+1,-48,-48,7,3);
+		Ghost_AddCombo(combo+2,-48,0,3,4);
+		Ghost_AddCombo(combo+3,16,0,3,4);
+		float rotation;
+		int FireTimer = Rand(120,210);
+		int wait;
+		int color;
+		bool Spinning = false;
+		Ghost_X = 124;
+		Ghost_Y = 64;
+		int Start_X = Ghost_X;
+		int Start_Y = Ghost_Y;
+		float angle;
+		float speed = ghost->Step/100;
+		float step = speed;
+		int MaxHP = Ghost_HP;
+		eweapon shot;
+		int k = Choose(-1,1);
+		step = step*k;
+		while(true){
+			angle = (angle+step)%360;
+			Ghost_X = Start_X + 48 * Cos(angle);
+			Ghost_Y = Start_Y + 24 * Sin(2*angle);
+			Ghost_ForceDir(DIR_DOWN);
+			if(FireTimer<=0){
+				if(!Spinning){
+					wait = 60;
+					while(wait>0){
+						color = (color+1) %16;
+						Laser(3, Ghost_X+8, Ghost_Y+16, 8, 90, ghost->WeaponDamage, color);
+						wait--;
+						Gen_Explode_Waitframe(this,ghost);
+					}
+					Spinning = true;
+					ghost->CollDetection = false;
+					Ghost_Data = GH_INVISIBLE_COMBO;
+					Ghost_ClearCombos();
+					Game->PlaySound(warpsfx);
+					for(int i = 0; i < 56; i++){
+						Screen->DrawCombo(3, (Ghost_X-48) + i, (Ghost_Y-48) - i, 
+											combo+1, 7, 7, Ghost_CSet, 112 - (i * 2),
+											112 + (i * 2), 0, 0, 0, -1, 0, true, OP_OPAQUE);
+						Gen_Explode_Waitframe(this,ghost);
+					}
+					Ghost_X = Start_X;
+					Ghost_Y = Start_Y;
+					Game->PlaySound(warpsfx);
+					for(int i = 56; i >0; i--){
+						Screen->DrawCombo(3, (Ghost_X-48) + i, (Ghost_Y-48) - i, 
+											combo+1, 7, 7, Ghost_CSet, 112 - (i * 2),
+											112 + (i * 2), 0, 0, 0, -1, 0, true, OP_OPAQUE);
+						Gen_Explode_Waitframe(this,ghost);
+					}
+					Ghost_Data = combo;
+					Ghost_AddCombo(combo+1,-48,-48,7,3);
+					Ghost_AddCombo(combo+2,-48,0,3,4);
+					Ghost_AddCombo(combo+3,16,0,3,4);
+					ghost->CollDetection = true;
+				}
+				else if(Spinning){
+					rotation = Rand(360);
+					for(int i=0; i<20; i++){
+						for(int j=0; j<5; j++){
+							shot = FireEWeapon(ghost->Weapon,CenterX(ghost)-8, CenterY(ghost)-8, 
+												DegtoRad(rotation+72*j), 150,ghost->WeaponDamage, sprite, sfx, 0);
+							SetEWeaponLifespan(shot,EWL_TIMER, 100);
+							SetEWeaponDeathEffect(shot,EWD_EXPLODE, 8);
+						}
+						rotation += 4*k;
+						Gen_Explode_Waitframes(this,ghost,4);
+					}
+					Spinning = false;
+					//ghost->CollDetection = false;
+					Ghost_Data = GH_INVISIBLE_COMBO;
+					Ghost_ClearCombos();
+					Game->PlaySound(warpsfx);
+					for(int i = 0; i < 56; i++){
+						Screen->DrawCombo(3, (Ghost_X-48) + i, (Ghost_Y-48) - i, 
+											combo+1, 7, 7, Ghost_CSet, 112 - (i * 2),
+											112 + (i * 2), 0, 0, 0, -1, 0, true, OP_OPAQUE);
+						Gen_Explode_Waitframe(this,ghost);
+					}
+					Ghost_X = Start_X;
+					Ghost_Y = Start_Y;
+					Game->PlaySound(warpsfx);
+					for(int i = 56; i >0; i--){
+						Screen->DrawCombo(3, (Ghost_X-48) + i, (Ghost_Y-48) - i, 
+											combo+1, 7, 7, Ghost_CSet, 112 - (i * 2),
+											112 + (i * 2), 0, 0, 0, -1, 0, true, OP_OPAQUE);
+						Gen_Explode_Waitframe(this,ghost);
+					}
+					Ghost_Data = combo;
+					Ghost_AddCombo(combo+1,-48,-48,7,3);
+					Ghost_AddCombo(combo+2,-48,0,3,4);
+					Ghost_AddCombo(combo+3,16,0,3,4);
+					//ghost->CollDetection = true;
+				}
+				k= Choose(-1,1);
+				FireTimer = Rand(120,210);
+			}
+			FireTimer--;
+			if(Ghost_HP <=(MaxHP/2))
+				step = speed *2;
+			else
+				step = speed;
+			step = step*k;
+			Gen_Explode_Waitframe(this,ghost);
+		}
+	}
+}

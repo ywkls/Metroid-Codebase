@@ -5,17 +5,28 @@ const int GEN_MISC_TIMER_INDEX 		= 1;//Index to time last collision
 
 //Npc Misc Flags
 
+const int NPC_F_HARD	           = 00000000001b;//A hard enemy, with double HP.
 const int NPC_F_FREEZE      	   = 00000000010b;//A recently frozen enemy.
 const int NPC_F_PB			       = 00000000100b;//An enemy hit by a power bomb.
 
 //General Use Misc Flags
 
 const int GEN_F_ZERO_G      	   = 00000001000b;//An object that ignores gravity.
+const int GEN_F_DMG      	   	   = 00000010000b;//An object whose damage has been doubled.
 const int GEN_F_COLLISION		   = 00000100000b;//An object that has collided with the player,
 
 //Lweapon Misc Flags
 
 const int LWF_Y_OFFSET	           = 00000100000b;//An lweapon whose Y position has been offset.
+const int LWF_GRAV_UP	      	   = 00001000000b;//An lweapon affected by the Nightmare's gravity.
+
+//Map System Constants
+
+const int CENTRAL_MAP_TILE = 4623;
+const int VENTRAL_MAP_TILE = 4628;
+const int DORSAL_MAP_TILE = 4633;
+const int MAP_HEIGHT = 3;
+const int MAP_WIDTH = 5;
 
 //SFX constants
 

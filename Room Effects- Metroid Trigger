@@ -1,0 +1,19 @@
+ffc script Metroid_Trigger{
+	void run(int scriptNum){
+		bool triggered = false;
+		if(Screen->State[ST_SECRET])triggered = true;
+		ffc f;
+		while(!triggered){
+			for(int i = 1; i <= 32; i++){
+                  f = Screen->LoadFFC(i);
+                  if(f->Script != scriptNum) continue;
+				  if(Collision(f,this))
+					triggered = true;
+            }
+			Waitframe();
+		}
+		Screen->TriggerSecrets();
+		Screen->State[ST_SECRET]= true;
+		Game->PlaySound(SFX_SECRET);
+	}
+}

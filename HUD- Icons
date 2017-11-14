@@ -1,39 +1,49 @@
-//Section 72. Scripted Interface
-
 //Draws icons on the subscreen based on what item is in inventory and equipped.
 
 void DrawIcons(){
 	if(Link->Item[I_MISSILES]){
 		if(SamusVars[EQUIPPED_ITEM]==I_MISSILES)
-			Screen->FastTile(7, 74, -56, 14220, 8, 128 );
+			Screen->FastTile(7, 50, -56, 14000, 8, 128 );
 		else
-			Screen->FastTile(7, 74, -56, 14240, 8, 128 );
-		Screen->DrawInteger(7, 66, -40, FONT_Z1,0x03, -1,-1, -1, Game->Counter[CR_ARROWS], 0,128);
+			Screen->FastTile(7, 50, -56, 14020, 8, 128 );
+		Screen->DrawInteger(7, 42, -40, FONT_Z1,0x03, -1,-1, -1, Game->Counter[CR_ARROWS], 0,128);
 	}
 	if(Link->Item[I_SUPERMISSILE]){
 		if(SamusVars[EQUIPPED_ITEM]==I_SUPERMISSILE)
-			Screen->FastTile(7, 98, -56, 14221, 8, 128 );
+			Screen->FastTile(7, 74, -56, 14001, 8, 128 );
 		else
-			Screen->FastTile(7, 98, -56, 14241, 8, 128 );
-		Screen->DrawInteger(7, 98, -40, FONT_Z1,0x03, -1,-1, -1, Game->Counter[CR_RUPEES], 0,128);
+			Screen->FastTile(7, 74, -56, 14021, 8, 128 );
+		Screen->DrawInteger(7, 74, -40, FONT_Z1,0x03, -1,-1, -1, Game->Counter[CR_RUPEES], 0,128);
 	}
 	if(Link->Item[I_POWER_BOMB]){
 		if(SamusVars[EQUIPPED_ITEM]==I_POWER_BOMB)
-			Screen->FastTile(7, 122, -56, 14222, 8, 128 );
+			Screen->FastTile(7, 98, -56, 14002, 8, 128 );
 		else
-			Screen->FastTile(7,122, -56, 14242, 8, 128 );
-		Screen->DrawInteger(7, 122, -40, FONT_Z1,0x03, -1,-1, -1, Game->Counter[CR_SBOMBS], 0,128);
+			Screen->FastTile(7,98, -56, 14022, 8, 128 );
+		Screen->DrawInteger(7, 98, -40, FONT_Z1,0x03, -1,-1, -1, Game->Counter[CR_SBOMBS], 0,128);
 	}
 	if(Link->Item[I_GRAPPLE]){
 		if(SamusVars[EQUIPPED_ITEM]==I_GRAPPLE)
-			Screen->FastTile(7, 146, -56, 14223, 8, 128 );
+			Screen->FastTile(7, 122, -56, 14003, 8, 128 );
 		else
-			Screen->FastTile(7, 146, -56, 14243, 8, 128 );
+			Screen->FastTile(7, 122, -56, 14023, 8, 128 );
 	}
 	if(Link->Item[I_X_RAY]){
 		if(SamusVars[EQUIPPED_ITEM]==I_X_RAY)
-			Screen->FastTile(7, 170, -56, 14224, 8, 128 );
+			Screen->FastTile(7, 146, -56, 14004, 8, 128 );
 		else
-			Screen->FastTile(7, 170, -56, 14244, 8, 128 );
+			Screen->FastTile(7, 146, -56, 14024, 8, 128 );
 	}
+	if(!Link->Item[I_BIG_METROID])
+		Screen->FastCombo(7,112, -24,SamusVars[METROID_ICON], 
+							METROID_CSET, 128);
+	else
+		Screen->DrawCombo(7,104, -32,SamusVars[METROID_ICON], 
+							2,2, METROID_CSET, -1, -1, 0, 0, 0, 0, 0, true, 128);
+	if(Link->Item[I_ATOMIZER])
+		Screen->FastCombo(7,170, -24,ATOMIZER_COMBO, 
+							ATOMIC_CSET, 128);	
 }
+
+const int ATOMIZER_COMBO = 2584;
+const int ATOMIC_CSET	 = 7;
