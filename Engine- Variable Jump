@@ -58,9 +58,11 @@ void VariableJump(){
 		&& !SamusVars[IS_JUMPING] && Link->Action <=2){
 		//Set to know you're jumping.
         SamusVars[IS_JUMPING] = 1;
-		//Deactivate ground Override.
-		SamusVars[ON_GROUND_OVERRIDE]= 0;
-		//Jump.
+	//Deactivate ground Override.
+	SamusVars[ON_GROUND_OVERRIDE]= 0;
+	//Jump.
+	if(SamusVars[SAMUS_ACTION]==SAMUS_ACTION_CROUCH)
+		SamusVars[SAMUS_ACTION]= SAMUS_ACTION_NONE;
         Link->Jump = (JumpHeight+2)*0.8;
 		//Play a sound.
         Game->PlaySound(SFX_JUMP);

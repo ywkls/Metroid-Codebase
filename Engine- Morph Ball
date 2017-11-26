@@ -192,9 +192,12 @@ void MorphBall(){
 			DampInput(SamusVars[JUMP_BUTTON]);
 		}
 		//If you press up at any time, end morph ball mode.
-		if((Link->PressUp||Link->InputUp) && !Screen->isSolid(Link->X+4,Link->Y-8)&& !Screen->isSolid(Link->X+12,Link->Y-8)){
+		if((Link->PressUp||Link->InputUp) 
+			&& !Screen->isSolid(Link->X+4,Link->Y-8)
+			&& !Screen->isSolid(Link->X+12,Link->Y-8)
+			&& Link->Action!=LA_SCROLLING){
 			 SamusVars[IS_MORPHED] = 0;
-			 SamusVars[SAMUS_ACTION] = SAMUS_ACTION_NONE;
+			 SamusVars[SAMUS_ACTION] = SAMUS_ACTION_CROUCH;
 		}
 		//Draw combo at your location.
 		if(!Link->Item[I_GRAVITY_SUIT])
