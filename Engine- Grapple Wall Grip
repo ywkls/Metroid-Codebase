@@ -39,7 +39,7 @@ void Grapple_Grip(){
 					JumpHeight = JUMP_HEIGHT_HIGH;
 			}
 			//You have the first grip.
-			if(isGRGrip(Link->X+24,Link->Y-8)){
+			if(isGRGrip(Link->X+24,Link->Y+8)){
 				Screen->DrawTile(2, Link->X+24, Link->Y+8, TIL_GRAPPLEHOOK+9, 1, 1, 
 								CS_GRAPPLEHOOK, -1, -1, Link->X+24,  Link->Y+8, 
 								Angle(Link->X,Link->Y-16,Link->X+24,Link->Y+9), 0, true, 128);	
@@ -78,7 +78,7 @@ void Grapple_Grip(){
 					SamusVars[IS_JUMPING] = 0;
 			 }
 			 //Left combo is Sideview grip.
-			 else if(isGRGrip(Link->X-8,Link->Y-8)){
+			 else if(isGRGrip(Link->X-8,Link->Y+8)){
 				Screen->DrawTile(2, Link->X-8, Link->Y+8, TIL_GRAPPLEHOOK+9, 1, 1, 
 								CS_GRAPPLEHOOK, -1, -1, Link->X-8,  Link->Y+8, 
 								Angle(Link->X,Link->Y-16,Link->X-8,Link->Y+8), 0, true, 128);	
