@@ -27,6 +27,10 @@ ffc script Thwomp_Platform{
 		bool Grounded = false;
 		int PlatformCooldown;
 		int velocity;
+		int PressOffset;
+		int LinkX;
+		int PlatformX;
+		int PlatformY;
 		while(true){
 			velocity = Abs(Ghost_Jump);
 			ghost->Damage = Clamp(OrigDamage*(velocity/GH_TERMINAL_VELOCITY), 2, OrigDamage);
@@ -180,17 +184,33 @@ ffc script Thwomp_Platform{
 						Grounded = false;
 						SamusVars[ON_GROUND_OVERRIDE]=0;
 					}
-					if(!(Link->PressLeft||Link->InputLeft
-						||Link->InputRight||Link->PressRight))
-						Link->X = this->X+(((this->TileWidth-1)*16)/2);
+					LinkX = (this->X+(((this->TileWidth-1)*16)/2))+PressOffset;
+					if(PlatformX!=this->X || PlatformY!=this->Y)
+						LinkX = Clamp(LinkX,this->X,this->X+((this->TileWidth-1)*16));
+					else
+						LinkX = Clamp(LinkX,this->X-8,this->X+(this->TileWidth*16));
+					if(Link->PressLeft||Link->InputLeft)
+						PressOffset--;
+					else if(Link->PressRight||Link->InputRight)
+						PressOffset++;
+					if(Link->X>=this->X-8 && Link->X<=this->X+(this->TileWidth*16)+8)
+						Link->X= LinkX;
+					else{
+						PressOffset = 0;
+						PlatformCooldown = 30;
+						Grounded= false;
+					}
 					if(PlatformCooldown>0)
 						PlatformCooldown--;
+					PlatformX = this->X;
+					PlatformY = this->Y;
 					Ghost_Waitframe(this, ghost);
 				}
 			}
 			else if (Grounded && !OnPlatform(this, false,this->Script)){
 				Grounded = false;
 				PlatformCooldown= 30;
+				PressOffset = 0;
 				if (!OnPlatform(this, true,this->Script))
 					SamusVars[ON_GROUND_OVERRIDE]=0;
 			}
