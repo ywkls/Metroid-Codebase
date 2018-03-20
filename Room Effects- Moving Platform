@@ -14,6 +14,10 @@ ffc script Moving_Platform{
 		int PlatformCooldown;
 		int OrigY = this->Y;
 		bool Dropping = false;
+		int PressOffset;
+		int LinkX;
+		int PlatformX;
+		int PlatformY;
       while(true){ 
          //This detects when Link gets on the platform
         if(OnPlatform(this,false,this->Script) && PlatformCooldown<=0){
@@ -90,9 +94,26 @@ ffc script Moving_Platform{
 					Grounded = false;
 					SamusVars[ON_GROUND_OVERRIDE]=0;
 				}
-				if(!(Link->PressLeft||Link->InputLeft
-					||Link->InputRight||Link->PressRight))
-					Link->X = this->X+(((this->TileWidth-1)*16)/2);
+				LinkX = (this->X+(((this->TileWidth-1)*16)/2))+PressOffset;
+				if(PlatformX!=this->X || PlatformY!=this->Y)
+					LinkX = Clamp(LinkX,this->X,this->X+((this->TileWidth-1)*16));
+				else
+					LinkX = Clamp(LinkX,this->X-8,this->X+(this->TileWidth*16));
+				if(Link->PressLeft||Link->InputLeft)
+					PressOffset--;
+				else if(Link->PressRight||Link->InputRight)
+					PressOffset++;
+				if(Link->X>=this->X-8 && Link->X<=this->X+(this->TileWidth*16)+8)
+					Link->X= LinkX;
+				else{
+					PressOffset = 0;
+					PlatformCooldown = 30;
+					Grounded= false;
+				}
+				if(PlatformCooldown>0)
+					PlatformCooldown--;
+				PlatformX = this->X;
+				PlatformY = this->Y
 				if(PlatformCooldown>0)
 					PlatformCooldown--;
 				if(Kamer){
@@ -112,6 +133,8 @@ ffc script Moving_Platform{
 		}
 		else if (Grounded && !OnPlatform(this, false,this->Script)){
 			Grounded = false;
+			PressOffset = 0;
+			PlatformCooldown = 30;
 			if (!OnPlatform(this, true,this->Script))
 				SamusVars[ON_GROUND_OVERRIDE]=0;
 		}
@@ -124,6 +147,7 @@ ffc script Moving_Platform{
          Waitframe();
       }
 	  Grounded = false;
+	  PressOffset = 0;
 	  SamusVars[ON_GROUND_OVERRIDE]=0;
    }
 }
