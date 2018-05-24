@@ -11,7 +11,9 @@ item script Healing_Item{
 			SamusVars[CURR_FILLED_TANKS]++;
 			Link->MP+=32;
 		}
-		else if(SamusVars[NUM_RES_TANKS]>0){
+		else if(SamusVars[NUM_RES_TANKS]>0
+				&& (Game->Counter[HEALTH_COUNTER] + amount)>99 
+				&& SamusVars[CURR_FILLED_TANKS]>=SamusVars[NUM_TANKS]){
 			if(SamusVars[NUM_FILLED_RES_TANKS]<SamusVars[NUM_RES_TANKS]){
 				if((Game->Counter[RESERVE_COUNTER] + amount)>100 
 					&& (SamusVars[NUM_FILLED_RES_TANKS]+1)<SamusVars[NUM_RES_TANKS]){
